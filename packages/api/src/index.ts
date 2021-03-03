@@ -1,21 +1,36 @@
-import "reflect-metadata"
+import Koa from "koa"
+import logger from "koa-logger"
+import bodyParser from "koa-bodyparser"
 import { createConnection } from "typeorm"
-import { User } from "./entities/user"
+
 import dbConfig from "./config/db"
+import httpConfig from "./config/http"
 
-createConnection(dbConfig).then(async connection => {
+import errorHandler from "./middlewares/error-handler"
+import { allowedMethods, routes } from "./middlewares/router"
 
-    console.log("Inserting a new user into the database...")
-    const user = new User()
-    user.username = "loriswit"
-    user.displayName = "Loris"
-    await connection.manager.save(user)
-    console.log("Saved a new user with id: " + user.id)
+async function startServer() {
+    try {
+        await createConnection(dbConfig)
 
-    console.log("Loading users from the database...")
-    const users = await connection.manager.find(User)
-    console.log("Loaded users: ", users)
+        const app = new Koa()
 
-    console.log("Here you can setup and run express/koa/any other framework.")
+        if (process.env.NODE_ENV != "test")
+            app.use(logger())
 
-}).catch(error => console.error(error))
+        app.use(errorHandler)
+            .use(bodyParser())
+            .use(routes)
+            .use(allowedMethods)
+
+        app.listen(httpConfig)
+
+        const address = (httpConfig.host ?? "localhost") + ":" + httpConfig.port
+        console.info("Listening on http://" + address)
+
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+startServer()

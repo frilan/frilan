@@ -5,10 +5,10 @@ if (!process.env.DB_PASS) {
     process.exit(1)
 }
 
-const host = process.env.DB_HOST || "localhost"
-const port = Number.parseInt(process.env.DB_PORT || "5432")
-const database = process.env.DB_NAME || "frilan"
-const username = process.env.DB_USER || "postgres"
+const host = process.env.DB_HOST ?? "localhost"
+const port = Number.parseInt(process.env.DB_PORT ?? "5432")
+const database = process.env.DB_NAME ?? "frilan"
+const username = process.env.DB_USER ?? "postgres"
 const password = process.env.DB_PASS
 
 const root = process.env.TS_NODE_DEV ? "src" : "build"

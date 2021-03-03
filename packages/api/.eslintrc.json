@@ -13,6 +13,7 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
+  "ignorePatterns": ["src/migrations/*"],
   "rules": {
     "indent": ["error", 4],
     "linebreak-style": ["error", "unix"],

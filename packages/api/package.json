@@ -9,18 +9,26 @@
     "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
     "mig:gen": "npm run typeorm migration:generate -- -p -n",
     "mig:run": "npm run typeorm migration:run",
-    "lint": "eslint --ext .ts",
+    "lint": "eslint --ext .ts .",
     "lint:fix": "npm run lint -- --fix"
   },
   "dependencies": {
+    "koa": "^2.13.1",
+    "koa-bodyparser": "^4.3.0",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^10.0.0",
     "pg": "^8.5.1",
-    "typeorm": "^0.2.30"
+    "typeorm": "^0.2.31"
   },
   "devDependencies": {
-    "@types/node": "^14.14.22",
-    "@typescript-eslint/eslint-plugin": "^4.15.2",
-    "@typescript-eslint/parser": "^4.15.2",
-    "eslint": "^7.20.0",
-    "ts-node-dev": "^1.1.1"
+    "@types/koa": "^2.13.0",
+    "@types/koa-bodyparser": "^4.3.0",
+    "@types/koa-logger": "^3.1.1",
+    "@types/koa-router": "^7.4.1",
+    "@types/node": "^14.14.31",
+    "@typescript-eslint/eslint-plugin": "^4.16.1",
+    "@typescript-eslint/parser": "^4.16.1",
+    "eslint": "^7.21.0",
+    "ts-node-dev": "^1.1.6"
   }
 }
