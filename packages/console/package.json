@@ -1,0 +1,20 @@
+{
+  "name": "@frilan/console",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.0.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.1.5",
+    "@vuedx/typescript-plugin-vue": "^0.6.3",
+    "pug": "^3.0.2",
+    "sass": "^1.32.8",
+    "vite": "^2.0.5"
+  }
+}
