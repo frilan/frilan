@@ -1,5 +1,6 @@
 import Koa from "koa"
 import logger from "koa-logger"
+import cors from "@koa/cors"
 import bodyParser from "koa-bodyparser"
 import { createConnection } from "typeorm"
 
@@ -19,6 +20,7 @@ async function startServer() {
             app.use(logger())
 
         app.use(errorHandler)
+            .use(cors())
             .use(bodyParser())
             .use(routes)
             .use(allowedMethods)
