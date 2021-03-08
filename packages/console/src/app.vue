@@ -1,5 +1,8 @@
 <template lang="pug">
-h1 Console
+header
+  h1 Console
+main
+  router-view
 </template>
 
 <script lang="ts">
