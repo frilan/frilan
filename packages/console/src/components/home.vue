@@ -6,7 +6,7 @@ h2 Welcome
 import { defineComponent } from "vue"
 
 export default defineComponent({
-  name: "home",
+  name: "Home",
 })
 </script>
 
