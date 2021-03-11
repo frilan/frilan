@@ -4,5 +4,15 @@
   "private": true,
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "build": "ts-node scripts/run.ts build",
+    "lint": "ts-node scripts/run.ts lint",
+    "lint:fix": "ts-node scripts/run.ts lint:fix"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "glob": "^7.1.6",
+    "ts-node": "^9.1.1"
+  }
 }
