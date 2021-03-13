@@ -1,8 +1,14 @@
 import Router from "koa-router"
+
 import Users from "../controllers/users"
 import Events from "../controllers/events"
+import Login from "../controllers/login"
+
+import basicAuth from "./basic-auth"
 
 const router = new Router()
+
+    .get("/login", basicAuth, Login.login)
 
     .param("uid", Users.getUser)
     .get("/users", Users.readAll)
