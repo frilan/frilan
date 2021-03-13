@@ -14,10 +14,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _, next) => {
-    if (to.meta.visitor && store.getters.logged)
+    if (to.meta.visitor && store.state.logged)
         next({ name: "/" })
 
-    if (!to.meta.visitor && !store.getters.logged)
+    if (!to.meta.visitor && !store.state.logged)
         next({ name: "login" })
 
     else

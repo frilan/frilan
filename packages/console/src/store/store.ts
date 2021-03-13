@@ -2,33 +2,35 @@ import { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
 import axios from "axios"
 
-interface User {
+export interface User {
     username: string
     displayName: string
     profilePicture: string
 }
 
 export interface State {
-    user: User | null
+    user: User
+    logged: boolean
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
 
 export const store = createStore<State>({
     state: {
-        user: null,
-    },
-    getters: {
-        logged(state) {
-            return state.user !== null
+        user: {
+            username: "",
+            displayName: "",
+            profilePicture: "",
         },
+        logged: false,
     },
     mutations: {
         setUser(state, user) {
             state.user = user
+            state.logged = true
         },
         clearUser(state) {
-            state.user = null
+            state.logged = false
         },
     },
     actions: {
