@@ -1,8 +1,9 @@
-import { Column, Entity } from "typeorm"
+import { Column, Entity, Index } from "typeorm"
 import { Id } from "./common/id"
 import { IsOptional, IsString } from "class-validator"
 
 @Entity()
+@Index("username_index", { synchronize: false })
 export class User extends Id {
 
     @Column({ unique: true })

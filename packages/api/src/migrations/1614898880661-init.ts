@@ -25,7 +25,10 @@ export class init1614898880661 implements MigrationInterface {
         `)
         await queryRunner.query(`
             CREATE TYPE "registration_role_enum" AS ENUM('admin', 'organizer', 'player')
-        `);
+        `)
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX "username_index" ON "user" (LOWER("username"))
+        `)
         await queryRunner.query(`
             CREATE TABLE "registration"
             (

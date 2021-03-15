@@ -17,7 +17,16 @@ export default {
 
     async create(ctx: Context): Promise<void> {
         const user = getRepository(User).create(ctx.request.body)
-        await getRepository(User).save(user)
+
+        try {
+            await getRepository(User).save(user)
+        } catch (err) {
+            if (err.code == 23505)
+                ctx.throw(409, "This user name is already taken")
+            else
+                throw err
+        }
+
         ctx.body = user
         ctx.status = 201
     },
