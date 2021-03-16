@@ -1,6 +1,7 @@
 import { Context, Next } from "koa"
 import { getRepository } from "typeorm"
 import { User } from "../entities/user"
+import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 
 export default {
     async getUser(id: string, ctx: Context, next: Next): Promise<Next> {
@@ -21,7 +22,7 @@ export default {
         try {
             await getRepository(User).save(user)
         } catch (err) {
-            if (err.code == 23505)
+            if (err.code == PG_UNIQUE_VIOLATION)
                 ctx.throw(409, "This user name is already taken")
             else
                 throw err
