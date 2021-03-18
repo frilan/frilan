@@ -11,6 +11,7 @@ export interface User {
 export interface State {
     user: User
     logged: boolean
+    error: string | null
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
@@ -23,14 +24,21 @@ export const store = createStore<State>({
             profilePicture: "",
         },
         logged: false,
+        error: null,
     },
     mutations: {
-        setUser(state, user) {
+        setUser(state, user: User) {
             state.user = user
             state.logged = true
         },
         clearUser(state) {
             state.logged = false
+        },
+        setError(state, error: string) {
+            state.error = error
+        },
+        clearError(state) {
+            state.error = null
         },
     },
     actions: {

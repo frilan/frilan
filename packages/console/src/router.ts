@@ -14,6 +14,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _, next) => {
+    store.commit("clearError")
+
     if (to.meta.visitor && store.state.logged)
         next({ name: "/" })
 

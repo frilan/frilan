@@ -19,11 +19,13 @@ router-link(:to="{ name: 'login' }") Log in to an existing account
 import { defineComponent, reactive } from "vue"
 import { useRouter } from "vue-router"
 import axios from "axios"
+import { useStore } from "../store/store"
 
 export default defineComponent({
   name: "Join",
   setup() {
     const router = useRouter()
+    const store = useStore()
 
     const fields = reactive({
       username: "",
@@ -32,7 +34,8 @@ export default defineComponent({
     })
 
     const join = async () => {
-      await axios.post("/users", fields)
+      const user = await axios.post("/users", fields)
+      await store.commit("setUser", user.data)
       router.push({ name: "home" })
     }
 
