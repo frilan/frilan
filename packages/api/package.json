@@ -16,6 +16,7 @@
     "@drdgvhbh/postgres-error-codes": "^0.0.6",
     "@koa/cors": "^3.1.0",
     "basic-auth": "^2.0.1",
+    "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "koa": "^2.13.1",
     "koa-bodyparser": "^4.3.0",
