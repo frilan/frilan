@@ -1,9 +1,15 @@
+import { Ctx, Get, JsonController, UnauthorizedError, UseBefore } from "routing-controllers"
 import { Context } from "koa"
 import { getRepository } from "typeorm"
+import basicAuth from "../middlewares/basic-auth"
 import { User } from "../entities/user"
 
-export default {
-    async login(ctx: Context): Promise<void> {
+@JsonController("/login")
+export class LoginController {
+
+    @Get()
+    @UseBefore(basicAuth)
+    async login(@Ctx() ctx: Context): Promise<User> {
         const username = ctx.credentials.name
         const user = await getRepository(User)
             .createQueryBuilder()
@@ -11,8 +17,8 @@ export default {
             .getOne()
 
         if (!user)
-            ctx.throw(401, "Wrong username and/or password")
+            throw new UnauthorizedError("Wrong username and/or password")
 
-        ctx.body = user
-    },
+        return user
+    }
 }

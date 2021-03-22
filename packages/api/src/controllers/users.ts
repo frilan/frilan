@@ -1,49 +1,51 @@
-import { Context, Next } from "koa"
+import {
+    Body, Delete, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
+} from "routing-controllers"
 import { getRepository } from "typeorm"
-import { User } from "../entities/user"
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
-import { plainToClass } from "class-transformer"
+import { User } from "../entities/user"
 
-export default {
-    async getUser(id: string, ctx: Context, next: Next): Promise<Next> {
-        ctx.user = await getRepository(User).findOne(id)
-        if (!ctx.user)
-            ctx.throw(404, "This user does not exist")
+@JsonController("/users")
+export class UserController {
 
-        return next()
-    },
+    @Get()
+    readAll(): Promise<User[]> {
+        return getRepository(User).find()
+    }
 
-    async readAll(ctx: Context): Promise<void> {
-        ctx.body = await getRepository(User).find()
-    },
-
-    async create(ctx: Context): Promise<void> {
-        const user = plainToClass(User, ctx.request.body)
-
+    @Post()
+    @HttpCode(201)
+    async create(@Body() user: User): Promise<User> {
         try {
-            ctx.body = await getRepository(User).save(user)
-            ctx.status = 201
+            return await getRepository(User).save(user)
 
         } catch (err) {
             if (err.code == PG_UNIQUE_VIOLATION)
-                ctx.throw(409, "This user name is already taken")
+                throw new HttpError(409, "This user name is already taken")
             else
                 throw err
         }
-    },
+    }
 
-    async read(ctx: Context): Promise<void> {
-        ctx.body = ctx.user
-    },
+    @Get("/:id")
+    async read(@Param("id") id: number): Promise<User> {
+        const user = await getRepository(User).findOne(id)
+        if (!user)
+            throw new NotFoundError("This user does not exist")
 
-    async update(ctx: Context): Promise<void> {
-        Object.assign(ctx.user, ctx.request.body)
-        const user = plainToClass(User, ctx.user)
-        ctx.body = await getRepository(User).save(user)
-    },
+        return user
+    }
 
-    async delete(ctx: Context): Promise<void> {
-        await getRepository(User).remove(ctx.user.id)
-        ctx.body = ctx.user
-    },
+    @Patch("/:id")
+    @OnUndefined(204)
+    async update(@Param("id") id: number, @Body() user: QueryDeepPartialEntity<User>): Promise<void> {
+        await getRepository(User).update(id, user)
+    }
+
+    @Delete("/:id")
+    @OnUndefined(204)
+    async delete(@Param("id") id: number): Promise<void> {
+        await getRepository(User).delete(id)
+    }
 }

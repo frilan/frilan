@@ -1,5 +1,5 @@
 import { Transform, TransformOptions } from "class-transformer"
 
-export function Trim(options?: TransformOptions): PropertyDecorator {
-    return Transform(({ value }) => value.trim(), options)
+export function Trim(options?: TransformOptions): ReturnType<typeof Transform> {
+    return Transform(value => typeof value === "string" ? value.trim() : value, options)
 }

@@ -1,42 +1,42 @@
-import { Context, Next } from "koa"
+import {
+    Body, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
+} from "routing-controllers"
 import { getRepository } from "typeorm"
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity"
 import { Event } from "../entities/event"
-import { plainToClass } from "class-transformer"
-import { User } from "../entities/user"
 
-export default {
-    async getEvent(id: string, ctx: Context, next: Next): Promise<Next> {
-        ctx.event = await getRepository(Event).findOne(id)
-        if (!ctx.event)
-            ctx.throw(404, "This event does not exist")
+@JsonController("/events")
+export class EventController {
 
-        return next()
-    },
+    @Get()
+    readAll(): Promise<Event[]> {
+        return getRepository(Event).find()
+    }
 
-    async readAll(ctx: Context): Promise<void> {
-        ctx.body = await getRepository(Event).find()
-    },
+    @Post()
+    @HttpCode(201)
+    create(@Body() event: Event): Promise<Event> {
+        return getRepository(Event).save(event)
+    }
 
-    async create(ctx: Context): Promise<void> {
-        const event = plainToClass(Event, ctx.request.body)
-        await getRepository(Event).save(event)
-        ctx.body = event
-        ctx.status = 201
-    },
+    @Get("/:id")
+    async read(@Param("id") id: number): Promise<Event> {
+        const event = await getRepository(Event).findOne(id)
+        if (!event)
+            throw new NotFoundError("This event does not exist")
 
-    async read(ctx: Context): Promise<void> {
-        ctx.body = ctx.event
-    },
+        return event
+    }
 
-    async update(ctx: Context): Promise<void> {
-        Object.assign(ctx.event, ctx.request.body)
-        const event = plainToClass(User, ctx.user)
-        await getRepository(Event).save(event)
-        ctx.body = ctx.event
-    },
+    @Patch("/:id")
+    @OnUndefined(204)
+    async update(@Param("id") id: number, @Body() event: QueryDeepPartialEntity<Event>): Promise<void> {
+        await getRepository(Event).update(id, event)
+    }
 
-    async delete(ctx: Context): Promise<void> {
-        await getRepository(Event).remove(ctx.event.id)
-        ctx.body = ctx.event
-    },
+    @Delete("/:id")
+    @OnUndefined(204)
+    async delete(@Param("id") id: number): Promise<void> {
+        await getRepository(Event).delete(id)
+    }
 }
