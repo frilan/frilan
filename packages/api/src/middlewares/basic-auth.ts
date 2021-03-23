@@ -1,11 +1,15 @@
 import { Context, Next } from "koa"
 import auth from "basic-auth"
+import { KoaMiddlewareInterface, UnauthorizedError } from "routing-controllers"
 
-export default async function (ctx: Context, next: Next): Promise<void> {
-    ctx.credentials = auth(ctx.req)
-    if (!ctx.credentials) {
-        ctx.throw(401, "Basic authentication is required")
+export class BasicAuth implements KoaMiddlewareInterface {
+
+    use(ctx: Context, next: Next): ReturnType<Next> {
+
+        ctx.credentials = auth(ctx.req)
+        if (!ctx.credentials)
+            throw new UnauthorizedError("Basic authentication is required")
+
+        return next()
     }
-
-    await next()
 }
