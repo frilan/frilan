@@ -2,8 +2,15 @@ import {
     Body, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity"
 import { Event } from "../entities/event"
+
+export class EventNotFoundError extends NotFoundError {
+    name = "EventNotFoundError"
+
+    constructor() {
+        super("This event does not exist")
+    }
+}
 
 @JsonController("/events")
 export class EventController {
@@ -20,18 +27,16 @@ export class EventController {
     }
 
     @Get("/:id")
-    async read(@Param("id") id: number): Promise<Event> {
-        const event = await getRepository(Event).findOne(id)
-        if (!event)
-            throw new NotFoundError("This event does not exist")
-
-        return event
+    @OnUndefined(EventNotFoundError)
+    read(@Param("id") id: number): Promise<Event | undefined> {
+        return getRepository(Event).findOne(id)
     }
 
     @Patch("/:id")
-    @OnUndefined(204)
-    async update(@Param("id") id: number, @Body() event: QueryDeepPartialEntity<Event>): Promise<void> {
+    @OnUndefined(EventNotFoundError)
+    async update(@Param("id") id: number, @Body({ validate: { skipMissingProperties: true } }) event: Event): Promise<Event | undefined> {
         await getRepository(Event).update(id, event)
+        return getRepository(Event).findOne(id)
     }
 
     @Delete("/:id")
