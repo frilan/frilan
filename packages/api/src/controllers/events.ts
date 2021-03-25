@@ -3,6 +3,7 @@ import {
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "../entities/event"
+import { PartialBody } from "../decorators/partial-body"
 
 export class EventNotFoundError extends NotFoundError {
     name = "EventNotFoundError"
@@ -34,7 +35,7 @@ export class EventController {
 
     @Patch("/:id")
     @OnUndefined(EventNotFoundError)
-    async update(@Param("id") id: number, @Body({ validate: { skipMissingProperties: true } }) event: Event): Promise<Event | undefined> {
+    async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | undefined> {
         await getRepository(Event).update(id, event)
         return getRepository(Event).findOne(id)
     }

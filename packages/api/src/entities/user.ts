@@ -1,7 +1,7 @@
 import { Column, Entity, Index } from "typeorm"
 import { Id } from "./common/id"
 import { IsOptional, IsString } from "class-validator"
-import { Trim } from "../utils/trim"
+import { Trim } from "../decorators/trim"
 
 @Entity()
 @Index("username_index", { synchronize: false })

@@ -1,7 +1,7 @@
 import { Column, Entity } from "typeorm"
 import { Id } from "./common/id"
 import { IsString } from "class-validator"
-import { Trim } from "../utils/trim"
+import { Trim } from "../decorators/trim"
 
 @Entity()
 export class Event extends Id {

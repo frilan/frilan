@@ -4,6 +4,7 @@ import {
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "../entities/user"
+import { PartialBody } from "../decorators/partial-body"
 
 export class UserNotFoundError extends NotFoundError {
     name = "UserNotFoundError"
@@ -51,7 +52,7 @@ export class UserController {
 
     @Patch("/:id")
     @OnUndefined(UserNotFoundError)
-    async update(@Param("id") id: number, @Body({ validate: { skipMissingProperties: true } }) user: User): Promise<User | undefined> {
+    async update(@Param("id") id: number, @PartialBody() user: User): Promise<User | undefined> {
         try {
             await getRepository(User).update(id, user)
             return getRepository(User).findOne(id)
