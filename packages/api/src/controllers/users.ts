@@ -1,18 +1,9 @@
-import {
-    Body, Delete, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
-} from "routing-controllers"
+import { Body, HttpError, JsonController, Param, Patch, Post } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "../entities/user"
 import { PartialBody } from "../decorators/partial-body"
-
-export class UserNotFoundError extends NotFoundError {
-    name = "UserNotFoundError"
-
-    constructor() {
-        super("This user does not exist")
-    }
-}
+import { CRUD } from "./common/crud"
 
 export class UserConflictError extends HttpError {
     name = "UserConflictError"
@@ -22,52 +13,32 @@ export class UserConflictError extends HttpError {
     }
 }
 
-@JsonController("/users")
-export class UserController {
+async function handleConflict<T>(next: () => Promise<T>) {
+    try {
+        return await next()
 
-    @Get()
-    readAll(): Promise<User[]> {
-        return getRepository(User).find()
+    } catch (err) {
+        if (err.code == PG_UNIQUE_VIOLATION)
+            throw new UserConflictError()
+        else
+            throw err
+    }
+}
+
+@JsonController("/users")
+export class UserController extends CRUD<User> {
+
+    constructor() {
+        super(getRepository(User))
     }
 
     @Post()
-    @HttpCode(201)
     async create(@Body() user: User): Promise<User> {
-        try {
-            return await getRepository(User).save(user)
-
-        } catch (err) {
-            if (err.code == PG_UNIQUE_VIOLATION)
-                throw new UserConflictError()
-            else
-                throw err
-        }
-    }
-
-    @Get("/:id")
-    @OnUndefined(UserNotFoundError)
-    read(@Param("id") id: number): Promise<User | undefined> {
-        return getRepository(User).findOne(id)
+        return handleConflict(() => super.create(user))
     }
 
     @Patch("/:id")
-    @OnUndefined(UserNotFoundError)
     async update(@Param("id") id: number, @PartialBody() user: User): Promise<User | undefined> {
-        try {
-            await getRepository(User).update(id, user)
-            return getRepository(User).findOne(id)
-
-        } catch (err) {
-            if (err.code == PG_UNIQUE_VIOLATION)
-                throw new UserConflictError()
-            else
-                throw err
-        }
-    }
-
-    @Delete("/:id")
-    @OnUndefined(204)
-    async delete(@Param("id") id: number): Promise<void> {
-        await getRepository(User).delete(id)
+        return handleConflict(() => super.update(id, user))
     }
 }

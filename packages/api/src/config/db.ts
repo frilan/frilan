@@ -21,7 +21,7 @@ const config: ConnectionOptions = {
     username,
     password,
     database,
-    logging: true,
+    logging: false,
     migrationsRun: true,
     entities: [root + "/entities/*." + ext],
     migrations: [root + "/migrations/*." + ext],
