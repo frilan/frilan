@@ -1,9 +1,8 @@
-import {
-    Body, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
-} from "routing-controllers"
+import { Body, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "../entities/event"
 import { PartialBody } from "../decorators/partial-body"
+import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 
 export class EventNotFoundError extends NotFoundError {
     name = "EventNotFoundError"
@@ -27,20 +26,21 @@ export class EventController {
         return getRepository(Event).save(event)
     }
 
-    @Get("/:id")
+    @GetById()
     @OnUndefined(EventNotFoundError)
     read(@Param("id") id: number): Promise<Event | undefined> {
         return getRepository(Event).findOne(id)
     }
 
-    @Patch("/:id")
+    @PatchById()
     @OnUndefined(EventNotFoundError)
     async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | undefined> {
-        await getRepository(Event).update(id, event)
+        if (Object.keys(event).length)
+            await getRepository(Event).update(id, event)
         return getRepository(Event).findOne(id)
     }
 
-    @Delete("/:id")
+    @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number): Promise<void> {
         await getRepository(Event).delete(id)

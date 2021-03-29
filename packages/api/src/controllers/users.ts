@@ -1,10 +1,11 @@
 import {
-    Body, Delete, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Patch, Post,
+    Body, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "../entities/user"
 import { PartialBody } from "../decorators/partial-body"
+import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 
 export class UserNotFoundError extends NotFoundError {
     name = "UserNotFoundError"
@@ -44,17 +45,18 @@ export class UserController {
         }
     }
 
-    @Get("/:id")
+    @GetById()
     @OnUndefined(UserNotFoundError)
     read(@Param("id") id: number): Promise<User | undefined> {
         return getRepository(User).findOne(id)
     }
 
-    @Patch("/:id")
+    @PatchById()
     @OnUndefined(UserNotFoundError)
     async update(@Param("id") id: number, @PartialBody() user: User): Promise<User | undefined> {
         try {
-            await getRepository(User).update(id, user)
+            if (Object.keys(user).length)
+                await getRepository(User).update(id, user)
             return getRepository(User).findOne(id)
 
         } catch (err) {
@@ -65,7 +67,7 @@ export class UserController {
         }
     }
 
-    @Delete("/:id")
+    @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number): Promise<void> {
         await getRepository(User).delete(id)
