@@ -28,6 +28,9 @@ async function startServer() {
                 UserController,
                 EventController,
                 LoginController],
+            plainToClassTransformOptions: {
+                excludeExtraneousValues: true,
+            },
         })
 
         app.listen(httpConfig)
