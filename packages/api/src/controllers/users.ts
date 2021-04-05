@@ -3,7 +3,7 @@ import {
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
-import { User } from "../entities/user"
+import { User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 

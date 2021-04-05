@@ -21,8 +21,7 @@
     "koa-logger": "^3.2.1",
     "koa-router": "^10.0.0",
     "pg": "^8.5.1",
-    "routing-controllers": "^0.9.0",
-    "typeorm": "^0.2.31"
+    "routing-controllers": "^0.9.0"
   },
   "devDependencies": {
     "@types/basic-auth": "^1.1.3",

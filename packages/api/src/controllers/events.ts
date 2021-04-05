@@ -1,6 +1,6 @@
 import { Body, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { Event } from "../entities/event"
+import { Event } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 

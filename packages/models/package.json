@@ -1,0 +1,16 @@
+{
+  "name": "@frilan/models",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "eslint --ext .ts .",
+    "lint:fix": "npm run lint -- --fix"
+  },
+  "dependencies": {
+    "class-transformer": "^0.3.0",
+    "class-validator": "^0.12.0",
+    "typeorm": "^0.2.31"
+  }
+}

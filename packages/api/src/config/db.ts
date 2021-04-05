@@ -1,4 +1,5 @@
 import { ConnectionOptions } from "typeorm"
+import { Event, Registration, User } from "@frilan/models"
 
 if (!process.env.DB_PASS) {
     console.error("The environment variable DB_PASS must be defined")
@@ -23,11 +24,11 @@ const config: ConnectionOptions = {
     database,
     logging: true,
     migrationsRun: true,
-    entities: [root + "/entities/*." + ext],
+    entities: [User, Event, Registration],
     migrations: [root + "/migrations/*." + ext],
     subscribers: [root + "/subscribers/*." + ext],
     cli: {
-        entitiesDir: "src/entities",
+        entitiesDir: "../../models/src/entities",
         migrationsDir: "src/migrations",
         subscribersDir: "src/subscribers",
     },

@@ -2,7 +2,7 @@ import { Ctx, Get, JsonController, UnauthorizedError, UseBefore } from "routing-
 import { Context } from "koa"
 import { getRepository } from "typeorm"
 import { BasicAuth } from "../middlewares/basic-auth"
-import { User } from "../entities/user"
+import { User } from "@frilan/models"
 
 @JsonController("/login")
 export class LoginController {
