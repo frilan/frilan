@@ -1,12 +1,8 @@
 import { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
+import { plainToClass } from "class-transformer"
 import axios from "axios"
-
-export interface User {
-    username: string
-    displayName: string
-    profilePicture: string
-}
+import { User } from "@frilan/models"
 
 export interface State {
     user: User
@@ -18,11 +14,7 @@ export const key: InjectionKey<Store<State>> = Symbol()
 
 export const store = createStore<State>({
     state: {
-        user: {
-            username: "",
-            displayName: "",
-            profilePicture: "",
-        },
+        user: new User(),
         logged: false,
         error: null,
     },
@@ -44,7 +36,7 @@ export const store = createStore<State>({
     actions: {
         async login(context, username) {
             const user = await axios.get("/login", { auth: { username, password: "" } })
-            context.commit("setUser", user.data)
+            context.commit("setUser", plainToClass(User, user.data))
         },
         logout(context) {
             context.commit("clearUser")
