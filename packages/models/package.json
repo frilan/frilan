@@ -1,16 +1,22 @@
 {
   "name": "@frilan/models",
   "version": "0.1.0",
-  "main": "lib/index.js",
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
+    "build": "run-s build:cjs build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "watch": "run-p watch:cjs watch:esm",
+    "watch:cjs": "npm run build:cjs -- -w",
+    "watch:esm": "npm run build:esm -- -w",
     "lint": "eslint --ext .ts .",
     "lint:fix": "npm run lint -- --fix"
   },
   "dependencies": {
     "class-transformer": "^0.3.0",
     "class-validator": "^0.12.0",
+    "npm-run-all": "^4.1.5",
     "typeorm": "^0.2.31"
   }
 }
