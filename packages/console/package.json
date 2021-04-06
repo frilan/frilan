@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview",
+    "stats": "vite build -m stats",
     "lint": "eslint --ext .ts,.vue .",
     "lint:fix": "npm run lint -- --fix"
   },
@@ -20,6 +21,7 @@
     "@vuedx/typescript-plugin-vue": "^0.6.3",
     "eslint-plugin-vue": "^7.7.0",
     "pug": "^3.0.2",
+    "rollup-plugin-visualizer": "^5.3.0",
     "sass": "^1.32.8",
     "vite": "^2.1.1",
     "vue-tsc": "^0.0.13"
