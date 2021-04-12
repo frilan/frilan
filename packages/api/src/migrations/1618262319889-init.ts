@@ -1,17 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1614898880661 implements MigrationInterface {
-    name = "init1614898880661"
+export class init1618262319889 implements MigrationInterface {
+    name = "init1618262319889"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            CREATE TABLE "event"
-            (
-                "id"   SERIAL            NOT NULL,
-                "name" character varying NOT NULL,
-                CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id")
-            )
-        `)
         await queryRunner.query(`
             CREATE TABLE "user"
             (
@@ -24,10 +16,20 @@ export class init1614898880661 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE TYPE "registration_role_enum" AS ENUM('admin', 'organizer', 'player')
+            CREATE UNIQUE INDEX "username_index" ON "user" (LOWER("username"))
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "username_index" ON "user" (LOWER("username"))
+            CREATE TABLE "event"
+            (
+                "id"    SERIAL            NOT NULL,
+                "name"  character varying NOT NULL,
+                "start" TIMESTAMP         NOT NULL,
+                "end"   TIMESTAMP         NOT NULL,
+                CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id")
+            )
+        `)
+        await queryRunner.query(`
+            CREATE TYPE "registration_role_enum" AS ENUM('admin', 'organizer', 'player')
         `)
         await queryRunner.query(`
             CREATE TABLE "registration"
@@ -41,11 +43,11 @@ export class init1614898880661 implements MigrationInterface {
                 "eventId"   integer,
                 CONSTRAINT "PK_cb23dc9d28df8801b15e9e2b8d6" PRIMARY KEY ("id")
             )
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "registration"
-            ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
-        `);
+                ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+        `)
         await queryRunner.query(`
             ALTER TABLE "registration"
                 ADD CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -60,7 +62,7 @@ export class init1614898880661 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "registration"
         `)
@@ -68,10 +70,10 @@ export class init1614898880661 implements MigrationInterface {
             DROP TYPE "registration_role_enum"
         `)
         await queryRunner.query(`
-            DROP TABLE "user"
+            DROP TABLE "event"
         `)
         await queryRunner.query(`
-            DROP TABLE "event"
+            DROP TABLE "user"
         `)
     }
 

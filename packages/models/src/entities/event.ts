@@ -1,8 +1,8 @@
 import { Column, Entity } from "typeorm"
 import { Id } from "./common/id"
-import { IsString } from "class-validator"
+import { IsDate, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
-import { Expose } from "class-transformer"
+import { Expose, Type } from "class-transformer"
 
 @Entity()
 export class Event extends Id {
@@ -12,5 +12,17 @@ export class Event extends Id {
     @Trim()
     @Expose()
     name!: string
+
+    @Column()
+    @IsDate()
+    @Type(() => Date)
+    @Expose()
+    start!: Date
+
+    @Column()
+    @IsDate()
+    @Type(() => Date)
+    @Expose()
+    end!: Date
 
 }
