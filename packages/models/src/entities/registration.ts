@@ -1,8 +1,7 @@
-import { Column, Entity, ManyToOne } from "typeorm"
-import { Id } from "./common/id"
+import { Column, Entity, ManyToOne, PrimaryColumn } from "typeorm"
 import { User } from "./user"
 import { Event } from "./event"
-import { IsDate, IsEnum, IsInt } from "class-validator"
+import { IsDate, IsEnum, IsInt, IsOptional } from "class-validator"
 import { Type } from "class-transformer"
 
 export enum Role {
@@ -12,24 +11,34 @@ export enum Role {
 }
 
 @Entity()
-export class Registration extends Id {
+export class Registration {
 
-    @Column({ type: "enum", enum: Role })
+    @PrimaryColumn()
+    userId!: number
+
+    @PrimaryColumn()
+    eventId!: number
+
+    @Column({ type: "enum", enum: Role, default: Role.Player })
     @IsEnum(Role)
+    @IsOptional()
     role!: Role
 
-    @Column()
+    @Column({ nullable: true })
     @IsDate()
+    @IsOptional()
     @Type(() => Date)
-    arrival!: Date
+    arrival?: Date
 
-    @Column()
+    @Column({ nullable: true })
     @IsDate()
+    @IsOptional()
     @Type(() => Date)
-    departure!: Date
+    departure?: Date
 
-    @Column()
+    @Column({ default: 0 })
     @IsInt()
+    @IsOptional()
     score!: number
 
     @ManyToOne(() => User)

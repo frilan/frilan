@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1618262319889 implements MigrationInterface {
-    name = "init1618262319889"
+export class init1619040587189 implements MigrationInterface {
+    name = "init1619040587189"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -34,14 +34,13 @@ export class init1618262319889 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE "registration"
             (
-                "id"        SERIAL                   NOT NULL,
-                "role"      "registration_role_enum" NOT NULL,
-                "arrival"   TIMESTAMP                NOT NULL,
-                "departure" TIMESTAMP                NOT NULL,
-                "score"     integer                  NOT NULL,
-                "userId"    integer,
-                "eventId"   integer,
-                CONSTRAINT "PK_cb23dc9d28df8801b15e9e2b8d6" PRIMARY KEY ("id")
+                "userId"    integer                  NOT NULL,
+                "eventId"   integer                  NOT NULL,
+                "role"      "registration_role_enum" NOT NULL DEFAULT 'player',
+                "arrival"   TIMESTAMP,
+                "departure" TIMESTAMP,
+                "score"     integer                  NOT NULL DEFAULT '0',
+                CONSTRAINT "PK_c0191cee3b7627583ce4ff300e0" PRIMARY KEY ("userId", "eventId")
             )
         `)
         await queryRunner.query(`
@@ -51,14 +50,14 @@ export class init1618262319889 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "registration"
                 ADD CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"

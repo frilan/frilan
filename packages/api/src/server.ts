@@ -11,6 +11,7 @@ import httpConfig from "./config/http"
 import { UserController } from "./controllers/users"
 import { EventController } from "./controllers/events"
 import { LoginController } from "./controllers/login"
+import { RegistrationController } from "./controllers/registrations"
 
 async function startServer() {
     try {
@@ -27,6 +28,7 @@ async function startServer() {
             controllers: [
                 UserController,
                 EventController,
+                RegistrationController,
                 LoginController],
         })
 
