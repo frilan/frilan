@@ -13,6 +13,8 @@ import { EventController } from "./controllers/events"
 import { LoginController } from "./controllers/login"
 import { RegistrationController } from "./controllers/registrations"
 
+import openapi from "./middlewares/swagger"
+
 async function startServer() {
     try {
         await createConnection(dbConfig)
@@ -23,6 +25,7 @@ async function startServer() {
             app.use(logger())
 
         app.use(cors())
+        app.use(openapi())
 
         useKoaServer(app, {
             controllers: [
