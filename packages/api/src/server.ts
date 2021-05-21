@@ -8,10 +8,11 @@ import { createConnection } from "typeorm"
 import dbConfig from "./config/db"
 import httpConfig from "./config/http"
 
+import { LoginController } from "./controllers/login"
 import { UserController } from "./controllers/users"
 import { EventController } from "./controllers/events"
-import { LoginController } from "./controllers/login"
 import { RegistrationController } from "./controllers/registrations"
+import { TournamentController } from "./controllers/tournaments"
 
 import openapi from "./middlewares/swagger"
 
@@ -29,10 +30,12 @@ async function startServer() {
 
         useKoaServer(app, {
             controllers: [
+                LoginController,
                 UserController,
                 EventController,
                 RegistrationController,
-                LoginController],
+                TournamentController,
+            ],
         })
 
         app.listen(httpConfig)

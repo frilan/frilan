@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1619040587189 implements MigrationInterface {
-    name = "init1619040587189"
+export class init1621608089481 implements MigrationInterface {
+    name = "init1621608089481"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -44,6 +44,26 @@ export class init1619040587189 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
+            CREATE TYPE "tournament_status_enum" AS ENUM('hidden', 'ready', 'started', 'finished')
+        `)
+        await queryRunner.query(`
+            CREATE TABLE "tournament"
+            (
+                "id"             SERIAL                   NOT NULL,
+                "name"           character varying        NOT NULL,
+                "date"           TIMESTAMP                NOT NULL,
+                "duration"       integer                  NOT NULL,
+                "rules"          character varying        NOT NULL DEFAULT '',
+                "team_size_min"  integer                  NOT NULL,
+                "team_size_max"  integer                  NOT NULL,
+                "team_count_min" integer                  NOT NULL,
+                "team_count_max" integer                  NOT NULL,
+                "status"         "tournament_status_enum" NOT NULL DEFAULT 'hidden',
+                "eventId"        integer                  NOT NULL,
+                CONSTRAINT "PK_449f912ba2b62be003f0c22e767" PRIMARY KEY ("id")
+            )
+        `)
+        await queryRunner.query(`
             ALTER TABLE "registration"
                 ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
@@ -51,9 +71,17 @@ export class init1619040587189 implements MigrationInterface {
             ALTER TABLE "registration"
                 ADD CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
+        await queryRunner.query(`
+            ALTER TABLE "tournament"
+                ADD CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "tournament"
+                DROP CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd"
+        `)
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd"
@@ -61,6 +89,12 @@ export class init1619040587189 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"
+        `)
+        await queryRunner.query(`
+            DROP TABLE "tournament"
+        `)
+        await queryRunner.query(`
+            DROP TYPE "tournament_status_enum"
         `)
         await queryRunner.query(`
             DROP TABLE "registration"

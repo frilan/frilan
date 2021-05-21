@@ -14,6 +14,7 @@ const options: Options = {
             { name: "users" },
             { name: "events" },
             { name: "registrations" },
+            { name: "tournaments" },
         ],
         components: {
             responses: {
