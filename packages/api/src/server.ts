@@ -13,6 +13,7 @@ import { UserController } from "./controllers/users"
 import { EventController } from "./controllers/events"
 import { RegistrationController } from "./controllers/registrations"
 import { TournamentController } from "./controllers/tournaments"
+import { TeamController } from "./controllers/teams"
 
 import openapi from "./middlewares/swagger"
 
@@ -35,6 +36,7 @@ async function startServer() {
                 EventController,
                 RegistrationController,
                 TournamentController,
+                TeamController,
             ],
         })
 

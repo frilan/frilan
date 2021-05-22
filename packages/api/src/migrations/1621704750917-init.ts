@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1621608089481 implements MigrationInterface {
-    name = "init1621608089481"
+export class init1621704750917 implements MigrationInterface {
+    name = "init1621704750917"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -64,6 +64,30 @@ export class init1621608089481 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
+            CREATE TABLE "team"
+            (
+                "id"           SERIAL            NOT NULL,
+                "name"         character varying NOT NULL,
+                "result"       integer           NOT NULL DEFAULT '0',
+                "tournamentId" integer           NOT NULL,
+                CONSTRAINT "PK_f57d8293406df4af348402e4b74" PRIMARY KEY ("id")
+            )
+        `)
+        await queryRunner.query(`
+            CREATE TABLE "team_players_user"
+            (
+                "teamId" integer NOT NULL,
+                "userId" integer NOT NULL,
+                CONSTRAINT "PK_b8dd3b87a99030dc344a1daf00c" PRIMARY KEY ("teamId", "userId")
+            )
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "IDX_52d45fd74da54637d5190c8fda" ON "team_players_user" ("teamId")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "IDX_e40e914d741ef98dca13adefbc" ON "team_players_user" ("userId")
+        `)
+        await queryRunner.query(`
             ALTER TABLE "registration"
                 ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
@@ -75,9 +99,33 @@ export class init1621608089481 implements MigrationInterface {
             ALTER TABLE "tournament"
                 ADD CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
+        await queryRunner.query(`
+            ALTER TABLE "team"
+                ADD CONSTRAINT "FK_6c381b833f42438bdf2206f47bd" FOREIGN KEY ("tournamentId") REFERENCES "tournament" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "team_players_user"
+                ADD CONSTRAINT "FK_52d45fd74da54637d5190c8fda0" FOREIGN KEY ("teamId") REFERENCES "team" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "team_players_user"
+                ADD CONSTRAINT "FK_e40e914d741ef98dca13adefbc1" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "team_players_user"
+                DROP CONSTRAINT "FK_e40e914d741ef98dca13adefbc1"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "team_players_user"
+                DROP CONSTRAINT "FK_52d45fd74da54637d5190c8fda0"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "team"
+                DROP CONSTRAINT "FK_6c381b833f42438bdf2206f47bd"
+        `)
         await queryRunner.query(`
             ALTER TABLE "tournament"
                 DROP CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd"
@@ -89,6 +137,18 @@ export class init1621608089481 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "registration"
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "IDX_e40e914d741ef98dca13adefbc"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "IDX_52d45fd74da54637d5190c8fda"
+        `)
+        await queryRunner.query(`
+            DROP TABLE "team_players_user"
+        `)
+        await queryRunner.query(`
+            DROP TABLE "team"
         `)
         await queryRunner.query(`
             DROP TABLE "tournament"

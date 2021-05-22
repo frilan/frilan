@@ -15,6 +15,7 @@ const options: Options = {
             { name: "events" },
             { name: "registrations" },
             { name: "tournaments" },
+            { name: "teams" },
         ],
         components: {
             responses: {
@@ -35,6 +36,7 @@ const spec = swaggerJSDoc(options) as Record<string, unknown>
 export default function (): Middleware {
     return koaSwagger({
         swaggerOptions: { spec },
+        title: options.definition?.info.title,
         hideTopbar: true,
     })
 }
