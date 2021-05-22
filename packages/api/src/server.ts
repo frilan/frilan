@@ -16,6 +16,7 @@ import { TournamentController } from "./controllers/tournaments"
 import { TeamController } from "./controllers/teams"
 
 import openapi from "./middlewares/swagger"
+import { ErrorHandler } from "./middlewares/error-handler"
 
 async function startServer() {
     try {
@@ -30,6 +31,8 @@ async function startServer() {
         app.use(openapi())
 
         useKoaServer(app, {
+            middlewares: [ErrorHandler],
+            defaultErrorHandler: false,
             controllers: [
                 LoginController,
                 UserController,
