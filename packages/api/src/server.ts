@@ -12,8 +12,8 @@ import { LoginController } from "./controllers/login"
 import { UserController } from "./controllers/users"
 import { EventController } from "./controllers/events"
 import { RegistrationController } from "./controllers/registrations"
-import { TournamentController } from "./controllers/tournaments"
-import { TeamController } from "./controllers/teams"
+import { EventTournamentController, TournamentController } from "./controllers/tournaments"
+import { TeamController, TournamentTeamController } from "./controllers/teams"
 
 import openapi from "./middlewares/swagger"
 import { ErrorHandler } from "./middlewares/error-handler"
@@ -38,7 +38,9 @@ async function startServer() {
                 UserController,
                 EventController,
                 RegistrationController,
+                EventTournamentController,
                 TournamentController,
+                TournamentTeamController,
                 TeamController,
             ],
         })

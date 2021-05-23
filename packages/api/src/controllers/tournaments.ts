@@ -33,6 +33,7 @@ export class TournamentNotFoundError extends NotFoundError {
  *       in: path
  *       schema:
  *         type: integer
+ *         example: 1
  *       required: true
  *       description: the ID of an existing tournament
  *
@@ -44,14 +45,15 @@ export class TournamentNotFoundError extends NotFoundError {
  *         example: event,teams
  *       description: load related resources into response
  */
+
 @JsonController("/events/:event_id(\\d+)/tournaments")
-export class TournamentController {
+export class EventTournamentController {
 
     /**
      * @openapi
      * /events/{event-id}/tournaments:
      *   get:
-     *     summary: get all tournaments for an event
+     *     summary: get all tournaments from an event
      *     tags:
      *       - tournaments
      *     parameters:
@@ -77,7 +79,7 @@ export class TournamentController {
      * @openapi
      * /events/{event-id}/tournaments:
      *   post:
-     *     summary: create a new tournament
+     *     summary: create a new tournament in an event
      *     tags:
      *       - tournaments
      *     parameters:
@@ -114,16 +116,19 @@ export class TournamentController {
                 throw err
         }
     }
+}
+
+@JsonController("/tournaments")
+export class TournamentController {
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}:
+     * /tournaments/{tournament-id}:
      *   get:
-     *     summary: get a tournament in an event
+     *     summary: get a single tournament
      *     tags:
      *       - tournaments
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TournamentRelations"
      *     responses:
@@ -139,23 +144,18 @@ export class TournamentController {
     @GetById()
     @OnUndefined(TournamentNotFoundError)
     @UseBefore(RelationsParser)
-    read(
-        @Param("event_id") eventId: number,
-        @Param("id") id: number,
-        @Ctx() ctx: Context,
-    ): Promise<Tournament | undefined> {
-        return getRepository(Tournament).findOne({ id, eventId }, { relations: ctx.relations })
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Tournament | undefined> {
+        return getRepository(Tournament).findOne(id, { relations: ctx.relations })
     }
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}:
+     * /tournaments/{tournament-id}:
      *   patch:
      *     summary: update an existing tournament
      *     tags:
      *       - tournaments
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
      *     requestBody:
      *       content:
@@ -176,25 +176,20 @@ export class TournamentController {
      */
     @PatchById()
     @OnUndefined(TournamentNotFoundError)
-    async update(
-        @Param("event_id") eventId: number,
-        @Param("id") id: number,
-        @PartialBody() tournament: Tournament,
-    ): Promise<Tournament | undefined> {
+    async update(@Param("id") id: number, @PartialBody() tournament: Tournament): Promise<Tournament | undefined> {
         if (Object.keys(tournament).length)
-            await getRepository(Tournament).update({ id, eventId }, tournament)
-        return getRepository(Tournament).findOne({ id, eventId })
+            await getRepository(Tournament).update(id, tournament)
+        return getRepository(Tournament).findOne(id)
     }
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}:
+     * /tournaments/{tournament-id}:
      *   delete:
-     *     summary: delete a tournament from an event
+     *     summary: delete a tournament
      *     tags:
      *       - tournaments
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
      *     responses:
      *       204:
@@ -202,7 +197,7 @@ export class TournamentController {
      */
     @DeleteById()
     @OnUndefined(204)
-    async delete(@Param("event_id") eventId: number, @Param("id") id: number): Promise<void> {
-        await getRepository(Tournament).delete({ id, eventId })
+    async delete(@Param("id") id: number): Promise<void> {
+        await getRepository(Tournament).delete(id)
     }
 }

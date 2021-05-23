@@ -34,6 +34,7 @@ export class TeamNotFoundError extends NotFoundError {
  *       in: path
  *       schema:
  *         type: integer
+ *         example: 1
  *       required: true
  *       description: the ID of an existing team
  *
@@ -42,21 +43,21 @@ export class TeamNotFoundError extends NotFoundError {
  *       in: query
  *       schema:
  *         type: string
- *         example: user,event
+ *         example: tournament,members
  *       description: load related resources into response
  */
-@JsonController("/events/:event_id(\\d+)/tournaments/:tournament_id(\\d+)/teams")
-export class TeamController {
+
+@JsonController("/tournaments/:tournament_id(\\d+)/teams")
+export class TournamentTeamController {
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams:
+     * /tournaments/{tournament-id}/teams:
      *   get:
-     *     summary: get all teams
+     *     summary: get all teams from a tournament
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamRelations"
      *     responses:
@@ -77,13 +78,12 @@ export class TeamController {
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams:
+     * /tournaments/{tournament-id}/teams:
      *   post:
-     *     summary: create a new team
+     *     summary: create a new team in a tournament
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
      *     requestBody:
      *       required: true
@@ -116,17 +116,19 @@ export class TeamController {
                 throw err
         }
     }
+}
+
+@JsonController("/teams")
+export class TeamController {
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams/{team-id}:
+     * /teams/{team-id}:
      *   get:
      *     summary: get a single team
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
-     *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamId"
      *       - $ref: "#/components/parameters/TeamRelations"
      *     responses:
@@ -142,24 +144,18 @@ export class TeamController {
     @GetById()
     @OnUndefined(TeamNotFoundError)
     @UseBefore(RelationsParser)
-    read(
-        @Param("tournament_id") tournamentId: number,
-        @Param("id") id: number,
-        @Ctx() ctx: Context,
-    ): Promise<Team | undefined> {
-        return getRepository(Team).findOne({ id, tournamentId }, { relations: ctx.relations })
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Team | undefined> {
+        return getRepository(Team).findOne(id, { relations: ctx.relations })
     }
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams/{team-id}:
+     * /teams/{team-id}:
      *   patch:
      *     summary: update an existing team
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
-     *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamId"
      *     requestBody:
      *       content:
@@ -180,26 +176,20 @@ export class TeamController {
      */
     @PatchById()
     @OnUndefined(TeamNotFoundError)
-    async update(
-        @Param("tournament_id") tournamentId: number,
-        @Param("id") id: number,
-        @PartialBody() team: Team,
-    ): Promise<Team | undefined> {
+    async update(@Param("id") id: number, @PartialBody() team: Team): Promise<Team | undefined> {
         if (Object.keys(team).length)
-            await getRepository(Team).update({ id, tournamentId }, team)
+            await getRepository(Team).update(id, team)
         return getRepository(Team).findOne(id)
     }
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams/{team-id}:
+     * /teams/{team-id}:
      *   delete:
      *     summary: delete an existing team
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
-     *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamId"
      *     responses:
      *       204:
@@ -207,20 +197,18 @@ export class TeamController {
      */
     @DeleteById()
     @OnUndefined(204)
-    async delete(@Param("tournament_id") tournamentId: number, @Param("id") id: number): Promise<void> {
-        await getRepository(Team).delete({ id, tournamentId })
+    async delete(@Param("id") id: number): Promise<void> {
+        await getRepository(Team).delete(id)
     }
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams/{team-id}/members/{user-id}:
+     * /teams/{team-id}/members/{user-id}:
      *   put:
      *     summary: add a user into a team
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
-     *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamId"
      *       - $ref: "#/components/parameters/UserId"
      *     responses:
@@ -231,12 +219,8 @@ export class TeamController {
      */
     @Put("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async addPlayer(
-        @Param("tournament_id") tournamentId: number,
-        @Param("id") id: number,
-        @Param("user_id") userId: number,
-    ): Promise<void> {
-        const team = await getRepository(Team).findOne({ id, tournamentId }, { relations: ["members"] })
+    async addPlayer(@Param("id") id: number, @Param("user_id") userId: number): Promise<void> {
+        const team = await getRepository(Team).findOne(id, { relations: ["members"] })
         if (!team)
             throw new TeamNotFoundError()
 
@@ -250,14 +234,12 @@ export class TeamController {
 
     /**
      * @openapi
-     * /events/{event-id}/tournaments/{tournament-id}/teams/{team-id}/members/{user-id}:
+     * /teams/{team-id}/members/{user-id}:
      *   delete:
      *     summary: remove a user from a team
      *     tags:
      *       - teams
      *     parameters:
-     *       - $ref: "#/components/parameters/EventId"
-     *       - $ref: "#/components/parameters/TournamentId"
      *       - $ref: "#/components/parameters/TeamId"
      *       - $ref: "#/components/parameters/UserId"
      *     responses:
@@ -268,12 +250,8 @@ export class TeamController {
      */
     @Delete("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async removePlayer(
-        @Param("tournament_id") tournamentId: number,
-        @Param("id") id: number,
-        @Param("user_id") userId: number,
-    ): Promise<void> {
-        const team = await getRepository(Team).findOne({ id, tournamentId }, { relations: ["members"] })
+    async removePlayer(@Param("id") id: number, @Param("user_id") userId: number): Promise<void> {
+        const team = await getRepository(Team).findOne(id, { relations: ["members"] })
         if (!team)
             throw new TeamNotFoundError()
 
