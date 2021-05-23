@@ -81,9 +81,9 @@ export class Registration {
     score!: number
 
     @ManyToOne(() => User)
-    user!: User
+    user?: User
 
     @ManyToOne(() => Event)
-    event!: Event
+    event?: Event
 
 }

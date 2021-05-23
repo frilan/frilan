@@ -1,9 +1,13 @@
-import { Body, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post } from "routing-controllers"
+import {
+    Body, Ctx, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+} from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
 import { Tournament } from "@frilan/models"
+import { RelationsParser } from "../middlewares/relations-parser"
+import { Context } from "koa"
 
 /**
  * @openapi
@@ -31,6 +35,14 @@ export class TournamentNotFoundError extends NotFoundError {
  *         type: integer
  *       required: true
  *       description: the ID of an existing tournament
+ *
+ *     TournamentRelations:
+ *       name: load
+ *       in: query
+ *       schema:
+ *         type: string
+ *         example: event,teams
+ *       description: load related resources into response
  */
 @JsonController("/events/:event_id(\\d+)/tournaments")
 export class TournamentController {
@@ -44,6 +56,7 @@ export class TournamentController {
      *       - tournaments
      *     parameters:
      *       - $ref: "#/components/parameters/EventId"
+     *       - $ref: "#/components/parameters/TournamentRelations"
      *     responses:
      *       200:
      *         description: success
@@ -55,8 +68,9 @@ export class TournamentController {
      *                 $ref: "#/components/schemas/TournamentWithId"
      */
     @Get()
-    readAll(@Param("event_id") eventId: number): Promise<Tournament[]> {
-        return getRepository(Tournament).find({ where: { eventId } })
+    @UseBefore(RelationsParser)
+    readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Tournament[]> {
+        return getRepository(Tournament).find({ where: { eventId }, relations: ctx.relations })
     }
 
     /**
@@ -111,6 +125,7 @@ export class TournamentController {
      *     parameters:
      *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/TournamentId"
+     *       - $ref: "#/components/parameters/TournamentRelations"
      *     responses:
      *       200:
      *         description: success
@@ -123,8 +138,13 @@ export class TournamentController {
      */
     @GetById()
     @OnUndefined(TournamentNotFoundError)
-    read(@Param("event_id") eventId: number, @Param("id") id: number): Promise<Tournament | undefined> {
-        return getRepository(Tournament).findOne({ id, eventId })
+    @UseBefore(RelationsParser)
+    read(
+        @Param("event_id") eventId: number,
+        @Param("id") id: number,
+        @Ctx() ctx: Context,
+    ): Promise<Tournament | undefined> {
+        return getRepository(Tournament).findOne({ id, eventId }, { relations: ctx.relations })
     }
 
     /**

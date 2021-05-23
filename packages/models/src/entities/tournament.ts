@@ -1,9 +1,10 @@
-import { Column, Entity, ManyToOne } from "typeorm"
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsDate, IsEnum, IsInt, IsOptional, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Event } from "./event"
+import { Team } from "./team"
 
 /**
  * @openapi
@@ -109,6 +110,9 @@ export class Tournament extends Id {
     eventId!: number
 
     @ManyToOne(() => Event)
-    event!: Event
+    event?: Event
+
+    @OneToMany(() => Team, team => team.tournament)
+    teams?: Team[]
 
 }

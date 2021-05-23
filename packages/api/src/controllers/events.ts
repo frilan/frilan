@@ -1,8 +1,12 @@
-import { Body, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post } from "routing-controllers"
+import {
+    Body, Ctx, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+} from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
+import { RelationsParser } from "../middlewares/relations-parser"
+import { Context } from "koa"
 
 /**
  * @openapi
@@ -28,8 +32,17 @@ export class EventNotFoundError extends NotFoundError {
  *       in: path
  *       schema:
  *         type: integer
+ *         example: 1
  *       required: true
  *       description: the ID of an existing event
+ *
+ *     EventRelations:
+ *       name: load
+ *       in: query
+ *       schema:
+ *         type: string
+ *         example: registrations,tournaments
+ *       description: load related resources into response
  */
 @JsonController("/events")
 export class EventController {
@@ -41,6 +54,8 @@ export class EventController {
      *     summary: get all events
      *     tags:
      *       - events
+     *     parameters:
+     *       - $ref: "#/components/parameters/EventRelations"
      *     responses:
      *       200:
      *         description: success
@@ -52,8 +67,9 @@ export class EventController {
      *                 $ref: "#/components/schemas/EventWithId"
      */
     @Get()
-    readAll(): Promise<Event[]> {
-        return getRepository(Event).find()
+    @UseBefore(RelationsParser)
+    readAll(@Ctx() ctx: Context): Promise<Event[]> {
+        return getRepository(Event).find({ relations: ctx.relations })
     }
 
     /**
@@ -94,6 +110,7 @@ export class EventController {
      *       - events
      *     parameters:
      *       - $ref: "#/components/parameters/EventId"
+     *       - $ref: "#/components/parameters/EventRelations"
      *     responses:
      *       200:
      *         description: success
@@ -106,8 +123,9 @@ export class EventController {
      */
     @GetById()
     @OnUndefined(EventNotFoundError)
-    read(@Param("id") id: number): Promise<Event | undefined> {
-        return getRepository(Event).findOne(id)
+    @UseBefore(RelationsParser)
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Event | undefined> {
+        return getRepository(Event).findOne(id, { relations: ctx.relations })
     }
 
     /**

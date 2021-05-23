@@ -1,7 +1,9 @@
-import { Column, Entity, Index } from "typeorm"
+import { Column, Entity, Index, ManyToMany, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsOptional, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
+import { Registration } from "./registration"
+import { Team } from "./team"
 
 /**
  * @openapi
@@ -46,5 +48,11 @@ export class User extends Id {
     @IsOptional()
     @Trim()
     profilePicture?: string
+
+    @OneToMany(() => Registration, registration => registration.user)
+    registrations?: Registration[]
+
+    @ManyToMany(() => Team, team => team.members)
+    teams?: Team[]
 
 }

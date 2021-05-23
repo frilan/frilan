@@ -1,8 +1,10 @@
-import { Column, Entity } from "typeorm"
+import { Column, Entity, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsDate, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
+import { Registration } from "./registration"
+import { Tournament } from "./tournament"
 
 /**
  * @openapi
@@ -44,5 +46,11 @@ export class Event extends Id {
     @IsDate()
     @Type(() => Date)
     end!: Date
+
+    @OneToMany(() => Registration, registration => registration.event)
+    registrations?: Registration[]
+
+    @OneToMany(() => Tournament, tournament => tournament.event)
+    tournaments?: Tournament[]
 
 }

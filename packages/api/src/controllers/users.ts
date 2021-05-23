@@ -1,11 +1,13 @@
 import {
-    Body, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post,
+    Body, Ctx, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
+import { RelationsParser } from "../middlewares/relations-parser"
+import { Context } from "koa"
 
 /**
  * @openapi
@@ -46,8 +48,17 @@ export class UserConflictError extends HttpError {
  *       in: path
  *       schema:
  *         type: integer
+ *         example: 1
  *       required: true
  *       description: the ID of an existing user
+ *
+ *     UserRelations:
+ *       name: load
+ *       in: query
+ *       schema:
+ *         type: string
+ *         example: registrations,teams
+ *       description: load related resources into response
  */
 @JsonController("/users")
 export class UserController {
@@ -59,6 +70,8 @@ export class UserController {
      *     summary: get all users
      *     tags:
      *       - users
+     *     parameters:
+     *       - $ref: "#/components/parameters/UserRelations"
      *     responses:
      *       200:
      *         description: success
@@ -70,8 +83,10 @@ export class UserController {
      *                 $ref: "#/components/schemas/UserWithId"
      */
     @Get()
-    readAll(): Promise<User[]> {
-        return getRepository(User).find()
+    @UseBefore(RelationsParser)
+    readAll(@Ctx() ctx: Context): Promise<User[]> {
+        console.log(ctx.relations)
+        return getRepository(User).find({ relations: ctx.relations })
     }
 
     /**
@@ -122,6 +137,7 @@ export class UserController {
      *       - users
      *     parameters:
      *       - $ref: "#/components/parameters/UserId"
+     *       - $ref: "#/components/parameters/UserRelations"
      *     responses:
      *       200:
      *         description: success
@@ -134,8 +150,9 @@ export class UserController {
      */
     @GetById()
     @OnUndefined(UserNotFoundError)
-    read(@Param("id") id: number): Promise<User | undefined> {
-        return getRepository(User).findOne(id)
+    @UseBefore(RelationsParser)
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<User | undefined> {
+        return getRepository(User).findOne(id, { relations: ctx.relations })
     }
 
     /**

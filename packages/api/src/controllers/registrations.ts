@@ -1,9 +1,11 @@
 import {
-    Body, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Put,
+    Body, Ctx, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Registration } from "@frilan/models"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
+import { RelationsParser } from "../middlewares/relations-parser"
+import { Context } from "koa"
 
 /**
  * @openapi
@@ -20,6 +22,18 @@ export class RegistrationNotFoundError extends NotFoundError {
     }
 }
 
+/**
+ * @openapi
+ * components:
+ *   parameters:
+ *     RegistrationRelations:
+ *       name: load
+ *       in: query
+ *       schema:
+ *         type: string
+ *         example: user,event
+ *       description: load related resources into response
+ */
 @JsonController("/events/:event_id(\\d+)/registrations")
 export class RegistrationController {
 
@@ -32,6 +46,7 @@ export class RegistrationController {
      *       - registrations
      *     parameters:
      *       - $ref: "#/components/parameters/EventId"
+     *       - $ref: "#/components/parameters/RegistrationRelations"
      *     responses:
      *       200:
      *         description: success
@@ -43,8 +58,9 @@ export class RegistrationController {
      *                 $ref: "#/components/schemas/RegistrationWithIds"
      */
     @Get()
-    readAll(@Param("event_id") eventId: number): Promise<Registration[]> {
-        return getRepository(Registration).find({ where: { eventId } })
+    @UseBefore(RelationsParser)
+    readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Registration[]> {
+        return getRepository(Registration).find({ where: { eventId }, relations: ctx.relations })
     }
 
     /**
@@ -105,6 +121,7 @@ export class RegistrationController {
      *     parameters:
      *       - $ref: "#/components/parameters/EventId"
      *       - $ref: "#/components/parameters/UserId"
+     *       - $ref: "#/components/parameters/RegistrationRelations"
      *     responses:
      *       200:
      *         description: success
@@ -117,8 +134,13 @@ export class RegistrationController {
      */
     @Get("/:user_id(\\d+)")
     @OnUndefined(RegistrationNotFoundError)
-    read(@Param("event_id") eventId: number, @Param("user_id") userId: number): Promise<Registration | undefined> {
-        return getRepository(Registration).findOne({ eventId, userId })
+    @UseBefore(RelationsParser)
+    read(
+        @Param("event_id") eventId: number,
+        @Param("user_id") userId: number,
+        @Ctx() ctx: Context,
+    ): Promise<Registration | undefined> {
+        return getRepository(Registration).findOne({ eventId, userId }, { relations: ctx.relations })
     }
 
     /**
