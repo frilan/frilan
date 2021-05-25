@@ -10,6 +10,7 @@ export class Http {
     private readonly axiosInstance: AxiosInstance
 
     constructor(baseURL: string) {
+        console.log(baseURL)
         this.axiosInstance = axios.create({ baseURL })
     }
 
@@ -36,5 +37,5 @@ export class Http {
     }
 }
 
-const baseURL = import.meta.env.VITE_API_URL as string ?? "http://localhost"
+const baseURL = import.meta.env.VITE_API_URL as string ?? "http://localhost:8080"
 export default new Http(baseURL)
