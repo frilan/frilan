@@ -49,10 +49,10 @@ export class User extends Id {
     @Trim()
     profilePicture?: string
 
-    @OneToMany(() => Registration, registration => registration.user)
+    @OneToMany("Registration", "user")
     registrations?: Registration[]
 
-    @ManyToMany(() => Team, team => team.members)
+    @ManyToMany("Team", "members")
     teams?: Team[]
 
 }

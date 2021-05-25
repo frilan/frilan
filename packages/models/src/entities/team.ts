@@ -44,10 +44,10 @@ export class Team extends Id {
     @Column()
     tournamentId!: number
 
-    @ManyToOne(() => Tournament)
+    @ManyToOne("Tournament")
     tournament?: Tournament
 
-    @ManyToMany(() => User, user => user.teams)
+    @ManyToMany("User", "teams")
     @JoinTable()
     members?: User[]
 

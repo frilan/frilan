@@ -109,10 +109,10 @@ export class Tournament extends Id {
     @Column()
     eventId!: number
 
-    @ManyToOne(() => Event)
+    @ManyToOne("Event")
     event?: Event
 
-    @OneToMany(() => Team, team => team.tournament)
+    @OneToMany("Team", "tournament")
     teams?: Team[]
 
 }

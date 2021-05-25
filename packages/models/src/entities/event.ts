@@ -47,10 +47,10 @@ export class Event extends Id {
     @Type(() => Date)
     end!: Date
 
-    @OneToMany(() => Registration, registration => registration.event)
+    @OneToMany("Registration", "event")
     registrations?: Registration[]
 
-    @OneToMany(() => Tournament, tournament => tournament.event)
+    @OneToMany("Tournament", "event")
     tournaments?: Tournament[]
 
 }

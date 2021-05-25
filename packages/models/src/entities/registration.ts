@@ -80,10 +80,10 @@ export class Registration {
     @IsOptional()
     score!: number
 
-    @ManyToOne(() => User)
+    @ManyToOne("User")
     user?: User
 
-    @ManyToOne(() => Event)
+    @ManyToOne("Event")
     event?: Event
 
 }
