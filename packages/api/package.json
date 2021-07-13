@@ -33,6 +33,6 @@
     "@types/koa-logger": "^3.1.1",
     "@types/koa-router": "^7.4.1",
     "@types/swagger-jsdoc": "^6.0.0",
-    "ts-node-dev": "^1.1.6"
+    "ts-node-dev": "^1.1.8"
   }
 }
