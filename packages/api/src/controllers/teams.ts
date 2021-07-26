@@ -236,7 +236,7 @@ export class TeamController {
      * @openapi
      * /teams/{team-id}/members/{user-id}:
      *   delete:
-     *     summary: remove a user from a team
+     *     summary: remove a user from a team, delete the team if empty afterwards
      *     tags:
      *       - teams
      *     parameters:
@@ -256,6 +256,10 @@ export class TeamController {
             throw new TeamNotFoundError()
 
         team.members = team.members?.filter(({ id }) => id != userId)
-        await getRepository(Team).save(team)
+        if (!team.members?.length)
+            // also remove team if empty
+            await getRepository(Team).delete(id)
+        else
+            await getRepository(Team).save(team)
     }
 }
