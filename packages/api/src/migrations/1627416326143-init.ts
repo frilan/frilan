@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1621704750917 implements MigrationInterface {
-    name = "init1621704750917"
+export class init1627416326143 implements MigrationInterface {
+    name = "init1627416326143"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -9,6 +9,7 @@ export class init1621704750917 implements MigrationInterface {
             (
                 "id"             SERIAL            NOT NULL,
                 "username"       character varying NOT NULL,
+                "password"       character varying NOT NULL,
                 "displayName"    character varying NOT NULL,
                 "profilePicture" character varying,
                 CONSTRAINT "UQ_78a916df40e02a9deb1c4b75edb" UNIQUE ("username"),
@@ -78,14 +79,14 @@ export class init1621704750917 implements MigrationInterface {
             (
                 "teamId" integer NOT NULL,
                 "userId" integer NOT NULL,
-                CONSTRAINT "PK_b8dd3b87a99030dc344a1daf00c" PRIMARY KEY ("teamId", "userId")
+                CONSTRAINT "PK_946e161af78b3cc26186236d3bd" PRIMARY KEY ("teamId", "userId")
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "IDX_52d45fd74da54637d5190c8fda" ON "team_members_user" ("teamId")
+            CREATE INDEX "IDX_b3f2c420a7871621010a4e1d21" ON "team_members_user" ("teamId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "IDX_e40e914d741ef98dca13adefbc" ON "team_members_user" ("userId")
+            CREATE INDEX "IDX_45db1cff3b87cc40512fb2963e" ON "team_members_user" ("userId")
         `)
         await queryRunner.query(`
             ALTER TABLE "registration"
@@ -105,22 +106,22 @@ export class init1621704750917 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "team_members_user"
-                ADD CONSTRAINT "FK_52d45fd74da54637d5190c8fda0" FOREIGN KEY ("teamId") REFERENCES "team" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_b3f2c420a7871621010a4e1d212" FOREIGN KEY ("teamId") REFERENCES "team" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "team_members_user"
-                ADD CONSTRAINT "FK_e40e914d741ef98dca13adefbc1" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_45db1cff3b87cc40512fb2963ea" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "team_members_user"
-                DROP CONSTRAINT "FK_e40e914d741ef98dca13adefbc1"
+                DROP CONSTRAINT "FK_45db1cff3b87cc40512fb2963ea"
         `)
         await queryRunner.query(`
             ALTER TABLE "team_members_user"
-                DROP CONSTRAINT "FK_52d45fd74da54637d5190c8fda0"
+                DROP CONSTRAINT "FK_b3f2c420a7871621010a4e1d212"
         `)
         await queryRunner.query(`
             ALTER TABLE "team"
@@ -139,10 +140,10 @@ export class init1621704750917 implements MigrationInterface {
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"
         `)
         await queryRunner.query(`
-            DROP INDEX "IDX_e40e914d741ef98dca13adefbc"
+            DROP INDEX "IDX_45db1cff3b87cc40512fb2963e"
         `)
         await queryRunner.query(`
-            DROP INDEX "IDX_52d45fd74da54637d5190c8fda"
+            DROP INDEX "IDX_b3f2c420a7871621010a4e1d21"
         `)
         await queryRunner.query(`
             DROP TABLE "team_members_user"

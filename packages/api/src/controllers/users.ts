@@ -8,6 +8,7 @@ import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
+import bcrypt from "bcrypt"
 
 /**
  * @openapi
@@ -101,7 +102,7 @@ export class UserController {
      *       content:
      *         application/json:
      *           schema:
-     *            $ref: "#/components/schemas/User"
+     *            $ref: "#/components/schemas/UserWithPassword"
      *     responses:
      *       201:
      *         description: user created
@@ -118,6 +119,7 @@ export class UserController {
     @HttpCode(201)
     async create(@Body() user: User): Promise<User> {
         try {
+            user.password = await bcrypt.hash(user.password, 10)
             return await getRepository(User).save(user)
 
         } catch (err) {
