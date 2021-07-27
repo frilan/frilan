@@ -23,19 +23,6 @@ Setup and start a PostgreSQL 13 server and create a new database.
 
 Setup Node.js 16 and install dependencies from the repository **root** by running `npm install`. Note that all npm commands, further described below, should be run from the repository root as well.
 
-- [Installation](#installation)
-  * [Prerequisites](#prerequisites)
-  * [Environment variables](#environment-variables)
-  * [Starting the server](#starting-the-server)
-- [Usage](#usage)
-  * [Loading relations](#loading-relations)
-- [Development](#development)
-  * [Development server](#development-server)
-  * [Code linting](#code-linting)
-- [Database](#database)
-  * [Entities](#entities)
-  * [Migrations](#migrations)
-
 ### Environment variables
 
 Define the following variables accordingly:
@@ -48,6 +35,10 @@ Define the following variables accordingly:
 | `DB_NAME` | the database name | frilan |
 | `DB_USER` | the database username | postgres |
 | `DB_PASS` | the database password |
+| `JWT_SECRET` | the secret used to sign authentication tokens |
+| `JWT_TTL` | the time before a token expires (in seconds) | 3600 |
+
+Note that variables with no default values **must explicitly be defined** before starting the server.
 
 ### Starting the server
 

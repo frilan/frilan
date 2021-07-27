@@ -60,12 +60,13 @@ export class LoginController {
             ctx.throw(500, "JWT secret not set")
         }
 
-        const expireAfter = Number(process.env.JWT_EXPIRE_AFTER)
+        const timeToLive = Number(process.env.JWT_TTL || 3600)
+        console.log(Math.floor(Date.now() / 1000) + timeToLive)
         return {
             user,
             token: jwt.sign({
                 id: user.id,
-                exp: Math.floor(Date.now() / 1000) + expireAfter,
+                exp: Math.floor(Date.now() / 1000) + timeToLive,
             }, process.env.JWT_SECRET),
         }
     }
