@@ -1,13 +1,26 @@
 import {
-    Body, Ctx, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+    Body,
+    Ctx,
+    CurrentUser,
+    ForbiddenError,
+    Get,
+    HttpCode,
+    JsonController,
+    NotFoundError,
+    OnUndefined,
+    Param,
+    Post,
+    UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
-import { Tournament } from "@frilan/models"
+import { Role, Tournament } from "@frilan/models"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
+import { AuthUser } from "../middlewares/jwt-utils"
+import { checkEventPrivilege } from "./events"
 
 /**
  * @openapi
@@ -22,6 +35,27 @@ export class TournamentNotFoundError extends NotFoundError {
     constructor() {
         super("This tournament does not exist")
     }
+}
+
+/**
+ * Restrict access to users that are registered to the event hosting the tournament.
+ *
+ * @param user The authenticated user
+ * @param tournament The tournament object or the ID of the tournament
+ */
+export async function checkTournamentPrivilege(user: AuthUser, tournament: Tournament | number): Promise<void> {
+    if (user.admin)
+        return
+
+    // if passing an ID as argument
+    if (typeof tournament == "number")
+        try {
+            tournament = await getRepository(Tournament).findOneOrFail(tournament)
+        } catch (err) {
+            throw new TournamentNotFoundError()
+        }
+
+    await checkEventPrivilege(user, tournament.eventId)
 }
 
 /**
@@ -68,10 +102,20 @@ export class EventTournamentController {
      *               type: array
      *               items:
      *                 $ref: "#/components/schemas/TournamentWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
     @UseBefore(RelationsParser)
-    readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Tournament[]> {
+    async readAll(
+        @Param("event_id") eventId: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Tournament[]> {
+
+        await checkEventPrivilege(user, eventId)
         return getRepository(Tournament).find({ where: { eventId }, relations: ctx.relations })
     }
 
@@ -100,12 +144,24 @@ export class EventTournamentController {
      *                 $ref: "#/components/schemas/TournamentWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *          description: the specified event doesn't exist
      */
     @Post()
     @HttpCode(201)
-    async create(@Param("event_id") eventId: number, @Body() tournament: Tournament): Promise<Tournament> {
+    async create(
+        @Param("event_id") eventId: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Body() tournament: Tournament,
+    ): Promise<Tournament> {
+
+        if (!user.admin && user.roles[eventId] != Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can create tournaments")
+
         try {
             tournament.eventId = eventId
             return await getRepository(Tournament).save(tournament)
@@ -138,14 +194,26 @@ export class TournamentController {
      *           application/json:
      *             schema:
      *               $ref: "#/components/schemas/TournamentWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TournamentNotFound"
      */
     @GetById()
     @OnUndefined(TournamentNotFoundError)
     @UseBefore(RelationsParser)
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Tournament | undefined> {
-        return getRepository(Tournament).findOne(id, { relations: ctx.relations })
+    async read(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Tournament | undefined> {
+
+        const tournament = await getRepository(Tournament).findOne(id, { relations: ctx.relations })
+        if (tournament)
+            await checkTournamentPrivilege(user, tournament)
+        return tournament
     }
 
     /**
@@ -171,15 +239,29 @@ export class TournamentController {
      *               $ref: "#/components/schemas/TournamentWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TournamentNotFound"
      */
     @PatchById()
-    @OnUndefined(TournamentNotFoundError)
-    async update(@Param("id") id: number, @PartialBody() tournament: Tournament): Promise<Tournament | undefined> {
-        if (Object.keys(tournament).length)
-            await getRepository(Tournament).update(id, tournament)
-        return getRepository(Tournament).findOne(id)
+    async update(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @PartialBody() updatedTournament: Tournament,
+    ): Promise<Tournament | undefined> {
+
+        const tournament = await getRepository(Tournament).findOne(id)
+        if (!tournament)
+            throw new TournamentNotFoundError()
+
+        if (!user.admin && user.roles[tournament.eventId] != Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can update tournaments")
+
+        Object.assign(tournament, updatedTournament)
+        return await getRepository(Tournament).save(updatedTournament)
     }
 
     /**
@@ -194,10 +276,23 @@ export class TournamentController {
      *     responses:
      *       204:
      *         description: tournament deleted
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @DeleteById()
     @OnUndefined(204)
-    async delete(@Param("id") id: number): Promise<void> {
+    async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
+        if (!user.admin) {
+            const tournament = await getRepository(Tournament).findOne(id)
+            if (!tournament)
+                throw new TournamentNotFoundError()
+
+            if (user.roles[tournament.eventId] != Role.Organizer)
+                throw new ForbiddenError("Only administrators and organizers can delete tournaments")
+        }
+
         await getRepository(Tournament).delete(id)
     }
 }

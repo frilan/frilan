@@ -1,14 +1,39 @@
 import {
-    Body, Ctx, Delete, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
+    Body,
+    Ctx,
+    CurrentUser,
+    Delete,
+    ForbiddenError,
+    Get,
+    HttpCode,
+    JsonController,
+    NotFoundError,
+    OnUndefined,
+    Param,
+    Post,
+    Put,
+    UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { Team, User } from "@frilan/models"
+import { Role, Team, User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { UserNotFoundError } from "./users"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
+import { AuthUser } from "../middlewares/jwt-utils"
+import { checkTournamentPrivilege } from "./tournaments"
+
+/**
+ * Returns true if the user is an organizer of the event in which the team is registered.
+ *
+ * @param user The authenticated user
+ * @param team The target team
+ */
+async function isOrganizer(user: AuthUser, team: Team) {
+    return team.tournament && user.roles[team.tournament?.eventId] == Role.Organizer
+}
 
 /**
  * @openapi
@@ -69,10 +94,22 @@ export class TournamentTeamController {
      *               type: array
      *               items:
      *                 $ref: "#/components/schemas/TeamWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *       404:
+     *         $ref: "#/components/responses/TournamentNotFound"
      */
     @Get()
     @UseBefore(RelationsParser)
-    readAll(@Param("tournament_id") tournamentId: number, @Ctx() ctx: Context): Promise<Team[]> {
+    async readAll(
+        @Param("tournament_id") tournamentId: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Team[]> {
+
+        await checkTournamentPrivilege(user, tournamentId)
         return getRepository(Team).find({ where: { tournamentId }, relations: ctx.relations })
     }
 
@@ -100,14 +137,30 @@ export class TournamentTeamController {
      *               $ref: "#/components/schemas/TeamWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
-     *          description: the specified event and/or team doesn't exist
+     *         description: the specified event and/or team doesn't exist
      */
     @Post()
     @HttpCode(201)
-    async create(@Param("tournament_id") tournamentId: number, @Body() team: Team): Promise<Team> {
+    async create(
+        @Param("tournament_id") tournamentId: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Body() team: Team,
+    ): Promise<Team> {
+
+        await checkTournamentPrivilege(user, tournamentId)
+
+        const targetUser = await getRepository(User).findOne(user.id)
+        if (!targetUser)
+            throw new UserNotFoundError()
+
         try {
             team.tournamentId = tournamentId
+            team.members = [targetUser] // add current user into the team
             return await getRepository(Team).save(team)
         } catch (err) {
             if (err.code == PG_FOREIGN_KEY_VIOLATION)
@@ -138,14 +191,27 @@ export class TeamController {
      *           application/json:
      *             schema:
      *               $ref: "#/components/schemas/TeamWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TeamNotFound"
      */
     @GetById()
     @OnUndefined(TeamNotFoundError)
     @UseBefore(RelationsParser)
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Team | undefined> {
-        return getRepository(Team).findOne(id, { relations: ctx.relations })
+    async read(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Team | undefined> {
+
+        const team = await getRepository(Team).findOne(id, { relations: ctx.relations })
+        if (team)
+            await checkTournamentPrivilege(user, team.tournamentId)
+
+        return team
     }
 
     /**
@@ -171,15 +237,30 @@ export class TeamController {
      *               $ref: "#/components/schemas/TeamWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TeamNotFound"
      */
     @PatchById()
-    @OnUndefined(TeamNotFoundError)
-    async update(@Param("id") id: number, @PartialBody() team: Team): Promise<Team | undefined> {
-        if (Object.keys(team).length)
-            await getRepository(Team).update(id, team)
-        return getRepository(Team).findOne(id)
+    async update(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @PartialBody() updatedTeam: Team,
+    ): Promise<Team | undefined> {
+
+        const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
+        if (!team)
+            throw new TeamNotFoundError()
+
+        const isMember = team.members?.map(({ id }) => id).includes(user.id)
+        if (!user.admin && !isMember && !await isOrganizer(user, team))
+            throw new ForbiddenError("Only members of this team can update the team")
+
+        Object.assign(team, updatedTeam)
+        return await getRepository(Team).save(team)
     }
 
     /**
@@ -194,10 +275,25 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: team deleted
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *       404:
+     *         $ref: "#/components/responses/TeamNotFound"
      */
     @DeleteById()
     @OnUndefined(204)
-    async delete(@Param("id") id: number): Promise<void> {
+    async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
+        if (!user.admin) {
+            const team = await getRepository(Team).findOne({ where: { id }, relations: ["tournament"] })
+            if (!team)
+                throw new TeamNotFoundError()
+
+            if (!await isOrganizer(user, team))
+                throw new ForbiddenError("Only administrators and organizers can delete teams")
+        }
+
         await getRepository(Team).delete(id)
     }
 
@@ -214,21 +310,35 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: user added into the team
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         description: team and/or user not found
      */
     @Put("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async addPlayer(@Param("id") id: number, @Param("user_id") userId: number): Promise<void> {
-        const team = await getRepository(Team).findOne(id, { relations: ["members"] })
+    async addPlayer(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Param("user_id") userId: number,
+    ): Promise<void> {
+
+        const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
-        const user = await getRepository(User).findOne(userId)
-        if (!user)
+        if (!user.admin && user.id != userId && !await isOrganizer(user, team))
+            throw new ForbiddenError("Only administrators and organizers can add other users to the team")
+
+        await checkTournamentPrivilege(user, team.tournamentId)
+
+        const targetUser = await getRepository(User).findOne(userId)
+        if (!targetUser)
             throw new UserNotFoundError()
 
-        team.members?.push(user)
+        team.members?.push(targetUser)
         await getRepository(Team).save(team)
     }
 
@@ -245,15 +355,27 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: user removed from the team
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TeamNotFound"
      */
     @Delete("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async removePlayer(@Param("id") id: number, @Param("user_id") userId: number): Promise<void> {
+    async removePlayer(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Param("user_id") userId: number,
+    ): Promise<void> {
+
         const team = await getRepository(Team).findOne(id, { relations: ["members"] })
         if (!team)
             throw new TeamNotFoundError()
+
+        if (!user.admin && user.id != userId && !await isOrganizer(user, team))
+            throw new ForbiddenError("Only administrators and organizers can remove other users from the team")
 
         team.members = team.members?.filter(({ id }) => id != userId)
         if (!team.members?.length)

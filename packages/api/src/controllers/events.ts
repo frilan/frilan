@@ -1,5 +1,17 @@
 import {
-    Body, Ctx, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+    Authorized,
+    Body,
+    Ctx,
+    CurrentUser,
+    ForbiddenError,
+    Get,
+    HttpCode,
+    JsonController,
+    NotFoundError,
+    OnUndefined,
+    Param,
+    Post,
+    UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "@frilan/models"
@@ -7,6 +19,7 @@ import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
+import { AuthUser } from "../middlewares/jwt-utils"
 
 /**
  * @openapi
@@ -21,6 +34,24 @@ export class EventNotFoundError extends NotFoundError {
     constructor() {
         super("This event does not exist")
     }
+}
+
+/**
+ * Restrict access to users that are registered to the provided event.
+ *
+ * @param user The authenticated user
+ * @param event The event object or the ID of the event
+ */
+export async function checkEventPrivilege(user: AuthUser, event: Event | number): Promise<void> {
+    if (user.admin)
+        return
+
+    // if passing an ID as argument
+    if (typeof event != "number")
+        event = event.id
+
+    if (!(event in user.roles))
+        throw new ForbiddenError("Access is restricted to users registered to this event")
 }
 
 /**
@@ -65,9 +96,14 @@ export class EventController {
      *               type: array
      *               items:
      *                 $ref: "#/components/schemas/EventWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
     @UseBefore(RelationsParser)
+    @Authorized("admin")
     readAll(@Ctx() ctx: Context): Promise<Event[]> {
         return getRepository(Event).find({ relations: ctx.relations })
     }
@@ -94,9 +130,14 @@ export class EventController {
      *               $ref: "#/components/schemas/EventWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Post()
     @HttpCode(201)
+    @Authorized("admin")
     create(@Body() event: Event): Promise<Event> {
         return getRepository(Event).save(event)
     }
@@ -118,13 +159,23 @@ export class EventController {
      *           application/json:
      *             schema:
      *               $ref: "#/components/schemas/EventWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/EventNotFound"
      */
     @GetById()
     @OnUndefined(EventNotFoundError)
     @UseBefore(RelationsParser)
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Event | undefined> {
+    async read(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Event | undefined> {
+
+        await checkEventPrivilege(user, id)
         return getRepository(Event).findOne(id, { relations: ctx.relations })
     }
 
@@ -151,11 +202,16 @@ export class EventController {
      *               $ref: "#/components/schemas/EventWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/EventNotFound"
      */
     @PatchById()
     @OnUndefined(EventNotFoundError)
+    @Authorized("admin")
     async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | undefined> {
         if (Object.keys(event).length)
             await getRepository(Event).update(id, event)
@@ -174,9 +230,14 @@ export class EventController {
      *     responses:
      *       204:
      *         description: event deleted
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @DeleteById()
     @OnUndefined(204)
+    @Authorized("admin")
     async delete(@Param("id") id: number): Promise<void> {
         await getRepository(Event).delete(id)
     }

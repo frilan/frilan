@@ -14,7 +14,6 @@ import { Type } from "class-transformer"
  *         role:
  *           type: string
  *           enum:
- *             - admin
  *             - organizer
  *             - player
  *           example: player
@@ -44,7 +43,6 @@ import { Type } from "class-transformer"
  */
 
 export enum Role {
-    Admin = "admin",
     Organizer = "organizer",
     Player = "player"
 }

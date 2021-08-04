@@ -1,7 +1,6 @@
 import Koa from "koa"
 import logger from "koa-logger"
 import cors from "@koa/cors"
-
 import { useKoaServer } from "routing-controllers"
 import { createConnection } from "typeorm"
 
@@ -17,6 +16,7 @@ import { TeamController, TournamentTeamController } from "./controllers/teams"
 
 import openapi from "./middlewares/swagger"
 import { ErrorHandler } from "./middlewares/error-handler"
+import { getAuthorizationFromToken, getUserFromToken, tokenDecoder } from "./middlewares/jwt-utils"
 
 async function startServer() {
     try {
@@ -29,10 +29,13 @@ async function startServer() {
 
         app.use(cors())
         app.use(openapi())
+        app.use(tokenDecoder())
 
         useKoaServer(app, {
             middlewares: [ErrorHandler],
             defaultErrorHandler: false,
+            authorizationChecker: getAuthorizationFromToken,
+            currentUserChecker: getUserFromToken,
             controllers: [
                 LoginController,
                 UserController,

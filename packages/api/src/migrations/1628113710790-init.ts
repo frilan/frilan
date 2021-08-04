@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1627416326143 implements MigrationInterface {
-    name = "init1627416326143"
+export class init1628113710790 implements MigrationInterface {
+    name = "init1628113710790"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -12,6 +12,7 @@ export class init1627416326143 implements MigrationInterface {
                 "password"       character varying NOT NULL,
                 "displayName"    character varying NOT NULL,
                 "profilePicture" character varying,
+                "admin"          boolean           NOT NULL DEFAULT false,
                 CONSTRAINT "UQ_78a916df40e02a9deb1c4b75edb" UNIQUE ("username"),
                 CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id")
             )
@@ -30,7 +31,7 @@ export class init1627416326143 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE TYPE "registration_role_enum" AS ENUM('admin', 'organizer', 'player')
+            CREATE TYPE "registration_role_enum" AS ENUM('organizer', 'player')
         `)
         await queryRunner.query(`
             CREATE TABLE "registration"

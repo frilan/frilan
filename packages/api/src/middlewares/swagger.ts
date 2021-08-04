@@ -22,6 +22,12 @@ const options: Options = {
                 ValidationError: {
                     description: "body validation failed",
                 },
+                AuthenticationRequired: {
+                    description: "authentication is required",
+                },
+                NotEnoughPrivilege: {
+                    description: "not enough privilege",
+                }
             },
         },
     },

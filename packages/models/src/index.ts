@@ -1,5 +1,5 @@
 export { User } from "./entities/user"
 export { Event } from "./entities/event"
-export { Registration } from "./entities/registration"
-export { Tournament } from "./entities/tournament"
+export { Registration, Role } from "./entities/registration"
+export { Tournament, Status } from "./entities/tournament"
 export { Team } from "./entities/team"

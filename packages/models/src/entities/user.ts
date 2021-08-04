@@ -1,6 +1,6 @@
 import { Column, Entity, Index, ManyToMany, OneToMany } from "typeorm"
 import { Id } from "./common/id"
-import { IsOptional, IsString } from "class-validator"
+import { IsBoolean, IsOptional, IsString } from "class-validator"
 import { Exclude } from "class-transformer"
 import { Trim } from "../decorators/trim"
 import { Registration } from "./registration"
@@ -23,6 +23,9 @@ import { Team } from "./team"
  *           type: string
  *           nullable: true
  *           example: http://example.com/profile.jpg
+ *         admin:
+ *           type: boolean
+ *           example: false
  *
  *     UserWithPassword:
  *       allOf:
@@ -63,6 +66,11 @@ export class User extends Id {
     @IsOptional()
     @Trim()
     profilePicture?: string
+
+    @Column({ default: false })
+    @IsBoolean()
+    @IsOptional()
+    admin!: boolean
 
     @OneToMany("Registration", "user")
     registrations?: Registration[]

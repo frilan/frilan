@@ -1,5 +1,6 @@
 import {
-    Body, Ctx, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
+    OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -9,6 +10,7 @@ import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import bcrypt from "bcrypt"
+import { AuthUser } from "../middlewares/jwt-utils"
 
 /**
  * @openapi
@@ -82,11 +84,15 @@ export class UserController {
      *               type: array
      *               items:
      *                 $ref: "#/components/schemas/UserWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
     @UseBefore(RelationsParser)
+    @Authorized("admin")
     readAll(@Ctx() ctx: Context): Promise<User[]> {
-        console.log(ctx.relations)
         return getRepository(User).find({ relations: ctx.relations })
     }
 
@@ -118,8 +124,12 @@ export class UserController {
     @Post()
     @HttpCode(201)
     async create(@Body() user: User): Promise<User> {
+        // make the first registered user an admin
+        const userCount = await getRepository(User).count()
+        user.admin = userCount < 1
+        user.password = await bcrypt.hash(user.password, 10)
+
         try {
-            user.password = await bcrypt.hash(user.password, 10)
             return await getRepository(User).save(user)
 
         } catch (err) {
@@ -147,12 +157,17 @@ export class UserController {
      *           application/json:
      *             schema:
      *               $ref: "#/components/schemas/UserWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/UserNotFound"
      */
     @GetById()
     @OnUndefined(UserNotFoundError)
     @UseBefore(RelationsParser)
+    @Authorized()
     read(@Param("id") id: number, @Ctx() ctx: Context): Promise<User | undefined> {
         return getRepository(User).findOne(id, { relations: ctx.relations })
     }
@@ -180,6 +195,10 @@ export class UserController {
      *               $ref: "#/components/schemas/UserWithId"
      *       400:
      *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/UserNotFound"
      *       409:
@@ -187,10 +206,21 @@ export class UserController {
      */
     @PatchById()
     @OnUndefined(UserNotFoundError)
-    async update(@Param("id") id: number, @PartialBody() user: User): Promise<User | undefined> {
+    async update(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) currentUser: AuthUser,
+        @PartialBody() updatedUser: User,
+    ): Promise<User | undefined> {
+
+        if (!currentUser.admin)
+            if (currentUser.id != id)
+                throw new ForbiddenError("Only administrators can update other users")
+            else if ("admin" in updatedUser)
+                throw new ForbiddenError("Only administrators can define roles of users")
+
         try {
-            if (Object.keys(user).length)
-                await getRepository(User).update(id, user)
+            if (Object.keys(updatedUser).length)
+                await getRepository(User).update(id, updatedUser)
             return getRepository(User).findOne(id)
 
         } catch (err) {
@@ -213,9 +243,14 @@ export class UserController {
      *     responses:
      *       204:
      *         description: user deleted
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @DeleteById()
     @OnUndefined(204)
+    @Authorized("admin")
     async delete(@Param("id") id: number): Promise<void> {
         await getRepository(User).delete(id)
     }
