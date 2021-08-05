@@ -1,8 +1,20 @@
 import {
-    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
-    OnUndefined, Param, Post, UseBefore,
+    Authorized,
+    Body,
+    Ctx,
+    CurrentUser,
+    ForbiddenError,
+    Get,
+    HttpCode,
+    HttpError,
+    JsonController,
+    NotFoundError,
+    OnUndefined,
+    Param,
+    Post,
+    UseBefore,
 } from "routing-controllers"
-import { getRepository } from "typeorm"
+import { getRepository, Repository, Transaction, TransactionRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
@@ -39,6 +51,21 @@ export class UserConflictError extends HttpError {
 
     constructor() {
         super(409, "This username is already taken")
+    }
+}
+
+/**
+ * @openapi
+ * components:
+ *   responses:
+ *     AdminDeleted:
+ *       description: this user is the only administrator and cannot be deleted
+ */
+export class AdminDeletedError extends ForbiddenError {
+    name = "AdminDeletedError"
+
+    constructor() {
+        super("This user cannot be deleted because they are the only administrator.")
     }
 }
 
@@ -246,12 +273,23 @@ export class UserController {
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *         $ref: "#/components/responses/AdminDeleted"
      */
     @DeleteById()
     @OnUndefined(204)
+    @Transaction()
     @Authorized("admin")
-    async delete(@Param("id") id: number): Promise<void> {
-        await getRepository(User).delete(id)
+    async delete(@Param("id") id: number, @TransactionRepository(User) repository: Repository<User>): Promise<void> {
+        const user = await repository.findOne(id)
+        if (!user)
+            throw new UserNotFoundError()
+
+        if (user.admin) {
+            const adminCount = await repository.count({ admin: true })
+            if (adminCount == 1)
+                throw new AdminDeletedError()
+        }
+
+        await repository.delete(id)
     }
 }
