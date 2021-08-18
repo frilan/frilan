@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on: [ push, pull_request ]
 
@@ -25,3 +25,22 @@ jobs:
       - run: |
           npm ci
           npm run build -ws
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - uses: harmon758/postgresql-action@v1
+        with:
+          postgresql version: 13
+          postgresql db: frilan-test
+          postgresql user: postgres
+          postgresql password: postgres
+      - run: |
+          npm ci
+          npm run test -w @frilan/api
+        env:
+          DB_PASS: postgres
