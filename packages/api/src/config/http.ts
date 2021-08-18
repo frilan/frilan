@@ -1,6 +1,10 @@
 import { ListenOptions } from "net"
+import { env } from "./env"
 
-const port = Number.parseInt(process.env.HTTP_PORT ?? "8080")
+// use port 0 when testing, i.e. any available port
+const defaultPort = env == "test" ? 0 : 8080
+
+const port = process.env.HTTP_PORT ? Number.parseInt(process.env.HTTP_PORT) : defaultPort
 const host = process.env.HTTP_HOST ?? undefined
 
 export default { port, host } as ListenOptions

@@ -1,5 +1,6 @@
 import { ConnectionOptions } from "typeorm"
 import { Event, Registration, Team, Tournament, User } from "@frilan/models"
+import { env } from "./env"
 
 if (!process.env.DB_PASS) {
     console.error("The environment variable DB_PASS must be defined")
@@ -8,12 +9,13 @@ if (!process.env.DB_PASS) {
 
 const host = process.env.DB_HOST ?? "localhost"
 const port = Number.parseInt(process.env.DB_PORT ?? "5432")
-const database = process.env.DB_NAME ?? "frilan"
+const database = process.env.DB_NAME ?? env == "test" ? "frilan-test" : "frilan"
 const username = process.env.DB_USER ?? "postgres"
 const password = process.env.DB_PASS
 
-const root = process.env.TS_NODE_DEV ? "src" : "build"
-const ext = process.env.TS_NODE_DEV ? "ts" : "js"
+// scripts have different paths & extension when running in production
+const root = env == "prod" ? "build" : "src"
+const ext = env == "prod" ? "js" : "ts"
 
 const config: ConnectionOptions = {
     type: "postgres",
@@ -22,8 +24,9 @@ const config: ConnectionOptions = {
     username,
     password,
     database,
-    logging: true,
     migrationsRun: true,
+    logging: env == "dev",
+    dropSchema: env == "test",
     entities: [User, Event, Registration, Tournament, Team],
     migrations: [root + "/migrations/*." + ext],
     subscribers: [root + "/subscribers/*." + ext],

@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne, PrimaryColumn } from "typeorm"
 import { User } from "./user"
 import { Event } from "./event"
 import { IsDate, IsEnum, IsInt, IsOptional } from "class-validator"
-import { Type } from "class-transformer"
+import { Exclude, Type } from "class-transformer"
 
 /**
  * @openapi
@@ -76,12 +76,13 @@ export class Registration {
     @Column({ default: 0 })
     @IsInt()
     @IsOptional()
+    @Exclude({ toClassOnly: true })
     score!: number
 
-    @ManyToOne("User")
+    @ManyToOne("User", { onDelete: "CASCADE" })
     user?: User
 
-    @ManyToOne("Event")
+    @ManyToOne("Event", { onDelete: "CASCADE" })
     event?: Event
 
 }

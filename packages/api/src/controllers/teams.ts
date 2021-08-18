@@ -1,21 +1,9 @@
 import {
-    Body,
-    Ctx,
-    CurrentUser,
-    Delete,
-    ForbiddenError,
-    Get,
-    HttpCode,
-    JsonController,
-    NotFoundError,
-    OnUndefined,
-    Param,
-    Post,
-    Put,
-    UseBefore,
+    Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param,
+    Post, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { Role, Team, User } from "@frilan/models"
+import { Role, Team, Tournament, User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -23,7 +11,8 @@ import { UserNotFoundError } from "./users"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
-import { checkTournamentPrivilege } from "./tournaments"
+import { checkTournamentPrivilege, TournamentNotFoundError } from "./tournaments"
+import { checkEventPrivilege } from "./events"
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
@@ -152,7 +141,18 @@ export class TournamentTeamController {
         @Body() team: Team,
     ): Promise<Team> {
 
-        await checkTournamentPrivilege(user, tournamentId)
+        // by default, the team creator is automatically part of the members
+        // however, admins can create teams without being registered to the event
+        // if they do so, then it creates an empty team
+        let registered = true
+        if (user.admin) {
+            const tournament = await getRepository(Tournament).findOne(tournamentId)
+            if (!tournament)
+                throw new TournamentNotFoundError()
+            if (!(tournament.eventId in user.roles))
+                registered = false
+        } else
+            await checkTournamentPrivilege(user, tournamentId)
 
         const targetUser = await getRepository(User).findOne(user.id)
         if (!targetUser)
@@ -160,8 +160,10 @@ export class TournamentTeamController {
 
         try {
             team.tournamentId = tournamentId
-            team.members = [targetUser] // add current user into the team
+            // add current user into the team if registered to the event
+            team.members = registered ? [targetUser] : []
             return await getRepository(Team).save(team)
+
         } catch (err) {
             if (err.code == PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
@@ -299,6 +301,51 @@ export class TeamController {
 
     /**
      * @openapi
+     * /teams/{team-id}/members:
+     *   get:
+     *     summary: read members from a team
+     *     tags:
+     *       - teams
+     *     parameters:
+     *       - $ref: "#/components/parameters/TeamId"
+     *       - $ref: "#/components/parameters/UserRelations"
+     *     responses:
+     *       200:
+     *         description: success
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: "#/components/schemas/UserWithId"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *       404:
+     *         $ref: "#/components/responses/TeamNotFound"
+     */
+    @Get("/:id(\\d+)/members")
+    @OnUndefined(TeamNotFoundError)
+    @UseBefore(RelationsParser)
+    async readMembers(
+        @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<User[] | undefined> {
+
+        const relations = ctx.relations.map((relation: string) => "members." + relation)
+        relations.unshift("members")
+
+        const team = await getRepository(Team).findOne(id, { relations })
+        if (team)
+            await checkTournamentPrivilege(user, team.tournamentId)
+
+        return team?.members
+    }
+
+    /**
+     * @openapi
      * /teams/{team-id}/members/{user-id}:
      *   put:
      *     summary: add a user into a team
@@ -334,9 +381,18 @@ export class TeamController {
 
         await checkTournamentPrivilege(user, team.tournamentId)
 
-        const targetUser = await getRepository(User).findOne(userId)
+        const tournament = await getRepository(Tournament).findOne(team.tournamentId)
+        if (!tournament)
+            throw new TournamentNotFoundError()
+
+        await checkEventPrivilege(user, tournament.eventId)
+
+        const targetUser = await getRepository(User).findOne(userId, { relations: ["registrations"] })
         if (!targetUser)
             throw new UserNotFoundError()
+
+        if (targetUser.registrations && !targetUser.registrations.map(r => r.eventId).includes(tournament.eventId))
+            throw new ForbiddenError("Cannot add unregistered user as member to this team")
 
         team.members?.push(targetUser)
         await getRepository(Team).save(team)

@@ -1,15 +1,5 @@
 import {
-    Body,
-    Ctx,
-    CurrentUser,
-    ForbiddenError,
-    Get,
-    HttpCode,
-    JsonController,
-    NotFoundError,
-    OnUndefined,
-    Param,
-    Post,
+    Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post,
     UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
@@ -261,7 +251,7 @@ export class TournamentController {
             throw new ForbiddenError("Only administrators and organizers can update tournaments")
 
         Object.assign(tournament, updatedTournament)
-        return await getRepository(Tournament).save(updatedTournament)
+        return await getRepository(Tournament).save(tournament)
     }
 
     /**

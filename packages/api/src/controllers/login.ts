@@ -1,10 +1,11 @@
-import { Ctx, Get, InternalServerError, JsonController, UnauthorizedError, UseBefore } from "routing-controllers"
+import { Ctx, Get, JsonController, UnauthorizedError, UseBefore } from "routing-controllers"
 import { Context } from "koa"
 import { getRepository } from "typeorm"
 import { BasicAuth } from "../middlewares/basic-auth"
 import { User } from "@frilan/models"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import jwtConfig from "../config/jwt"
 
 /**
  * @openapi
@@ -57,21 +58,17 @@ export class LoginController {
         if (!user || !await bcrypt.compare(ctx.credentials.pass, user.password))
             throw new UnauthorizedError("Wrong username and/or password")
 
-        if (process.env.JWT_SECRET === undefined)
-            throw new InternalServerError("JWT secret not set")
-
         // the user's roles during every event they're registered to
         const roles = user.registrations?.map(({ eventId, role }) => [eventId, role])
 
-        const timeToLive = Number(process.env.JWT_TTL || 3600)
         return {
             user,
             token: jwt.sign({
                 id: user.id,
                 admin: user.admin,
                 roles: Object.fromEntries(roles || []),
-                exp: Math.floor(Date.now() / 1000) + timeToLive,
-            }, process.env.JWT_SECRET),
+                exp: jwtConfig.expiration(),
+            }, jwtConfig.secret),
         }
     }
 }

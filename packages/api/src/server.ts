@@ -1,11 +1,14 @@
 import Koa from "koa"
 import logger from "koa-logger"
 import cors from "@koa/cors"
+import { Server } from "http"
+import { AddressInfo } from "net"
 import { useKoaServer } from "routing-controllers"
-import { createConnection } from "typeorm"
+import { Connection, createConnection } from "typeorm"
 
 import dbConfig from "./config/db"
 import httpConfig from "./config/http"
+import { env } from "./config/env"
 
 import { LoginController } from "./controllers/login"
 import { UserController } from "./controllers/users"
@@ -18,44 +21,44 @@ import openapi from "./middlewares/swagger"
 import { ErrorHandler } from "./middlewares/error-handler"
 import { getAuthorizationFromToken, getUserFromToken, tokenDecoder } from "./middlewares/jwt-utils"
 
-async function startServer() {
-    try {
-        await createConnection(dbConfig)
+let server: Server | undefined
+let dbConnection: Connection | undefined
 
-        const app = new Koa()
+export async function startServer(): Promise<string> {
+    dbConnection = await createConnection(dbConfig)
 
-        if (process.env.NODE_ENV != "test")
-            app.use(logger())
+    const app = new Koa()
 
-        app.use(cors())
-        app.use(openapi())
-        app.use(tokenDecoder())
+    if (env != "test")
+        app.use(logger())
 
-        useKoaServer(app, {
-            middlewares: [ErrorHandler],
-            defaultErrorHandler: false,
-            authorizationChecker: getAuthorizationFromToken,
-            currentUserChecker: getUserFromToken,
-            controllers: [
-                LoginController,
-                UserController,
-                EventController,
-                RegistrationController,
-                EventTournamentController,
-                TournamentController,
-                TournamentTeamController,
-                TeamController,
-            ],
-        })
+    app.use(cors())
+    app.use(openapi())
+    app.use(tokenDecoder())
 
-        app.listen(httpConfig)
+    useKoaServer(app, {
+        middlewares: [ErrorHandler],
+        defaultErrorHandler: false,
+        authorizationChecker: getAuthorizationFromToken,
+        currentUserChecker: getUserFromToken,
+        controllers: [
+            LoginController,
+            UserController,
+            EventController,
+            RegistrationController,
+            EventTournamentController,
+            TournamentController,
+            TournamentTeamController,
+            TeamController,
+        ],
+    })
 
-        const address = (httpConfig.host ?? "localhost") + ":" + httpConfig.port
-        console.info("Listening on http://" + address)
-
-    } catch (error) {
-        console.error(error)
-    }
+    server = app.listen(httpConfig)
+    const { port } = server.address() as AddressInfo
+    return "http://" + (httpConfig.host ?? "localhost") + ":" + port
 }
 
-startServer()
+export async function stopServer(): Promise<void> {
+    server?.close()
+    await dbConnection?.close()
+}

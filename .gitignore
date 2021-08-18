@@ -8,3 +8,6 @@ lib/
 # IDE config
 .idea/
 .vscode/
+
+# tests coverage
+coverage/

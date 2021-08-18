@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1628113710790 implements MigrationInterface {
-    name = "init1628113710790"
+export class init1629149015052 implements MigrationInterface {
+    name = "init1629149015052"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -91,19 +91,19 @@ export class init1628113710790 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "registration"
-                ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "registration"
-                ADD CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_c9cbfae000488578b2bb322c8bd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "tournament"
-                ADD CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_77f8956c8e4f357b0f58d57b5dd" FOREIGN KEY ("eventId") REFERENCES "event" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "team"
-                ADD CONSTRAINT "FK_6c381b833f42438bdf2206f47bd" FOREIGN KEY ("tournamentId") REFERENCES "tournament" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_6c381b833f42438bdf2206f47bd" FOREIGN KEY ("tournamentId") REFERENCES "tournament" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "team_members_user"

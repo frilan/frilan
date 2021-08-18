@@ -1,17 +1,6 @@
 import {
-    Authorized,
-    Body,
-    Ctx,
-    CurrentUser,
-    ForbiddenError,
-    Get,
-    HttpCode,
-    JsonController,
-    NotFoundError,
-    OnUndefined,
-    Param,
-    Post,
-    UseBefore,
+    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
+    Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "@frilan/models"
@@ -46,7 +35,7 @@ export async function checkEventPrivilege(user: AuthUser, event: Event | number)
     if (user.admin)
         return
 
-    // if passing an ID as argument
+    // if not passing an ID as argument
     if (typeof event != "number")
         event = event.id
 

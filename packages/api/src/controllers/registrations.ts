@@ -1,16 +1,5 @@
 import {
-    Body,
-    Ctx,
-    CurrentUser,
-    Delete,
-    ForbiddenError,
-    Get,
-    HttpCode,
-    JsonController,
-    NotFoundError,
-    OnUndefined,
-    Param,
-    Put,
+    Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError, OnUndefined, Param, Put,
     UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
@@ -121,7 +110,6 @@ export class RegistrationController {
      *         description: the specified event and/or user don't exist
      */
     @Put("/:user_id(\\d+)")
-    @HttpCode(201)
     async put(
         @Param("event_id") eventId: number,
         @Param("user_id") userId: number,
@@ -214,7 +202,7 @@ export class RegistrationController {
         @CurrentUser({ required: true }) user: AuthUser,
     ): Promise<void> {
 
-        if (!user.admin && !(eventId in user.roles))
+        if (!user.admin && user.id != userId)
             throw new ForbiddenError("Only administrators can unregister other users")
 
         await getRepository(Registration).delete({ eventId, userId })

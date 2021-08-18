@@ -1,14 +1,12 @@
 import jwt from "koa-jwt"
 import { Context, Next } from "koa"
-import { Action, InternalServerError, UnauthorizedError } from "routing-controllers"
+import { Action, UnauthorizedError } from "routing-controllers"
 import { Role } from "@frilan/models"
+import jwtConfig from "../config/jwt"
 
 export function tokenDecoder() {
     return async (ctx: Context, next: Next): Promise<void> => {
-        if (process.env.JWT_SECRET === undefined)
-            throw new InternalServerError("JWT secret not set")
-
-        await jwt({ secret: process.env.JWT_SECRET, passthrough: true })(ctx, next)
+        await jwt({ secret: jwtConfig.secret, passthrough: true })(ctx, next)
     }
 }
 

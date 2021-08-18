@@ -4,6 +4,7 @@ import { IsInt, IsOptional, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Tournament } from "./tournament"
 import { User } from "./user"
+import { Exclude } from "class-transformer"
 
 /**
  * @openapi
@@ -39,12 +40,13 @@ export class Team extends Id {
     @Column({ default: 0 })
     @IsInt()
     @IsOptional()
+    @Exclude({ toClassOnly: true })
     result!: number
 
     @Column()
     tournamentId!: number
 
-    @ManyToOne("Tournament")
+    @ManyToOne("Tournament", { onDelete: "CASCADE" })
     tournament?: Tournament
 
     @ManyToMany("User", "teams")

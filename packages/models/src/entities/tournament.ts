@@ -109,7 +109,7 @@ export class Tournament extends Id {
     @Column()
     eventId!: number
 
-    @ManyToOne("Event")
+    @ManyToOne("Event", { onDelete: "CASCADE" })
     event?: Event
 
     @OneToMany("Team", "tournament")
