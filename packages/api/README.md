@@ -1,4 +1,4 @@
-# @frilan/api
+# @frilan/api [![codecov](https://codecov.io/gh/frilan/frilan/branch/main/graph/badge.svg?token=YaEaJBnZJz)](https://codecov.io/gh/frilan/frilan)
 
 A server providing a REST API running on Node.js.
 
@@ -11,6 +11,7 @@ A server providing a REST API running on Node.js.
 - [Development](#development)
   * [Development server](#development-server)
   * [Code linting](#code-linting)
+  * [Integration tests](#integration-tests)
 - [Database](#database)
   * [Entities](#entities)
   * [Migrations](#migrations)
@@ -89,6 +90,17 @@ To lint the code and fix errors, run:
 ```sh
 npm run lint:fix -w @frilan/api
 ```
+
+### Integration tests
+
+To run integrations tests:
+
+```sh
+npm run test -w @frilan/api
+```
+
+Note that when running the above command, the default value of the `DB_NAME` variable becomes `frilan-test` to prevent
+accidental destruction of the main database.
 
 ## Database
 

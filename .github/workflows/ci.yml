@@ -41,6 +41,9 @@ jobs:
           postgresql password: postgres
       - run: |
           npm ci
-          npm run test -w @frilan/api
+          npm run test:cov -w @frilan/api
         env:
           DB_PASS: postgres
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
