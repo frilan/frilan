@@ -1,7 +1,7 @@
 import { env } from "./env"
 
 // prevent default secret when running in production
-if (!process.env.JWT_SECRET && env == "prod") {
+if (!process.env.JWT_SECRET && env === "prod") {
     console.error("The environment variable JWT_SECRET must be defined")
     process.exit(1)
 }

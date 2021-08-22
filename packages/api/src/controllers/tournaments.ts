@@ -38,7 +38,7 @@ export async function checkTournamentPrivilege(user: AuthUser, tournament: Tourn
         return
 
     // if passing an ID as argument
-    if (typeof tournament == "number")
+    if (typeof tournament === "number")
         try {
             tournament = await getRepository(Tournament).findOneOrFail(tournament)
         } catch (err) {
@@ -149,14 +149,14 @@ export class EventTournamentController {
         @Body() tournament: Tournament,
     ): Promise<Tournament> {
 
-        if (!user.admin && user.roles[eventId] != Role.Organizer)
+        if (!user.admin && user.roles[eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can create tournaments")
 
         try {
             tournament.eventId = eventId
             return await getRepository(Tournament).save(tournament)
         } catch (err) {
-            if (err.code == PG_FOREIGN_KEY_VIOLATION)
+            if (err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
             else
                 throw err
@@ -247,7 +247,7 @@ export class TournamentController {
         if (!tournament)
             throw new TournamentNotFoundError()
 
-        if (!user.admin && user.roles[tournament.eventId] != Role.Organizer)
+        if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can update tournaments")
 
         Object.assign(tournament, updatedTournament)
@@ -279,7 +279,7 @@ export class TournamentController {
             if (!tournament)
                 throw new TournamentNotFoundError()
 
-            if (user.roles[tournament.eventId] != Role.Organizer)
+            if (user.roles[tournament.eventId] !== Role.Organizer)
                 throw new ForbiddenError("Only administrators and organizers can delete tournaments")
         }
 

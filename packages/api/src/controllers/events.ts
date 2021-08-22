@@ -36,7 +36,7 @@ export async function checkEventPrivilege(user: AuthUser, event: Event | number)
         return
 
     // if not passing an ID as argument
-    if (typeof event != "number")
+    if (typeof event !== "number")
         event = event.id
 
     if (!(event in user.roles))

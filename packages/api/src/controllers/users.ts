@@ -148,7 +148,7 @@ export class UserController {
             return await getRepository(User).save(user)
 
         } catch (err) {
-            if (err.code == PG_UNIQUE_VIOLATION)
+            if (err.code === PG_UNIQUE_VIOLATION)
                 throw new UserConflictError()
             else
                 throw err
@@ -228,7 +228,7 @@ export class UserController {
     ): Promise<User | undefined> {
 
         if (!currentUser.admin)
-            if (currentUser.id != id)
+            if (currentUser.id !== id)
                 throw new ForbiddenError("Only administrators can update other users")
             else if ("admin" in updatedUser)
                 throw new ForbiddenError("Only administrators can define roles of users")
@@ -239,7 +239,7 @@ export class UserController {
             return getRepository(User).findOne(id)
 
         } catch (err) {
-            if (err.code == PG_UNIQUE_VIOLATION)
+            if (err.code === PG_UNIQUE_VIOLATION)
                 throw new UserConflictError()
             else
                 throw err
@@ -274,7 +274,7 @@ export class UserController {
 
         if (user.admin) {
             const adminCount = await repository.count({ admin: true })
-            if (adminCount == 1)
+            if (adminCount === 1)
                 throw new AdminDeletedError()
         }
 

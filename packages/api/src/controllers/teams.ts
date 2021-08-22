@@ -21,7 +21,7 @@ import { checkEventPrivilege } from "./events"
  * @param team The target team
  */
 async function isOrganizer(user: AuthUser, team: Team) {
-    return team.tournament && user.roles[team.tournament?.eventId] == Role.Organizer
+    return team.tournament && user.roles[team.tournament?.eventId] === Role.Organizer
 }
 
 /**
@@ -165,7 +165,7 @@ export class TournamentTeamController {
             return await getRepository(Team).save(team)
 
         } catch (err) {
-            if (err.code == PG_FOREIGN_KEY_VIOLATION)
+            if (err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
             else
                 throw err
@@ -376,7 +376,7 @@ export class TeamController {
         if (!team)
             throw new TeamNotFoundError()
 
-        if (!user.admin && user.id != userId && !await isOrganizer(user, team))
+        if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can add other users to the team")
 
         await checkTournamentPrivilege(user, team.tournamentId)
@@ -430,10 +430,10 @@ export class TeamController {
         if (!team)
             throw new TeamNotFoundError()
 
-        if (!user.admin && user.id != userId && !await isOrganizer(user, team))
+        if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can remove other users from the team")
 
-        team.members = team.members?.filter(({ id }) => id != userId)
+        team.members = team.members?.filter(({ id }) => id !== userId)
         if (!team.members?.length)
             // also remove team if empty
             await getRepository(Team).delete(id)

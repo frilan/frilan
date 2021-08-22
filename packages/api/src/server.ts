@@ -29,7 +29,7 @@ export async function startServer(): Promise<string> {
 
     const app = new Koa()
 
-    if (env != "test")
+    if (env !== "test")
         app.use(logger())
 
     app.use(cors())

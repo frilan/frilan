@@ -117,10 +117,10 @@ export class RegistrationController {
         @Body() registration: Registration,
     ): Promise<Registration> {
 
-        if (!user.admin && user.id != userId)
+        if (!user.admin && user.id !== userId)
             throw new ForbiddenError("Only administrators can register other users")
 
-        if (!user.admin && registration.role == Role.Organizer)
+        if (!user.admin && registration.role === Role.Organizer)
             throw new ForbiddenError("Only administrators can register users as organizers")
 
         try {
@@ -128,7 +128,7 @@ export class RegistrationController {
             registration.userId = userId
             return await getRepository(Registration).save(registration)
         } catch (err) {
-            if (err.code == PG_FOREIGN_KEY_VIOLATION)
+            if (err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
             else
                 throw err
@@ -202,7 +202,7 @@ export class RegistrationController {
         @CurrentUser({ required: true }) user: AuthUser,
     ): Promise<void> {
 
-        if (!user.admin && user.id != userId)
+        if (!user.admin && user.id !== userId)
             throw new ForbiddenError("Only administrators can unregister other users")
 
         await getRepository(Registration).delete({ eventId, userId })

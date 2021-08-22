@@ -9,13 +9,13 @@ if (!process.env.DB_PASS) {
 
 const host = process.env.DB_HOST ?? "localhost"
 const port = Number.parseInt(process.env.DB_PORT ?? "5432")
-const database = process.env.DB_NAME ?? env == "test" ? "frilan-test" : "frilan"
+const database = process.env.DB_NAME ?? env === "test" ? "frilan-test" : "frilan"
 const username = process.env.DB_USER ?? "postgres"
 const password = process.env.DB_PASS
 
 // scripts have different paths & extension when running in production
-const root = env == "prod" ? "build" : "src"
-const ext = env == "prod" ? "js" : "ts"
+const root = env === "prod" ? "build" : "src"
+const ext = env === "prod" ? "js" : "ts"
 
 const config: ConnectionOptions = {
     type: "postgres",
@@ -25,8 +25,8 @@ const config: ConnectionOptions = {
     password,
     database,
     migrationsRun: true,
-    logging: env == "dev",
-    dropSchema: env == "test",
+    logging: env === "dev",
+    dropSchema: env === "test",
     entities: [User, Event, Registration, Tournament, Team],
     migrations: [root + "/migrations/*." + ext],
     subscribers: [root + "/subscribers/*." + ext],

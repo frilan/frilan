@@ -18,7 +18,9 @@
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "double"],
     "semi": ["error", "never"],
+    "eqeqeq": ["error", "always"],
     "eol-last": ["error", "always"],
+    "no-multi-spaces": "error",
     "no-trailing-spaces": "error"
   }
 }
