@@ -20,7 +20,7 @@ beforeAll(async () => {
 
     // create tournaments
     const tournament =
-        { name: "t", date: 0, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 8 }
+        { name: "t", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 8 }
 
     let res = await http.post(`/events/${ event1 }/tournaments`, tournament, admin.config)
     tournament1 = res.data.id
@@ -38,7 +38,8 @@ beforeAll(async () => {
 describe("create teams", () => {
 
     test("create team as admin", async () => {
-        const res = await http.post(`/tournaments/${ tournament1 }/teams`, { name: "admin", result: 999 }, admin.config)
+        const res = await http.post(`/tournaments/${ tournament1 }/teams`,
+            { name: "admin", result: 999 }, admin.config)
         expect(res.status).toBe(201)
         expect(res.data.name).toBe("admin")
         expect(res.data.members.length).toBe(1)
@@ -69,6 +70,11 @@ describe("create teams", () => {
         expect(res.status).toBe(201)
         expect(res.data.members.length).toBe(0)
         emptyTeam = res.data.id
+    })
+
+    test("prevent creating team with empty name", async () => {
+        const res = await http.post(`/tournaments/${ tournament1 }/teams`, { name: "" }, admin.config)
+        expect(res.status).toBe(400)
     })
 
     test("prevent creating team as unregistered", async () => {
@@ -166,6 +172,12 @@ describe("update teams", () => {
         const res = await http.patch("/teams/" + playerTeam, { name: "team3" }, regular.config)
         expect(res.status).toBe(200)
         expect(res.data.name).toBe("team3")
+    })
+
+    test("prevent updating result", async () => {
+        const res = await http.patch("/teams/" + playerTeam, { result: 999 }, regular.config)
+        expect(res.status).toBe(200)
+        expect(res.data.result).toBe(0)
     })
 
     test("prevent updating team as non-member", async () => {

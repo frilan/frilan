@@ -10,7 +10,7 @@ let event2: number
 const tournament1 = {
     id: NaN,
     name: "League Of Legends",
-    date: new Date("2022-03-12T14:00").toISOString(),
+    date: new Date(5).toISOString(),
     duration: 120,
     rules: "5v5 matches, best of 3",
     team_size_min: 5,
@@ -47,6 +47,34 @@ describe("create tournaments", () => {
         expect(res.status).toBe(201)
         tournament2.id = res.data.id
         expect(res.data).toMatchObject(tournament2)
+    })
+
+    test("prevent creating tournament earlier than event start", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`, { ...tournament1, date: 0 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating tournament later than event end", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`, { ...tournament1, date: 20 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating tournament with single team", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, team_count_min: 1, team_count_max: 1 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating tournament with maximum teams lower than minimum", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, team_count_min: 2, team_count_max: 1 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating tournament with maximum teams size lower than minimum", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, team_size_min: 2, team_size_max: 1 }, admin.config)
+        expect(res.status).toBe(400)
     })
 
     test("prevent creating tournament as player", async () => {

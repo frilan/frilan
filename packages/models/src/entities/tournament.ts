@@ -1,10 +1,12 @@
 import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
 import { Id } from "./common/id"
-import { IsDate, IsEnum, IsInt, IsOptional, IsString } from "class-validator"
+import { IsEnum, IsNotEmpty, IsOptional, IsPositive, IsString, Min } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Event } from "./event"
 import { Team } from "./team"
+import { GreaterOrEqual } from "../decorators/greater-or-equal"
+import { DuringEvent } from "../decorators/during-event"
 
 /**
  * @openapi
@@ -67,16 +69,17 @@ export class Tournament extends Id {
 
     @Column()
     @IsString()
+    @IsNotEmpty()
     @Trim()
     name!: string
 
     @Column()
-    @IsDate()
+    @DuringEvent("eventId")
     @Type(() => Date)
     date!: Date
 
     @Column()
-    @IsInt()
+    @IsPositive()
     duration!: number
 
     @Column({ default: "" })
@@ -86,19 +89,21 @@ export class Tournament extends Id {
     rules!: string
 
     @Column()
-    @IsInt()
+    @IsPositive()
     team_size_min!: number
 
     @Column()
-    @IsInt()
+    @IsPositive()
+    @GreaterOrEqual("team_size_min")
     team_size_max!: number
 
     @Column()
-    @IsInt()
+    @IsPositive()
     team_count_min!: number
 
     @Column()
-    @IsInt()
+    @Min(2)
+    @GreaterOrEqual("team_count_min")
     team_count_max!: number
 
     @Column({ type: "enum", enum: Status, default: Status.Hidden })

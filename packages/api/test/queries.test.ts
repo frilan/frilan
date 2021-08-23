@@ -17,7 +17,7 @@ beforeAll(async () => {
 
     // create tournament
     const tournament =
-        { name: "foo", date: 0, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 8 }
+        { name: "foo", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 8 }
     const res = await http.post(`/events/${ eventId }/tournaments`, tournament, admin.config)
     const tournamentId = res.data.id
 

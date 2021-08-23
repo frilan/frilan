@@ -22,6 +22,11 @@ describe("create events", () => {
         expect(res.data).toMatchObject(event)
     })
 
+    test("prevent creating event ending before starting", async () => {
+        const res = await http.post("/events", { name: "a", start: 10, end: 5 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
     test("prevent creating event without privilege", async () => {
         let res = await http.post("/events", event, regular.config)
         expect(res.status).toBe(403)

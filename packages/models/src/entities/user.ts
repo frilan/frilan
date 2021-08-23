@@ -1,6 +1,6 @@
 import { Column, Entity, Index, ManyToMany, OneToMany } from "typeorm"
 import { Id } from "./common/id"
-import { IsBoolean, IsOptional, IsString } from "class-validator"
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator"
 import { Exclude } from "class-transformer"
 import { Trim } from "../decorators/trim"
 import { Registration } from "./registration"
@@ -47,23 +47,28 @@ import { Team } from "./team"
 export class User extends Id {
 
     @Column({ unique: true })
-    @IsString()
+    @MinLength(2)
+    @MaxLength(30)
+    @IsNotEmpty()
     @Trim()
     username!: string
 
     @Column()
-    @IsString()
+    @MinLength(6)
     @Exclude({ toPlainOnly: true })
     password!: string
 
     @Column()
-    @IsString()
+    @MinLength(2)
+    @MaxLength(30)
+    @IsNotEmpty()
     @Trim()
     displayName!: string
 
     @Column({ nullable: true })
     @IsString()
     @IsOptional()
+    @IsNotEmpty()
     @Trim()
     profilePicture?: string
 

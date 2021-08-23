@@ -64,6 +64,12 @@ describe("register users to events", () => {
         expect(res.status).toBe(404)
     })
 
+    test("prevent departure earlier than arrival", async () => {
+        const res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`,
+            { arrival: 10, departure: 5 }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
 })
 
 describe("read registrations", () => {

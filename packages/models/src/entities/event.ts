@@ -1,10 +1,11 @@
 import { Column, Entity, OneToMany } from "typeorm"
 import { Id } from "./common/id"
-import { IsDate, IsString } from "class-validator"
+import { IsDate, IsNotEmpty, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Registration } from "./registration"
 import { Tournament } from "./tournament"
+import { GreaterOrEqual } from "../decorators/greater-or-equal"
 
 /**
  * @openapi
@@ -34,6 +35,7 @@ export class Event extends Id {
 
     @Column()
     @IsString()
+    @IsNotEmpty()
     @Trim()
     name!: string
 
@@ -44,6 +46,7 @@ export class Event extends Id {
 
     @Column()
     @IsDate()
+    @GreaterOrEqual("start")
     @Type(() => Date)
     end!: Date
 

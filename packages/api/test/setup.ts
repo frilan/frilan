@@ -16,8 +16,8 @@ export async function createUsers(amount: number): Promise<TestUser[]> {
     // `map` won't work here
     for (const i of Array(amount).keys()) {
         const username = "user-" + i
-        await http.post("/users", { username, displayName: "test", password: "test" })
-        const res = await http.get("/login", { auth: { username, password: "test" } })
+        await http.post("/users", { username, displayName: "test", password: "password" })
+        const res = await http.get("/login", { auth: { username, password: "password" } })
         users.push({
             username,
             id: res.data.user.id,
@@ -31,7 +31,7 @@ export async function createUsers(amount: number): Promise<TestUser[]> {
  * Refreshes privilege of the provided user by getting a new access token.
  */
 export async function refreshPrivilege(user: TestUser): Promise<void> {
-    const res = await http.get("/login", { auth: { username: user.username, password: "test" } })
+    const res = await http.get("/login", { auth: { username: user.username, password: "password" } })
     user.config.headers.Authorization = "Bearer " + res.data.token
 }
 
@@ -40,7 +40,7 @@ export async function refreshPrivilege(user: TestUser): Promise<void> {
  */
 export async function createEvents(amount: number, config: AxiosRequestConfig): Promise<number[]> {
     return Promise.all([...Array(amount).keys()].map(async index => {
-        const res = await http.post("/events", { name: "event-" + index, start: new Date(), end: new Date() }, config)
+        const res = await http.post("/events", { name: "event-" + index, start: 1, end: 10 }, config)
         return res.data.id
     }))
 }
