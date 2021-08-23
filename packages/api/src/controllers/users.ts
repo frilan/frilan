@@ -11,6 +11,7 @@ import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import bcrypt from "bcrypt"
 import { AuthUser } from "../middlewares/jwt-utils"
+import { FiltersParser } from "../middlewares/filters-parser"
 
 /**
  * @openapi
@@ -101,14 +102,12 @@ export class UserController {
      *                 $ref: "#/components/schemas/UserWithId"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
-    @UseBefore(RelationsParser)
-    @Authorized("admin")
+    @UseBefore(RelationsParser, FiltersParser)
+    @Authorized()
     readAll(@Ctx() ctx: Context): Promise<User[]> {
-        return getRepository(User).find({ relations: ctx.relations })
+        return getRepository(User).find({ relations: ctx.relations, where: ctx.filters })
     }
 
     /**
@@ -174,8 +173,6 @@ export class UserController {
      *               $ref: "#/components/schemas/UserWithId"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/UserNotFound"
      */

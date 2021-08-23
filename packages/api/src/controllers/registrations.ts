@@ -1,6 +1,6 @@
 import {
-    Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError, OnUndefined, Param, Put,
-    UseBefore,
+    Authorized, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError, OnUndefined, Param,
+    Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Registration, Role } from "@frilan/models"
@@ -8,7 +8,7 @@ import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
-import { checkEventPrivilege } from "./events"
+import { FiltersParser } from "../middlewares/filters-parser"
 
 /**
  * @openapi
@@ -61,19 +61,14 @@ export class RegistrationController {
      *                 $ref: "#/components/schemas/RegistrationWithIds"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
-    @UseBefore(RelationsParser)
-    async readAll(
-        @Param("event_id") eventId: number,
-        @CurrentUser({ required: true }) user: AuthUser,
-        @Ctx() ctx: Context,
-    ): Promise<Registration[]> {
-
-        await checkEventPrivilege(user, eventId)
-        return getRepository(Registration).find({ where: { eventId }, relations: ctx.relations })
+    @UseBefore(RelationsParser, FiltersParser)
+    @Authorized()
+    async readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Registration[]> {
+        // prevent filtering by event ID
+        delete ctx.filters.eventId
+        return getRepository(Registration).find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -155,23 +150,18 @@ export class RegistrationController {
      *               $ref: "#/components/schemas/RegistrationWithIds"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/RegistrationNotFound"
      */
     @Get("/:user_id(\\d+)")
     @OnUndefined(RegistrationNotFoundError)
     @UseBefore(RelationsParser)
+    @Authorized()
     read(
         @Param("event_id") eventId: number,
         @Param("user_id") userId: number,
-        @CurrentUser({ required: true }) user: AuthUser,
         @Ctx() ctx: Context,
     ): Promise<Registration | undefined> {
-
-        if (!user.admin && !(eventId in user.roles))
-            throw new ForbiddenError("Only users registered to this event can see other registrations")
 
         return getRepository(Registration).findOne({ eventId, userId }, { relations: ctx.relations })
     }

@@ -16,17 +16,23 @@ export interface AuthUser {
     roles: { [key: number]: Role }
 }
 
+/**
+ * Throws an HTTP error if there's a token in the request but it is not valid (expired, malformed, etc.).
+ */
+function checkTokenValidity(action: Action) {
+    if (!action.context.state.user && "authorization" in action.request.headers)
+        throw new UnauthorizedError(action.context.state.jwtOriginalError.message)
+}
+
 export function getUserFromToken(action: Action): AuthUser {
+    checkTokenValidity(action)
     return action.context.state.user
 }
 
 export function getAuthorizationFromToken(action: Action, roles: string[]): boolean {
+    checkTokenValidity(action)
+
     const state = action.context.state
-
-    // if JWT could not be decoded, show error message
-    if (!state.user && "authorization" in action.request.headers)
-        throw new UnauthorizedError(state.jwtOriginalError.message)
-
     if (!state.user)
         throw new UnauthorizedError("Authentication is required")
 

@@ -39,10 +39,13 @@ describe("read events", () => {
         expect(res.data).toMatchObject([event])
     })
 
-    test("prevent reading all events without privilege", async () => {
-        let res = await http.get("/events", regular.config)
-        expect(res.status).toBe(403)
-        res = await http.post("/events")
+    test("read all events as regular user", async () => {
+        const res = await http.get("/events", regular.config)
+        expect(res.status).toBe(200)
+    })
+
+    test("prevent reading all events when not logged in", async () => {
+        const res = await http.post("/events")
         expect(res.status).toBe(401)
     })
 
@@ -52,9 +55,10 @@ describe("read events", () => {
         expect(res.data).toMatchObject(event)
     })
 
-    test("prevent reading single event as unregistered", async () => {
+    test("read single event as unregistered", async () => {
         const res = await http.get("/events/" + event.id, regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
+        expect(res.data).toMatchObject(event)
     })
 
     test("read single event as registered", async () => {

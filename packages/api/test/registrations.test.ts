@@ -93,9 +93,9 @@ describe("read registrations", () => {
         expect(res.status).toBe(200)
     })
 
-    test("prevent reading all registrations by unregistered", async () => {
+    test("read all registrations by unregistered", async () => {
         const res = await http.get(`/events/${ event2 }/registrations`, regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
     })
 
     test("prevent reading all registrations when not logged in", async () => {
@@ -115,9 +115,9 @@ describe("read registrations", () => {
         expect(res.data.userId).toBe(admin.id)
     })
 
-    test("prevent reading single registration by unregistered", async () => {
+    test("read single registration by unregistered", async () => {
         const res = await http.get(`/events/${ event2 }/registrations/${ admin.id }`, regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
     })
 
     test("prevent reading single registration when not logged in", async () => {

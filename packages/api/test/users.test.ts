@@ -75,11 +75,14 @@ describe("read users", () => {
         const res = await http.get("/users", admin.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(2)
+        expect(res.data[1].username).toBe(regular.username)
     })
 
-    test("prevent reading all users as regular user", async () => {
+    test("read all users as regular user", async () => {
         const res = await http.get("/users", regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
+        expect(res.data.length).toBe(2)
+        expect(res.data[0].username).toBe(admin.username)
     })
 
     test("read single user", async () => {
@@ -138,6 +141,11 @@ describe("update users", () => {
         expect(res.status).toBe(403)
     })
 
+    test("prevent updating user when not logged in", async () => {
+        const res = await http.patch("/users/" + regular.id, { username: "garbage" })
+        expect(res.status).toBe(401)
+    })
+
     test("prevent updating non-existing user", async () => {
         const res = await http.patch("/users/9999", {}, admin.config)
         expect(res.status).toBe(404)
@@ -155,6 +163,11 @@ describe("delete users", () => {
     test("prevent deleting user as regular user", async () => {
         const res = await http.delete("/users/" + regular.id, regular.config)
         expect(res.status).toBe(403)
+    })
+
+    test("prevent deleting user when not logged in", async () => {
+        const res = await http.delete("/users/" + regular.id)
+        expect(res.status).toBe(401)
     })
 
     test("delete user as admin", async () => {

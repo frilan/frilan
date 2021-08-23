@@ -109,9 +109,9 @@ describe("read teams", () => {
         expect(res.status).toBe(200)
     })
 
-    test("prevent reading all teams as unregistered", async () => {
+    test("read all teams as unregistered", async () => {
         const res = await http.get(`/tournaments/${ tournament1 }/teams`, unregistered.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
     })
 
     test("prevent reading all teams when not logged in", async () => {
@@ -131,9 +131,10 @@ describe("read teams", () => {
         expect(res.data.name).toBe("organizer")
     })
 
-    test("prevent reading single team as unregistered", async () => {
+    test("read single team as unregistered", async () => {
         const res = await http.get("/teams/" + adminTeam, unregistered.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
+        expect(res.data.name).toBe("admin")
     })
 
     test("prevent reading single team when not logged in", async () => {
@@ -247,12 +248,13 @@ describe("read team members", () => {
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(2)
         expect(res.data[0].username).toBe(admin.username)
-        expect(res.data[1].username).toBe(regular.username)
     })
 
-    test("prevent reading members as unregistered", async () => {
+    test("read members as unregistered", async () => {
         const res = await http.get(`/teams/${ playerTeam }/members`, unregistered.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
+        expect(res.data.length).toBe(1)
+        expect(res.data[0].username).toBe(regular.username)
     })
 
     test("prevent reading members when not logged in", async () => {

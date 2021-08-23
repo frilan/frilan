@@ -1,6 +1,6 @@
 import {
-    Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param,
-    Post, Put, UseBefore,
+    Authorized, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, InternalServerError, JsonController,
+    NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Role, Team, Tournament, User } from "@frilan/models"
@@ -11,8 +11,8 @@ import { UserNotFoundError } from "./users"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
-import { checkTournamentPrivilege, TournamentNotFoundError } from "./tournaments"
-import { checkEventPrivilege } from "./events"
+import { TournamentNotFoundError } from "./tournaments"
+import { FiltersParser } from "../middlewares/filters-parser"
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
@@ -85,21 +85,16 @@ export class TournamentTeamController {
      *                 $ref: "#/components/schemas/TeamWithId"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TournamentNotFound"
      */
     @Get()
-    @UseBefore(RelationsParser)
-    async readAll(
-        @Param("tournament_id") tournamentId: number,
-        @CurrentUser({ required: true }) user: AuthUser,
-        @Ctx() ctx: Context,
-    ): Promise<Team[]> {
-
-        await checkTournamentPrivilege(user, tournamentId)
-        return getRepository(Team).find({ where: { tournamentId }, relations: ctx.relations })
+    @UseBefore(RelationsParser, FiltersParser)
+    @Authorized()
+    async readAll(@Param("tournament_id") tournamentId: number, @Ctx() ctx: Context): Promise<Team[]> {
+        // prevent filtering by tournament ID
+        delete ctx.filters.tournamentId
+        return getRepository(Team).find({ where: { tournamentId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -141,18 +136,19 @@ export class TournamentTeamController {
         @Body() team: Team,
     ): Promise<Team> {
 
+        const tournament = await getRepository(Tournament).findOne(tournamentId)
+        if (!tournament)
+            throw new TournamentNotFoundError()
+
         // by default, the team creator is automatically part of the members
         // however, admins can create teams without being registered to the event
         // if they do so, then it creates an empty team
         let registered = true
-        if (user.admin) {
-            const tournament = await getRepository(Tournament).findOne(tournamentId)
-            if (!tournament)
-                throw new TournamentNotFoundError()
-            if (!(tournament.eventId in user.roles))
+        if (!(tournament.eventId in user.roles))
+            if (user.admin)
                 registered = false
-        } else
-            await checkTournamentPrivilege(user, tournamentId)
+            else
+                throw new ForbiddenError("Only users registered to this event can create teams")
 
         const targetUser = await getRepository(User).findOne(user.id)
         if (!targetUser)
@@ -195,25 +191,15 @@ export class TeamController {
      *               $ref: "#/components/schemas/TeamWithId"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         $ref: "#/components/responses/TeamNotFound"
      */
     @GetById()
     @OnUndefined(TeamNotFoundError)
     @UseBefore(RelationsParser)
-    async read(
-        @Param("id") id: number,
-        @CurrentUser({ required: true }) user: AuthUser,
-        @Ctx() ctx: Context,
-    ): Promise<Team | undefined> {
-
-        const team = await getRepository(Team).findOne(id, { relations: ctx.relations })
-        if (team)
-            await checkTournamentPrivilege(user, team.tournamentId)
-
-        return team
+    @Authorized()
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Team | undefined> {
+        return getRepository(Team).findOne(id, { relations: ctx.relations })
     }
 
     /**
@@ -328,19 +314,11 @@ export class TeamController {
     @Get("/:id(\\d+)/members")
     @OnUndefined(TeamNotFoundError)
     @UseBefore(RelationsParser)
-    async readMembers(
-        @Param("id") id: number,
-        @CurrentUser({ required: true }) user: AuthUser,
-        @Ctx() ctx: Context,
-    ): Promise<User[] | undefined> {
-
+    @Authorized()
+    async readMembers(@Param("id") id: number, @Ctx() ctx: Context): Promise<User[] | undefined> {
         const relations = ctx.relations.map((relation: string) => "members." + relation)
         relations.unshift("members")
-
         const team = await getRepository(Team).findOne(id, { relations })
-        if (team)
-            await checkTournamentPrivilege(user, team.tournamentId)
-
         return team?.members
     }
 
@@ -379,19 +357,14 @@ export class TeamController {
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can add other users to the team")
 
-        await checkTournamentPrivilege(user, team.tournamentId)
-
-        const tournament = await getRepository(Tournament).findOne(team.tournamentId)
-        if (!tournament)
-            throw new TournamentNotFoundError()
-
-        await checkEventPrivilege(user, tournament.eventId)
-
         const targetUser = await getRepository(User).findOne(userId, { relations: ["registrations"] })
         if (!targetUser)
             throw new UserNotFoundError()
 
-        if (targetUser.registrations && !targetUser.registrations.map(r => r.eventId).includes(tournament.eventId))
+        if (!team.tournament || !targetUser.registrations)
+            throw new InternalServerError("Database returned unexpected results")
+
+        if (!targetUser.registrations.map(r => r.eventId).includes(team.tournament.eventId))
             throw new ForbiddenError("Cannot add unregistered user as member to this team")
 
         team.members?.push(targetUser)

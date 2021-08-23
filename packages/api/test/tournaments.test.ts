@@ -97,9 +97,9 @@ describe("read tournaments", () => {
         expect(res.status).toBe(200)
     })
 
-    test("prevent reading all tournaments as unregistered", async () => {
+    test("read all tournaments as unregistered", async () => {
         const res = await http.get(`/events/${ event1 }/tournaments`, regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
     })
 
     test("prevent reading all tournaments when not logged in", async () => {
@@ -121,9 +121,9 @@ describe("read tournaments", () => {
         expect(res.data.eventId).toBe(event2)
     })
 
-    test("prevent reading single tournament as unregistered", async () => {
+    test("read single tournament as unregistered", async () => {
         const res = await http.get("/tournaments/" + tournament1.id, regular.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
     })
 
     test("prevent reading single tournament when not logged in", async () => {

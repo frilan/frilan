@@ -1,6 +1,6 @@
 import {
-    Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post,
-    UseBefore,
+    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
+    Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -10,7 +10,7 @@ import { Role, Tournament } from "@frilan/models"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
-import { checkEventPrivilege } from "./events"
+import { FiltersParser } from "../middlewares/filters-parser"
 
 /**
  * @openapi
@@ -25,27 +25,6 @@ export class TournamentNotFoundError extends NotFoundError {
     constructor() {
         super("This tournament does not exist")
     }
-}
-
-/**
- * Restrict access to users that are registered to the event hosting the tournament.
- *
- * @param user The authenticated user
- * @param tournament The tournament object or the ID of the tournament
- */
-export async function checkTournamentPrivilege(user: AuthUser, tournament: Tournament | number): Promise<void> {
-    if (user.admin)
-        return
-
-    // if passing an ID as argument
-    if (typeof tournament === "number")
-        try {
-            tournament = await getRepository(Tournament).findOneOrFail(tournament)
-        } catch (err) {
-            throw new TournamentNotFoundError()
-        }
-
-    await checkEventPrivilege(user, tournament.eventId)
 }
 
 /**
@@ -94,19 +73,14 @@ export class EventTournamentController {
      *                 $ref: "#/components/schemas/TournamentWithId"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
-     *       403:
-     *         $ref: "#/components/responses/NotEnoughPrivilege"
      */
     @Get()
-    @UseBefore(RelationsParser)
-    async readAll(
-        @Param("event_id") eventId: number,
-        @CurrentUser({ required: true }) user: AuthUser,
-        @Ctx() ctx: Context,
-    ): Promise<Tournament[]> {
-
-        await checkEventPrivilege(user, eventId)
-        return getRepository(Tournament).find({ where: { eventId }, relations: ctx.relations })
+    @UseBefore(RelationsParser, FiltersParser)
+    @Authorized()
+    async readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Tournament[]> {
+        // prevent filtering by event ID
+        delete ctx.filters.eventId
+        return getRepository(Tournament).find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -194,16 +168,12 @@ export class TournamentController {
     @GetById()
     @OnUndefined(TournamentNotFoundError)
     @UseBefore(RelationsParser)
+    @Authorized()
     async read(
         @Param("id") id: number,
-        @CurrentUser({ required: true }) user: AuthUser,
         @Ctx() ctx: Context,
     ): Promise<Tournament | undefined> {
-
-        const tournament = await getRepository(Tournament).findOne(id, { relations: ctx.relations })
-        if (tournament)
-            await checkTournamentPrivilege(user, tournament)
-        return tournament
+        return getRepository(Tournament).findOne(id, { relations: ctx.relations })
     }
 
     /**
