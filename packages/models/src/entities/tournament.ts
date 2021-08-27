@@ -2,11 +2,10 @@ import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsEnum, IsNotEmpty, IsOptional, IsPositive, IsString, Min } from "class-validator"
 import { Trim } from "../decorators/trim"
-import { Type } from "class-transformer"
+import { Exclude, Type } from "class-transformer"
 import { Event } from "./event"
 import { Team } from "./team"
 import { GreaterOrEqual } from "../decorators/greater-or-equal"
-import { DuringEvent } from "../decorators/during-event"
 
 /**
  * @openapi
@@ -74,7 +73,6 @@ export class Tournament extends Id {
     name!: string
 
     @Column()
-    @DuringEvent("eventId")
     @Type(() => Date)
     date!: Date
 
@@ -112,6 +110,7 @@ export class Tournament extends Id {
     status!: Status
 
     @Column()
+    @Exclude({ toClassOnly: true })
     eventId!: number
 
     @ManyToOne("Event", { onDelete: "CASCADE" })

@@ -1,16 +1,28 @@
 import {
-    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
-    Param, Post, UseBefore,
+    Authorized, BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError,
+    OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
-import { Role, Tournament } from "@frilan/models"
+import { Event, Role, Tournament } from "@frilan/models"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
+import { EventNotFoundError } from "./events"
+
+/**
+ * Make sure the tournament is happening during the event.
+ */
+async function checkDate(eventId: number, tournament: Tournament) {
+    const event = await getRepository(Event).findOne(eventId)
+    if (!event)
+        throw new EventNotFoundError()
+    if (tournament.date < event.start || tournament.date > event.end)
+        throw new BadRequestError("The tournament must be happening during the event")
+}
 
 /**
  * @openapi
@@ -126,6 +138,8 @@ export class EventTournamentController {
         if (!user.admin && user.roles[eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can create tournaments")
 
+        await checkDate(eventId, tournament)
+
         try {
             tournament.eventId = eventId
             return await getRepository(Tournament).save(tournament)
@@ -216,6 +230,8 @@ export class TournamentController {
         const tournament = await getRepository(Tournament).findOne(id)
         if (!tournament)
             throw new TournamentNotFoundError()
+
+        await checkDate(tournament.eventId, tournament)
 
         if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can update tournaments")
