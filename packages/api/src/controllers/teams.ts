@@ -1,9 +1,9 @@
 import {
-    Authorized, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, InternalServerError, JsonController,
-    NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
+    Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, InternalServerError,
+    JsonController, NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { Role, Team, Tournament, User } from "@frilan/models"
+import { Role, Status, Team, Tournament, User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -150,6 +150,9 @@ export class TournamentTeamController {
             else
                 throw new ForbiddenError("Only users registered to this event can create teams")
 
+        if (tournament.status === Status.Started || tournament.status === Status.Finished)
+            throw new BadRequestError("Cannot add team to tournaments have already started")
+
         const targetUser = await getRepository(User).findOne(user.id)
         if (!targetUser)
             throw new UserNotFoundError()
@@ -247,6 +250,9 @@ export class TeamController {
         if (!user.admin && !isMember && !await isOrganizer(user, team))
             throw new ForbiddenError("Only members of this team can update the team")
 
+        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+            throw new BadRequestError("Cannot update team if the tournament has already started")
+
         Object.assign(team, updatedTeam)
         return await getRepository(Team).save(team)
     }
@@ -273,14 +279,15 @@ export class TeamController {
     @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
-        if (!user.admin) {
-            const team = await getRepository(Team).findOne({ where: { id }, relations: ["tournament"] })
-            if (!team)
-                throw new TeamNotFoundError()
+        const team = await getRepository(Team).findOne({ where: { id }, relations: ["tournament"] })
+        if (!team)
+            throw new TeamNotFoundError()
 
-            if (!await isOrganizer(user, team))
-                throw new ForbiddenError("Only administrators and organizers can delete teams")
-        }
+        if (!user.admin && !await isOrganizer(user, team))
+            throw new ForbiddenError("Only administrators and organizers can delete teams")
+
+        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+            throw new BadRequestError("Cannot delete team if the tournament has already started")
 
         await getRepository(Team).delete(id)
     }
@@ -357,6 +364,9 @@ export class TeamController {
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can add other users to the team")
 
+        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+            throw new BadRequestError("Cannot add member to the team if the tournament has already started")
+
         const targetUser = await getRepository(User).findOne(userId, { relations: ["registrations"] })
         if (!targetUser)
             throw new UserNotFoundError()
@@ -399,12 +409,15 @@ export class TeamController {
         @Param("user_id") userId: number,
     ): Promise<void> {
 
-        const team = await getRepository(Team).findOne(id, { relations: ["members"] })
+        const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can remove other users from the team")
+
+        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+            throw new BadRequestError("Cannot remove member from the team if the tournament has already started")
 
         team.members = team.members?.filter(({ id }) => id !== userId)
         if (!team.members?.length)

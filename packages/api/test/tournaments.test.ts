@@ -20,7 +20,8 @@ const tournament1 = {
     status: Status.Ready,
 }
 
-const tournament2 = { ...tournament1 }
+const tournament2 = { ...tournament1, status: Status.Hidden }
+const tournament3 = { ...tournament2 }
 
 beforeAll(async () => {
     [admin, regular] = await createUsers(2)
@@ -77,6 +78,16 @@ describe("create tournaments", () => {
         expect(res.status).toBe(400)
     })
 
+    test("prevent creating tournament that has already started", async () => {
+        let res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, status: Status.Started }, admin.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, status: Status.Finished }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
     test("prevent creating tournament as player", async () => {
         const res = await http.post(`/events/${ event1 }/tournaments`, tournament2, regular.config)
         expect(res.status).toBe(403)
@@ -107,9 +118,10 @@ describe("read tournaments", () => {
 
     test("read all tournaments as admin", async () => {
         // create one more tournament
-        await http.post(`/events/${ event1 }/tournaments`, tournament2, admin.config)
+        let res = await http.post(`/events/${ event1 }/tournaments`, tournament2, admin.config)
+        tournament3.id = res.data.id
 
-        let res = await http.get(`/events/${ event1 }/tournaments`, admin.config)
+        res = await http.get(`/events/${ event1 }/tournaments`, admin.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(2)
         expect(res.data[0]).toMatchObject(tournament1)
@@ -128,6 +140,7 @@ describe("read tournaments", () => {
     test("read all tournaments as unregistered", async () => {
         const res = await http.get(`/events/${ event1 }/tournaments`, regular.config)
         expect(res.status).toBe(200)
+        expect(res.data.length).toBe(1) // no hidden tournament
     })
 
     test("prevent reading all tournaments when not logged in", async () => {
@@ -152,6 +165,11 @@ describe("read tournaments", () => {
     test("read single tournament as unregistered", async () => {
         const res = await http.get("/tournaments/" + tournament1.id, regular.config)
         expect(res.status).toBe(200)
+    })
+
+    test("prevent reading hidden tournament as player", async () => {
+        const res = await http.get("/tournaments/" + tournament3.id, regular.config)
+        expect(res.status).toBe(404)
     })
 
     test("prevent reading single tournament when not logged in", async () => {
@@ -180,6 +198,17 @@ describe("update tournaments", () => {
         const res = await http.patch("/tournaments/" + tournament2.id, tournament2, regular.config)
         expect(res.status).toBe(200)
         expect(res.data).toMatchObject(tournament2)
+    })
+
+    test("prevent starting tournament that is not ready", async () => {
+        const res = await http.patch("/tournaments/" + tournament2.id, { status: Status.Started }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent hiding tournament that has started", async () => {
+        await http.patch("/tournaments/" + tournament1.id, { status: Status.Started }, admin.config)
+        const res = await http.patch("/tournaments/" + tournament1.id, { status: Status.Hidden }, admin.config)
+        expect(res.status).toBe(400)
     })
 
     test("prevent creating tournament as unregistered", async () => {

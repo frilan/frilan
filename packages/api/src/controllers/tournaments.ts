@@ -1,12 +1,12 @@
 import {
-    Authorized, BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError,
-    OnUndefined, Param, Post, UseBefore,
+    BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
+    Param, Post, UseBefore,
 } from "routing-controllers"
-import { getRepository } from "typeorm"
+import { getRepository, Not } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
-import { Event, Role, Tournament } from "@frilan/models"
+import { Event, Role, Status, Tournament } from "@frilan/models"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
@@ -88,10 +88,18 @@ export class EventTournamentController {
      */
     @Get()
     @UseBefore(RelationsParser, FiltersParser)
-    @Authorized()
-    async readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Tournament[]> {
+    async readAll(
+        @Param("event_id") eventId: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Ctx() ctx: Context,
+    ): Promise<Tournament[]> {
+
         // prevent filtering by event ID
         delete ctx.filters.eventId
+        // don't show hidden tournaments if not admin/organizer
+        if (!user.admin && user.roles[eventId] !== Role.Organizer)
+            ctx.filters.status = Not(Status.Hidden)
+
         return getRepository(Tournament).find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
     }
 
@@ -140,6 +148,9 @@ export class EventTournamentController {
 
         await checkDate(eventId, tournament)
 
+        if (tournament.status === Status.Started || tournament.status === Status.Finished)
+            throw new BadRequestError("The tournament cannot have already started")
+
         try {
             tournament.eventId = eventId
             return await getRepository(Tournament).save(tournament)
@@ -182,12 +193,19 @@ export class TournamentController {
     @GetById()
     @OnUndefined(TournamentNotFoundError)
     @UseBefore(RelationsParser)
-    @Authorized()
     async read(
         @Param("id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
         @Ctx() ctx: Context,
     ): Promise<Tournament | undefined> {
-        return getRepository(Tournament).findOne(id, { relations: ctx.relations })
+
+        const tournament = await getRepository(Tournament).findOne(id, { relations: ctx.relations })
+        // don't show hidden tournament if not admin/organizer
+        if (tournament?.status === Status.Hidden)
+            if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
+                return undefined
+
+        return tournament
     }
 
     /**
@@ -231,10 +249,22 @@ export class TournamentController {
         if (!tournament)
             throw new TournamentNotFoundError()
 
-        await checkDate(tournament.eventId, tournament)
-
         if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can update tournaments")
+
+        await checkDate(tournament.eventId, tournament)
+
+        // check for updated status
+        if (updatedTournament.status && updatedTournament.status !== tournament.status) {
+            if (updatedTournament.status === Status.Hidden && tournament.status !== Status.Ready)
+                throw new BadRequestError("Cannot hide tournament if it has already started")
+            if (updatedTournament.status === Status.Ready && tournament.status !== Status.Hidden)
+                throw new BadRequestError("Cannot make tournament ready if it has already started")
+            if (updatedTournament.status === Status.Started && tournament.status !== Status.Ready)
+                throw new BadRequestError("Cannot start tournament if it is not ready")
+            if (updatedTournament.status === Status.Finished)
+                throw new BadRequestError("Cannot set status to finished before the tournament ended")
+        }
 
         Object.assign(tournament, updatedTournament)
         return await getRepository(Tournament).save(tournament)
