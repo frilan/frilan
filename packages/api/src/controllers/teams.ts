@@ -1,13 +1,12 @@
 import {
-    Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, InternalServerError,
-    JsonController, NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
+    Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, JsonController,
+    NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
-import { getRepository } from "typeorm"
-import { Role, Status, Team, Tournament, User } from "@frilan/models"
+import { getConnection, getRepository } from "typeorm"
+import { Registration, Role, Status, Team, Tournament } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
-import { UserNotFoundError } from "./users"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
@@ -140,27 +139,23 @@ export class TournamentTeamController {
         if (!tournament)
             throw new TournamentNotFoundError()
 
-        // by default, the team creator is automatically part of the members
-        // however, admins can create teams without being registered to the event
-        // if they do so, then it creates an empty team
-        let registered = true
-        if (!(tournament.eventId in user.roles))
-            if (user.admin)
-                registered = false
-            else
-                throw new ForbiddenError("Only users registered to this event can create teams")
-
         if (tournament.status === Status.Started || tournament.status === Status.Finished)
             throw new BadRequestError("Cannot add team to tournaments have already started")
 
-        const targetUser = await getRepository(User).findOne(user.id)
-        if (!targetUser)
-            throw new UserNotFoundError()
+        const registration = await getRepository(Registration)
+            .findOne({ userId: user.id, eventId: tournament.eventId })
+
+        // by default, the team creator is automatically part of the members
+        // however, admins can create teams without being registered to the event
+        // if they do so, then it creates an empty team
+        if (!registration && !user.admin)
+            throw new ForbiddenError("Only users registered to this event can create teams")
 
         try {
             team.tournamentId = tournamentId
             // add current user into the team if registered to the event
-            team.members = registered ? [targetUser] : []
+            team.members = registration ? [registration] : []
+
             return await getRepository(Team).save(team)
 
         } catch (err) {
@@ -246,13 +241,14 @@ export class TeamController {
         if (!team)
             throw new TeamNotFoundError()
 
-        const isMember = team.members?.map(({ id }) => id).includes(user.id)
+        const isMember = team.members?.map(({ userId }) => userId).includes(user.id)
         if (!user.admin && !isMember && !await isOrganizer(user, team))
             throw new ForbiddenError("Only members of this team can update the team")
 
         if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
             throw new BadRequestError("Cannot update team if the tournament has already started")
 
+        delete team.members
         Object.assign(team, updatedTeam)
         return await getRepository(Team).save(team)
     }
@@ -269,6 +265,8 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: team deleted
+     *       400:
+     *         description: tournament has already started
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
@@ -301,7 +299,7 @@ export class TeamController {
      *       - teams
      *     parameters:
      *       - $ref: "#/components/parameters/TeamId"
-     *       - $ref: "#/components/parameters/UserRelations"
+     *       - $ref: "#/components/parameters/RegistrationRelations"
      *     responses:
      *       200:
      *         description: success
@@ -310,7 +308,7 @@ export class TeamController {
      *             schema:
      *               type: array
      *               items:
-     *                 $ref: "#/components/schemas/UserWithId"
+     *                 $ref: "#/components/schemas/RegistrationWithIds"
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
@@ -322,7 +320,7 @@ export class TeamController {
     @OnUndefined(TeamNotFoundError)
     @UseBefore(RelationsParser)
     @Authorized()
-    async readMembers(@Param("id") id: number, @Ctx() ctx: Context): Promise<User[] | undefined> {
+    async readMembers(@Param("id") id: number, @Ctx() ctx: Context): Promise<Registration[] | undefined> {
         const relations = ctx.relations.map((relation: string) => "members." + relation)
         relations.unshift("members")
         const team = await getRepository(Team).findOne(id, { relations })
@@ -342,16 +340,18 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: user added into the team
+     *       400:
+     *         description: user is not registered to event or tournament has already started
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
      *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
-     *         description: team and/or user not found
+     *         $ref: "#/components/responses/TeamNotFound"
      */
     @Put("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async addPlayer(
+    async addMember(
         @Param("id") id: number,
         @CurrentUser({ required: true }) user: AuthUser,
         @Param("user_id") userId: number,
@@ -367,18 +367,19 @@ export class TeamController {
         if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
             throw new BadRequestError("Cannot add member to the team if the tournament has already started")
 
-        const targetUser = await getRepository(User).findOne(userId, { relations: ["registrations"] })
-        if (!targetUser)
-            throw new UserNotFoundError()
+        const registration = await getRepository(Registration)
+            .findOne({ userId: userId, eventId: team.tournament?.eventId })
+        if (!registration)
+            throw new BadRequestError("Cannot add member that is not registered to the event")
 
-        if (!team.tournament || !targetUser.registrations)
-            throw new InternalServerError("Database returned unexpected results")
-
-        if (!targetUser.registrations.map(r => r.eventId).includes(team.tournament.eventId))
-            throw new ForbiddenError("Cannot add unregistered user as member to this team")
-
-        team.members?.push(targetUser)
-        await getRepository(Team).save(team)
+        // skip if member already in team
+        if (!team.members?.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
+            // for some reason, members.push(registration) + save(team) doesn't work here
+            await getConnection()
+                .createQueryBuilder()
+                .relation(Team, "members")
+                .of(team)
+                .add({ userId: registration.userId, eventId: registration.eventId })
     }
 
     /**
@@ -394,6 +395,8 @@ export class TeamController {
      *     responses:
      *       204:
      *         description: user removed from the team
+     *       400:
+     *         description: tournament has already started
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
@@ -403,7 +406,7 @@ export class TeamController {
      */
     @Delete("/:id(\\d+)/members/:user_id(\\d+)")
     @OnUndefined(204)
-    async removePlayer(
+    async removeMember(
         @Param("id") id: number,
         @CurrentUser({ required: true }) user: AuthUser,
         @Param("user_id") userId: number,
@@ -419,11 +422,15 @@ export class TeamController {
         if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
             throw new BadRequestError("Cannot remove member from the team if the tournament has already started")
 
-        team.members = team.members?.filter(({ id }) => id !== userId)
+        team.members = team.members?.filter(member => member.userId !== userId)
         if (!team.members?.length)
             // also remove team if empty
             await getRepository(Team).delete(id)
         else
-            await getRepository(Team).save(team)
+            // for some reason, save(team) doesn't work here
+            await getConnection()
+                .createQueryBuilder()
+                .relation(Team, "members").of(team)
+                .remove({ userId, eventId: team.tournament?.eventId })
     }
 }

@@ -34,15 +34,15 @@ describe("load relations", () => {
     })
 
     test("load multiple relations", async () => {
-        const res = await http.get(`/users/${ admin.id }?load=registrations,teams`, admin.config)
+        const res = await http.get(`/events/${ eventId }?load=registrations,tournaments`, admin.config)
         expect(res.status).toBe(200)
-        expect(res.data.teams[0].name).toBe("bar")
+        expect(res.data.tournaments[0].name).toBe("foo")
     })
 
     test("load relations with multiples parameters", async () => {
-        const res = await http.get(`/users/${ admin.id }?load=registrations&load=teams`, admin.config)
+        const res = await http.get(`/events/${ eventId }?load=registrations&load=tournaments`, admin.config)
         expect(res.status).toBe(200)
-        expect(res.data.teams[0].name).toBe("bar")
+        expect(res.data.tournaments[0].name).toBe("foo")
     })
 
     test("load nested relations", async () => {
@@ -53,11 +53,15 @@ describe("load relations", () => {
     })
 
     test("load deeply nested relations", async () => {
-        const res = await http.get(`/users/${ admin.id }?load=teams,teams.tournament,teams.tournament.event`, admin.config)
+        const res = await http.get(
+            `/users/${ admin.id }?load=registrations,registrations.teams`
+            + "&load=registrations.teams.tournament,registrations.teams.tournament.event",
+            admin.config)
+
         expect(res.status).toBe(200)
-        expect(res.data.teams[0].name).toBe("bar")
-        expect(res.data.teams[0].tournament.name).toBe("foo")
-        expect(res.data.teams[0].tournament.event.name).toBe("event-0")
+        expect(res.data.registrations[0].teams[0].name).toBe("bar")
+        expect(res.data.registrations[0].teams[0].tournament.name).toBe("foo")
+        expect(res.data.registrations[0].teams[0].tournament.event.name).toBe("event-0")
     })
 
     test("prevent loading non-existing relations", async () => {

@@ -34,7 +34,7 @@ export class RegistrationNotFoundError extends NotFoundError {
  *       in: query
  *       schema:
  *         type: string
- *         example: user,event
+ *         example: user,event,teams
  *       description: load related resources into response
  */
 @JsonController("/events/:event_id(\\d+)/registrations")

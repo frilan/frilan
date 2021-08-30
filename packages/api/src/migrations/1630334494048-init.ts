@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1629149015052 implements MigrationInterface {
-    name = "init1629149015052"
+export class init1630334494048 implements MigrationInterface {
+    name = "init1630334494048"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -76,18 +76,23 @@ export class init1629149015052 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE TABLE "team_members_user"
+            CREATE TABLE "team_members_registration"
             (
-                "teamId" integer NOT NULL,
-                "userId" integer NOT NULL,
-                CONSTRAINT "PK_946e161af78b3cc26186236d3bd" PRIMARY KEY ("teamId", "userId")
+                "teamId"              integer NOT NULL,
+                "registrationUserId"  integer NOT NULL,
+                "registrationEventId" integer NOT NULL,
+                CONSTRAINT "PK_bb17ac8ab046cb444505a6c24fd" PRIMARY KEY (
+                                                                         "teamId",
+                                                                         "registrationUserId",
+                                                                         "registrationEventId"
+                    )
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "IDX_b3f2c420a7871621010a4e1d21" ON "team_members_user" ("teamId")
+            CREATE INDEX "IDX_b931a8080e4373e3b469a50e6f" ON "team_members_registration" ("teamId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "IDX_45db1cff3b87cc40512fb2963e" ON "team_members_user" ("userId")
+            CREATE INDEX "IDX_fec4bcafb04349584b84f75ec8" ON "team_members_registration" ("registrationUserId", "registrationEventId")
         `)
         await queryRunner.query(`
             ALTER TABLE "registration"
@@ -106,23 +111,23 @@ export class init1629149015052 implements MigrationInterface {
                 ADD CONSTRAINT "FK_6c381b833f42438bdf2206f47bd" FOREIGN KEY ("tournamentId") REFERENCES "tournament" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
-            ALTER TABLE "team_members_user"
-                ADD CONSTRAINT "FK_b3f2c420a7871621010a4e1d212" FOREIGN KEY ("teamId") REFERENCES "team" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ALTER TABLE "team_members_registration"
+                ADD CONSTRAINT "FK_b931a8080e4373e3b469a50e6f7" FOREIGN KEY ("teamId") REFERENCES "team" ("id") ON DELETE CASCADE ON UPDATE CASCADE
         `)
         await queryRunner.query(`
-            ALTER TABLE "team_members_user"
-                ADD CONSTRAINT "FK_45db1cff3b87cc40512fb2963ea" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ALTER TABLE "team_members_registration"
+                ADD CONSTRAINT "FK_fec4bcafb04349584b84f75ec81" FOREIGN KEY ("registrationUserId", "registrationEventId") REFERENCES "registration" ("userId", "eventId") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "team_members_user"
-                DROP CONSTRAINT "FK_45db1cff3b87cc40512fb2963ea"
+            ALTER TABLE "team_members_registration"
+                DROP CONSTRAINT "FK_fec4bcafb04349584b84f75ec81"
         `)
         await queryRunner.query(`
-            ALTER TABLE "team_members_user"
-                DROP CONSTRAINT "FK_b3f2c420a7871621010a4e1d212"
+            ALTER TABLE "team_members_registration"
+                DROP CONSTRAINT "FK_b931a8080e4373e3b469a50e6f7"
         `)
         await queryRunner.query(`
             ALTER TABLE "team"
@@ -141,13 +146,13 @@ export class init1629149015052 implements MigrationInterface {
                 DROP CONSTRAINT "FK_af6d07a8391d587c4dd40e7a5a9"
         `)
         await queryRunner.query(`
-            DROP INDEX "IDX_45db1cff3b87cc40512fb2963e"
+            DROP INDEX "IDX_fec4bcafb04349584b84f75ec8"
         `)
         await queryRunner.query(`
-            DROP INDEX "IDX_b3f2c420a7871621010a4e1d21"
+            DROP INDEX "IDX_b931a8080e4373e3b469a50e6f"
         `)
         await queryRunner.query(`
-            DROP TABLE "team_members_user"
+            DROP TABLE "team_members_registration"
         `)
         await queryRunner.query(`
             DROP TABLE "team"

@@ -1,10 +1,9 @@
-import { Column, Entity, Index, ManyToMany, OneToMany } from "typeorm"
+import { Column, Entity, Index, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator"
 import { Exclude } from "class-transformer"
 import { Trim } from "../decorators/trim"
 import { Registration } from "./registration"
-import { Team } from "./team"
 
 /**
  * @openapi
@@ -79,8 +78,5 @@ export class User extends Id {
 
     @OneToMany("Registration", "user")
     registrations?: Registration[]
-
-    @ManyToMany("Team", "members")
-    teams?: Team[]
 
 }

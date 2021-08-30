@@ -3,8 +3,8 @@ import { Id } from "./common/id"
 import { IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Tournament } from "./tournament"
-import { User } from "./user"
 import { Exclude } from "class-transformer"
+import { Registration } from "./registration"
 
 /**
  * @openapi
@@ -45,13 +45,14 @@ export class Team extends Id {
     result!: number
 
     @Column()
+    @Exclude({ toClassOnly: true })
     tournamentId!: number
 
     @ManyToOne("Tournament", { onDelete: "CASCADE" })
     tournament?: Tournament
 
-    @ManyToMany("User", "teams")
+    @ManyToMany("Registration", "teams")
     @JoinTable()
-    members?: User[]
+    members?: Registration[]
 
 }

@@ -47,7 +47,7 @@ describe("create teams", () => {
         expect(res.status).toBe(201)
         expect(res.data.name).toBe("admin")
         expect(res.data.members.length).toBe(1)
-        expect(res.data.members[0].username).toBe(admin.username)
+        expect(res.data.members[0].userId).toBe(admin.id)
         expect(res.data.tournamentId).toBe(hiddenTournament)
         // make sure result is set to default value
         expect(res.data.result).toBe(0)
@@ -58,14 +58,14 @@ describe("create teams", () => {
         const res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "organizer" }, regular.config)
         expect(res.status).toBe(201)
         expect(res.data.tournamentId).toBe(readyTournament)
-        expect(res.data.members[0].username).toBe(regular.username)
+        expect(res.data.members[0].userId).toBe(regular.id)
         organizerTeam = res.data.id
     })
 
     test("create team as player", async () => {
         const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "player" }, regular.config)
         expect(res.status).toBe(201)
-        expect(res.data.members[0].username).toBe(regular.username)
+        expect(res.data.members[0].userId).toBe(regular.id)
         playerTeam = res.data.id
     })
 
@@ -249,7 +249,7 @@ describe("add team members", () => {
 
     test("prevent adding unregistered members", async () => {
         const res = await http.put(`/teams/${ adminTeam }/members/${ unregistered.id }`, {}, admin.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(400)
     })
 
     test("prevent adding other members as player", async () => {
@@ -259,17 +259,12 @@ describe("add team members", () => {
 
     test("prevent joining team as unregistered", async () => {
         const res = await http.put(`/teams/${ adminTeam }/members/${ unregistered.id }`, {}, unregistered.config)
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(400)
     })
 
     test("prevent adding member when not logged in", async () => {
         const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {})
         expect(res.status).toBe(401)
-    })
-
-    test("prevent adding non-existing member", async () => {
-        const res = await http.put(`/teams/${ adminTeam }/members/999`, {}, admin.config)
-        expect(res.status).toBe(404)
     })
 
 })
@@ -280,21 +275,21 @@ describe("read team members", () => {
         const res = await http.get(`/teams/${ emptyTeam }/members`, admin.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(1)
-        expect(res.data[0].username).toBe(regular.username)
+        expect(res.data[0].userId).toBe(regular.id)
     })
 
     test("read members as registered", async () => {
         const res = await http.get(`/teams/${ adminTeam }/members`, regular.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(2)
-        expect(res.data[0].username).toBe(admin.username)
+        expect(res.data[0].userId).toBe(admin.id)
     })
 
     test("read members as unregistered", async () => {
         const res = await http.get(`/teams/${ playerTeam }/members`, unregistered.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(1)
-        expect(res.data[0].username).toBe(regular.username)
+        expect(res.data[0].userId).toBe(regular.id)
     })
 
     test("prevent reading members when not logged in", async () => {

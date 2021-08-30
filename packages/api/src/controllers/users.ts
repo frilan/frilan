@@ -76,7 +76,7 @@ export class AdminDeletedError extends ForbiddenError {
  *       in: query
  *       schema:
  *         type: string
- *         example: registrations,teams
+ *         example: registrations
  *       description: load related resources into response
  */
 @JsonController("/users")
