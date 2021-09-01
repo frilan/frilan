@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1630334494048 implements MigrationInterface {
-    name = "init1630334494048"
+export class init1630585817671 implements MigrationInterface {
+    name = "init1630585817671"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -71,6 +71,7 @@ export class init1630334494048 implements MigrationInterface {
                 "id"           SERIAL            NOT NULL,
                 "name"         character varying NOT NULL,
                 "result"       integer           NOT NULL DEFAULT '0',
+                "rank"         integer,
                 "tournamentId" integer           NOT NULL,
                 CONSTRAINT "PK_f57d8293406df4af348402e4b74" PRIMARY KEY ("id")
             )
@@ -116,7 +117,7 @@ export class init1630334494048 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "team_members_registration"
-                ADD CONSTRAINT "FK_fec4bcafb04349584b84f75ec81" FOREIGN KEY ("registrationUserId", "registrationEventId") REFERENCES "registration" ("userId", "eventId") ON DELETE NO ACTION ON UPDATE NO ACTION
+                ADD CONSTRAINT "FK_fec4bcafb04349584b84f75ec81" FOREIGN KEY ("registrationUserId", "registrationEventId") REFERENCES "registration" ("userId", "eventId") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
 

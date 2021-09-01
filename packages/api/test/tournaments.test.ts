@@ -6,6 +6,8 @@ let admin: TestUser
 let regular: TestUser
 let event1: number
 let event2: number
+let team1: number
+let team2: number
 
 const tournament1 = {
     id: NaN,
@@ -15,7 +17,7 @@ const tournament1 = {
     rules: "5v5 matches, best of 3",
     team_size_min: 5,
     team_size_max: 6,
-    team_count_min: 4,
+    team_count_min: 2,
     team_count_max: 16,
     status: Status.Ready,
 }
@@ -206,13 +208,14 @@ describe("update tournaments", () => {
     })
 
     test("prevent hiding tournament that has started", async () => {
-        await http.patch("/tournaments/" + tournament1.id, { status: Status.Started }, admin.config)
-        const res = await http.patch("/tournaments/" + tournament1.id, { status: Status.Hidden }, admin.config)
+        let res = await http.post(`events/${ event1 }/tournaments`, tournament1, admin.config)
+        await http.patch("/tournaments/" + res.data.id, { status: Status.Started }, admin.config)
+        res = await http.patch("/tournaments/" + res.data.id, { status: Status.Hidden }, admin.config)
         expect(res.status).toBe(400)
     })
 
-    test("prevent creating tournament as unregistered", async () => {
-        const res = await http.post(`/events/${ event1 }/tournaments`, tournament2, regular.config)
+    test("prevent updating tournament as unregistered", async () => {
+        const res = await http.patch("/tournaments/" + tournament1.id, { name: "Garbage" }, regular.config)
         expect(res.status).toBe(403)
     })
 
@@ -237,9 +240,128 @@ describe("update tournaments", () => {
 
 })
 
+describe("end tournaments", () => {
+
+    test("prevent ending tournament that hasn't started", async () => {
+        // register user to event
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Organizer }, admin.config)
+        await refreshPrivilege(regular)
+
+        // add teams to tournament
+        let res = await http.post(`/tournaments/${ tournament1.id }/teams`, { name: "team 1" }, admin.config)
+        team1 = res.data.id
+        res = await http.post(`/tournaments/${ tournament1.id }/teams`, { name: "team 2" }, regular.config)
+        team2 = res.data.id
+
+        // try ending the tournament
+        res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("end tournament as admin", async () => {
+        // start tournament
+        await http.patch(`/tournaments/${ tournament1.id }`, { status: Status.Started }, admin.config)
+
+        // end tournament and update scores
+        let res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
+        expect(res.status).toBe(200)
+
+        // check scores
+        res = await http.get(`/teams/${ team1 }`, admin.config)
+        expect(res.data.result).toBe(15)
+        res = await http.get(`/teams/${ team2 }`, admin.config)
+        expect(res.data.result).toBe(184)
+
+        res = await http.get(`/events/${ event1 }/registrations/${ admin.id }`, admin.config)
+        expect(res.data.score).toBe(15)
+        res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, regular.config)
+        expect(res.data.score).toBe(184)
+    })
+
+    test("end tournament as organizer", async () => {
+        // add teams to tournament
+        let res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 3" }, admin.config)
+        const team3 = res.data.id
+        res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 4" }, regular.config)
+        const team4 = res.data.id
+
+        // start tournament
+        await http.patch(`/tournaments/${ tournament3.id }`, { status: Status.Ready }, admin.config)
+        await http.patch(`/tournaments/${ tournament3.id }`, { status: Status.Started }, admin.config)
+
+        // end tournament and update scores
+        res = await http.post(`/tournaments/${ tournament3.id }/end`,
+            { ranks: [[team4, team3]], points: 50, distribution: "exponential" }, regular.config)
+        expect(res.status).toBe(200)
+
+        // check scores
+        res = await http.get(`/teams/${ team3 }`, admin.config)
+        expect(res.data.result).toBe(50)
+        res = await http.get(`/teams/${ team4 }`, admin.config)
+        expect(res.data.result).toBe(50)
+
+        res = await http.get(`/events/${ event1 }/registrations/${ admin.id }`, admin.config)
+        expect(res.data.score).toBe(15 + 50)
+        res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, regular.config)
+        expect(res.data.score).toBe(184 + 50)
+    })
+
+    test("overwrite ranks and scores", async () => {
+        let res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team1, team2], points: 75, distribution: "exponential" }, admin.config)
+        expect(res.status).toBe(200)
+
+        // check scores
+        res = await http.get(`/teams/${ team1 }`, admin.config)
+        expect(res.data.result).toBe(138)
+        res = await http.get(`/teams/${ team2 }`, admin.config)
+        expect(res.data.result).toBe(11)
+
+        res = await http.get(`/events/${ event1 }/registrations/${ admin.id }`, admin.config)
+        expect(res.data.score).toBe(138 + 50)
+        res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, regular.config)
+        expect(res.data.score).toBe(11 + 50)
+    })
+
+    test("prevent missing teams in ranking", async () => {
+        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team2], points: 100, distribution: "exponential" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent ending tournament as player", async () => {
+        // update role
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Player }, admin.config)
+        await refreshPrivilege(regular)
+
+        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team1, team2], points: 100, distribution: "exponential" }, regular.config)
+        expect(res.status).toBe(403)
+    })
+
+    test("prevent ending tournament when not logged in", async () => {
+        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+            { ranks: [team1, team2], points: 100, distribution: "exponential" })
+        expect(res.status).toBe(401)
+    })
+
+    test("prevent ending non-existing tournament", async () => {
+        const res = await http.post("/tournaments/999/end",
+            { ranks: [team1, team2], points: 100, distribution: "exponential" }, admin.config)
+        expect(res.status).toBe(404)
+    })
+
+})
+
 describe("delete tournaments", () => {
 
     test("prevent deleting tournament as player", async () => {
+        // update role
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Player }, admin.config)
+        await refreshPrivilege(regular)
+
         const res = await http.delete("/tournaments/" + tournament1.id, regular.config)
         expect(res.status).toBe(403)
     })

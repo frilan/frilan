@@ -27,12 +27,13 @@ const options: Options = {
                 },
                 NotEnoughPrivilege: {
                     description: "not enough privilege",
-                }
+                },
             },
         },
     },
     apis: [
         "../models/src/entities/**/*.ts",
+        "../models/src/payloads/**/*.ts",
         "src/controllers/*.ts",
     ],
 }

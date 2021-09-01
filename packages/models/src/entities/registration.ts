@@ -90,7 +90,7 @@ export class Registration {
     @ManyToOne("Event", { onDelete: "CASCADE" })
     event?: Event
 
-    @ManyToMany("Team", "members")
+    @ManyToMany("Team", "members", { onDelete: "CASCADE" })
     teams?: Team[]
 
 }

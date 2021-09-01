@@ -44,6 +44,11 @@ export class Team extends Id {
     @Exclude({ toClassOnly: true })
     result!: number
 
+    @Column({ nullable: true })
+    @IsOptional()
+    @Exclude({ toClassOnly: true })
+    rank?: number
+
     @Column()
     @Exclude({ toClassOnly: true })
     tournamentId!: number

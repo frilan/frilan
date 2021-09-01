@@ -6,12 +6,13 @@ import { getRepository, Not } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
-import { Event, Role, Status, Tournament } from "@frilan/models"
+import { Distribution, Event, Ranking, Registration, Role, Status, Team, Tournament } from "@frilan/models"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { EventNotFoundError } from "./events"
+import { distributeExp } from "../util/points-distribution"
 
 /**
  * Make sure the tournament is happening during the event.
@@ -116,7 +117,7 @@ export class EventTournamentController {
      *       content:
      *         application/json:
      *           schema:
-     *            $ref: "#/components/schemas/Tournament"
+     *             $ref: "#/components/schemas/Tournament"
      *     responses:
      *       201:
      *         description: tournament created
@@ -133,7 +134,7 @@ export class EventTournamentController {
      *       403:
      *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
-     *          description: the specified event doesn't exist
+     *         description: the specified event doesn't exist
      */
     @Post()
     @HttpCode(201)
@@ -221,7 +222,7 @@ export class TournamentController {
      *       content:
      *         application/json:
      *           schema:
-     *            $ref: "#/components/schemas/Tournament"
+     *             $ref: "#/components/schemas/Tournament"
      *     responses:
      *       200:
      *         description: tournament updated
@@ -300,5 +301,110 @@ export class TournamentController {
         }
 
         await getRepository(Tournament).delete(id)
+    }
+
+    /**
+     * @openapi
+     * /tournaments/{tournament-id}/end:
+     *   post:
+     *     summary: end a running tournament and provide the ranking
+     *     tags:
+     *       - tournaments
+     *     parameters:
+     *       - $ref: "#/components/parameters/TournamentId"
+     *     requestBody:
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: "#/components/schemas/Ranking"
+     *     responses:
+     *       200:
+     *         description: tournament ended and scores updated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: "#/components/schemas/TournamentWithId"
+     *       400:
+     *         $ref: "#/components/responses/ValidationError"
+     *       401:
+     *         $ref: "#/components/responses/AuthenticationRequired"
+     *       403:
+     *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *       404:
+     *         $ref: "#/components/responses/TournamentNotFound"
+     */
+    @Post("/:tournament_id(\\d+)/end")
+    async end(
+        @Param("tournament_id") id: number,
+        @CurrentUser({ required: true }) user: AuthUser,
+        @Body() ranking: Ranking,
+    ): Promise<Tournament> {
+
+        const tournament = await getRepository(Tournament).findOne(id, { relations: ["teams", "teams.members"] })
+        if (!tournament || !tournament.teams)
+            throw new TournamentNotFoundError()
+
+        if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can end tournaments")
+
+        if (tournament.status !== Status.Started && tournament.status !== Status.Finished)
+            throw new BadRequestError("Cannot end a tournament that hasn't started")
+
+        // const teams = tournament.teams
+        if (ranking.ranks.length > tournament.teams.length)
+            throw new BadRequestError("Too many teams in ranking")
+
+        // check that every team has received a rank
+        const missing = tournament.teams.filter(({ id }) => !ranking.ranks.flat().includes(id))
+        if (missing.length)
+            throw new BadRequestError(`Missing team(s) in ranking: [${ missing.map(t => t.id).join(", ") }]`)
+
+        if (ranking.descOrder)
+            ranking.ranks.reverse()
+
+        // ranking algorithm
+        let trueRank = 1
+        for (const ids of ranking.ranks) {
+            const tiedTeams = Array.isArray(ids) ? ids : [ids]
+
+            let result = 0
+            if (ranking.distribution === Distribution.Exponential)
+                result = distributeExp(trueRank, tiedTeams.length, tournament.teams.length, ranking.points)
+            else
+                throw new BadRequestError("Invalid points distribution")
+
+            // update team entities
+            for (const id of tiedTeams) {
+                const team = tournament.teams.find(team => team.id === id)
+                if (!team)
+                    throw new BadRequestError(`Team ${ team } is not registered to this tournament`)
+
+                // needed if results are being updated
+                const prevResult = team.result ?? 0
+
+                team.rank = trueRank
+                team.result = result
+
+                const { members, ...teamWithoutMembers } = team
+
+                // adjust members scores
+                if (members) {
+                    for (const member of members)
+                        member.score += result - prevResult
+                    await getRepository(Registration).save(members)
+                }
+
+                // for some reason, save(team) fails if it contains members
+                await getRepository(Team).save(teamWithoutMembers)
+            }
+
+            trueRank += tiedTeams.length
+        }
+
+        tournament.status = Status.Finished
+        await getRepository(Tournament).save(tournament)
+        return tournament
     }
 }

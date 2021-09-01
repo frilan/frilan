@@ -43,14 +43,15 @@ describe("create teams", () => {
 
     test("create team as admin", async () => {
         const res = await http.post(`/tournaments/${ hiddenTournament }/teams`,
-            { name: "admin", result: 999 }, admin.config)
+            { name: "admin", result: 999, rank: 2 }, admin.config)
         expect(res.status).toBe(201)
         expect(res.data.name).toBe("admin")
         expect(res.data.members.length).toBe(1)
         expect(res.data.members[0].userId).toBe(admin.id)
         expect(res.data.tournamentId).toBe(hiddenTournament)
-        // make sure result is set to default value
+        // make sure result and rank are set to default values
         expect(res.data.result).toBe(0)
+        expect(res.data.rank).toBeNull()
         adminTeam = res.data.id
     })
 
