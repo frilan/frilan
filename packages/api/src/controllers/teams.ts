@@ -38,6 +38,20 @@ export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
 }
 
 /**
+ * Returns true if a user has already joined a tournament.
+ * @param userId The ID of the user
+ * @param tournamentId The ID of the tournament
+ */
+export async function hasAlreadyJoined(userId: number, tournamentId: number): Promise<boolean> {
+    return await getRepository(Team)
+        .createQueryBuilder("team")
+        .leftJoin("team.members", "members")
+        .where("team.tournamentId = :tid", { tid: tournamentId })
+        .andWhere("members.userId = :uid", { uid: userId })
+        .getCount() > 0
+}
+
+/**
  * @openapi
  * components:
  *   responses:
@@ -165,6 +179,15 @@ export class TournamentTeamController {
         if (!registration && !user.admin)
             throw new ForbiddenError("Only users registered to this event can create teams")
 
+        const initialMembers = registration ? [registration] : []
+
+        if (registration && await hasAlreadyJoined(user.id, tournamentId))
+            if (user.admin)
+                // create empty team if admin already in another team
+                initialMembers.pop()
+            else
+                throw new BadRequestError("Cannot join multiple teams in the same tournament")
+
         const fullTeams = await getFullTeams(tournament)
         if (fullTeams.length >= tournament.team_count_max)
             throw new BadRequestError(
@@ -172,7 +195,7 @@ export class TournamentTeamController {
 
         team.tournamentId = tournamentId
         // add current user into the team if registered to the event
-        team.members = registration ? [registration] : []
+        team.members = initialMembers
 
         return await getRepository(Team).save(team)
     }
@@ -386,6 +409,9 @@ export class TeamController {
         // skip if member already in team
         if (team.members?.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
             return
+
+        if (await hasAlreadyJoined(user.id, team.tournamentId))
+            throw new BadRequestError("Cannot join multiple teams in the same tournament")
 
         // check that team and tournament aren't full
         if (team.members && team.tournament) {

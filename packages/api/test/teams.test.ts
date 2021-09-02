@@ -3,7 +3,8 @@ import { Role, Status } from "@frilan/models"
 
 // shared states
 let admin: TestUser
-let regular: TestUser
+let regular1: TestUser
+let regular2: TestUser
 let unregistered: TestUser
 let event1: number
 let event2: number
@@ -17,7 +18,7 @@ let emptyTeam: number
 let startedTeam: number
 
 beforeAll(async () => {
-    [admin, regular, unregistered] = await createUsers(3)
+    [admin, regular1, regular2, unregistered] = await createUsers(4)
     ;[event1, event2] = await createEvents(2, admin.config)
 
     // create tournaments
@@ -33,10 +34,12 @@ beforeAll(async () => {
 
     // register users to events
     await http.put(`/events/${ event1 }/registrations/${ admin.id }`, {}, admin.config)
-    await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
-    await http.put(`/events/${ event2 }/registrations/${ regular.id }`, { role: Role.Organizer }, admin.config)
+    await http.put(`/events/${ event1 }/registrations/${ regular1.id }`, {}, admin.config)
+    await http.put(`/events/${ event1 }/registrations/${ regular2.id }`, {}, admin.config)
+    await http.put(`/events/${ event2 }/registrations/${ regular1.id }`, { role: Role.Organizer }, admin.config)
     await refreshPrivilege(admin)
-    await refreshPrivilege(regular)
+    await refreshPrivilege(regular1)
+    await refreshPrivilege(regular2)
 })
 
 describe("create teams", () => {
@@ -56,17 +59,17 @@ describe("create teams", () => {
     })
 
     test("create team as organizer", async () => {
-        const res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "organizer" }, regular.config)
+        const res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "organizer" }, regular1.config)
         expect(res.status).toBe(201)
         expect(res.data.tournamentId).toBe(readyTournament)
-        expect(res.data.members[0].userId).toBe(regular.id)
+        expect(res.data.members[0].userId).toBe(regular1.id)
         organizerTeam = res.data.id
     })
 
     test("create team as player", async () => {
-        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "player" }, regular.config)
+        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "player" }, regular1.config)
         expect(res.status).toBe(201)
-        expect(res.data.members[0].userId).toBe(regular.id)
+        expect(res.data.members[0].userId).toBe(regular1.id)
         playerTeam = res.data.id
     })
 
@@ -85,7 +88,7 @@ describe("create teams", () => {
     test("prevent adding team to already started tournament", async () => {
         // add teams before starting
         await http.post(`/tournaments/${ startedTournament }/teams`, { name: "random" }, admin.config)
-        let res = await http.post(`/tournaments/${ startedTournament }/teams`, { name: "started" }, admin.config)
+        let res = await http.post(`/tournaments/${ startedTournament }/teams`, { name: "started" }, regular1.config)
         expect(res.status).toBe(201)
         startedTeam = res.data.id
 
@@ -98,6 +101,11 @@ describe("create teams", () => {
 
     test("prevent adding team to a tournament that is full", async () => {
         const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "garbage" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("create creating another team in same tournament", async () => {
+        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "garbage" }, regular1.config)
         expect(res.status).toBe(400)
     })
 
@@ -136,7 +144,7 @@ describe("read teams", () => {
     })
 
     test("read all teams as registered", async () => {
-        const res = await http.get(`/tournaments/${ readyTournament }/teams`, regular.config)
+        const res = await http.get(`/tournaments/${ readyTournament }/teams`, regular1.config)
         expect(res.status).toBe(200)
     })
 
@@ -157,7 +165,7 @@ describe("read teams", () => {
     })
 
     test("read single team as registered", async () => {
-        const res = await http.get("/teams/" + organizerTeam, regular.config)
+        const res = await http.get("/teams/" + organizerTeam, regular1.config)
         expect(res.status).toBe(200)
         expect(res.data.name).toBe("organizer")
     })
@@ -188,19 +196,19 @@ describe("update teams", () => {
     })
 
     test("update team as organizer", async () => {
-        const res = await http.patch("/teams/" + emptyTeam, { name: "team2" }, regular.config)
+        const res = await http.patch("/teams/" + emptyTeam, { name: "team2" }, regular1.config)
         expect(res.status).toBe(200)
         expect(res.data.name).toBe("team2")
     })
 
     test("update team as member", async () => {
-        const res = await http.patch("/teams/" + playerTeam, { name: "team3" }, regular.config)
+        const res = await http.patch("/teams/" + playerTeam, { name: "team3" }, regular1.config)
         expect(res.status).toBe(200)
         expect(res.data.name).toBe("team3")
     })
 
     test("prevent updating result", async () => {
-        const res = await http.patch("/teams/" + playerTeam, { result: 999 }, regular.config)
+        const res = await http.patch("/teams/" + playerTeam, { result: 999 }, regular1.config)
         expect(res.status).toBe(200)
         expect(res.data.result).toBe(0)
     })
@@ -211,7 +219,7 @@ describe("update teams", () => {
     })
 
     test("prevent updating team as non-member", async () => {
-        const res = await http.patch("/teams/" + adminTeam, { name: "garbage" }, regular.config)
+        const res = await http.patch("/teams/" + adminTeam, { name: "garbage" }, regular1.config)
         expect(res.status).toBe(403)
     })
 
@@ -235,17 +243,17 @@ describe("update teams", () => {
 describe("add team members", () => {
 
     test("add member as admin", async () => {
-        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular.id }`, {}, admin.config)
+        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, admin.config)
         expect(res.status).toBe(204)
     })
 
     test("add member as organizer", async () => {
-        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular.id }`, {}, regular.config)
+        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, regular1.config)
         expect(res.status).toBe(204)
     })
 
     test("prevent joining team when already full", async () => {
-        const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {}, regular.config)
+        const res = await http.put(`/teams/${ adminTeam }/members/${ regular1.id }`, {}, regular1.config)
         expect(res.status).toBe(400)
     })
 
@@ -253,8 +261,16 @@ describe("add team members", () => {
         // update maximum team size
         await http.patch("tournaments/" + hiddenTournament, { team_size_max: 2 }, admin.config)
 
-        const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {}, regular.config)
+        const res = await http.put(`/teams/${ adminTeam }/members/${ regular2.id }`, {}, regular2.config)
         expect(res.status).toBe(204)
+    })
+
+    test("prevent joining another team in the same tournament", async () => {
+        // update maximum team size
+        await http.patch("tournaments/" + hiddenTournament, { team_size_max: 2 }, admin.config)
+
+        const res = await http.put(`/teams/${ adminTeam }/members/${ regular1.id }`, {}, regular1.config)
+        expect(res.status).toBe(400)
     })
 
     test("prevent adding members when tournament has already started", async () => {
@@ -268,7 +284,7 @@ describe("add team members", () => {
     })
 
     test("prevent adding other members as player", async () => {
-        const res = await http.put(`/teams/${ adminTeam }/members/${ admin.id }`, {}, regular.config)
+        const res = await http.put(`/teams/${ adminTeam }/members/${ admin.id }`, {}, regular1.config)
         expect(res.status).toBe(403)
     })
 
@@ -278,7 +294,7 @@ describe("add team members", () => {
     })
 
     test("prevent adding member when not logged in", async () => {
-        const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {})
+        const res = await http.put(`/teams/${ adminTeam }/members/${ regular1.id }`, {})
         expect(res.status).toBe(401)
     })
 
@@ -290,11 +306,11 @@ describe("read team members", () => {
         const res = await http.get(`/teams/${ emptyTeam }/members`, admin.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(1)
-        expect(res.data[0].userId).toBe(regular.id)
+        expect(res.data[0].userId).toBe(regular1.id)
     })
 
     test("read members as registered", async () => {
-        const res = await http.get(`/teams/${ adminTeam }/members`, regular.config)
+        const res = await http.get(`/teams/${ adminTeam }/members`, regular1.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(2)
         expect(res.data[0].userId).toBe(admin.id)
@@ -304,7 +320,7 @@ describe("read team members", () => {
         const res = await http.get(`/teams/${ playerTeam }/members`, unregistered.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(1)
-        expect(res.data[0].userId).toBe(regular.id)
+        expect(res.data[0].userId).toBe(regular1.id)
     })
 
     test("prevent reading members when not logged in", async () => {
@@ -322,7 +338,7 @@ describe("read team members", () => {
 describe("remove team members", () => {
 
     test("remove member as admin", async () => {
-        const res = await http.delete(`/teams/${ emptyTeam }/members/${ regular.id }`, admin.config)
+        const res = await http.delete(`/teams/${ emptyTeam }/members/${ regular1.id }`, admin.config)
         expect(res.status).toBe(204)
     })
 
@@ -336,12 +352,12 @@ describe("remove team members", () => {
         let res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "test" }, admin.config)
         const teamId = res.data.id
 
-        res = await http.delete(`/teams/${ teamId }/members/${ regular.id }`, regular.config)
+        res = await http.delete(`/teams/${ teamId }/members/${ regular1.id }`, regular1.config)
         expect(res.status).toBe(204)
     })
 
     test("leaving team as member", async () => {
-        const res = await http.delete(`/teams/${ adminTeam }/members/${ regular.id }`, regular.config)
+        const res = await http.delete(`/teams/${ adminTeam }/members/${ regular2.id }`, regular2.config)
         expect(res.status).toBe(204)
     })
 
@@ -351,12 +367,12 @@ describe("remove team members", () => {
     })
 
     test("prevent removing other members as player", async () => {
-        const res = await http.delete(`/teams/${ adminTeam }/members/${ admin.id }`, regular.config)
+        const res = await http.delete(`/teams/${ adminTeam }/members/${ admin.id }`, regular1.config)
         expect(res.status).toBe(403)
     })
 
     test("prevent removing member when not logged in", async () => {
-        const res = await http.delete(`/teams/${ playerTeam }/members/${ regular.id }`)
+        const res = await http.delete(`/teams/${ playerTeam }/members/${ regular1.id }`)
         expect(res.status).toBe(401)
     })
 
@@ -364,7 +380,7 @@ describe("remove team members", () => {
         const res = await http.get(`/teams/${ adminTeam }/members`, admin.config)
         expect(res.status).toBe(200)
         expect(res.data.length).toBe(1)
-        expect(res.data[0].username).not.toBe(regular.username)
+        expect(res.data[0].username).not.toBe(regular2.username)
     })
 
 })
@@ -372,7 +388,7 @@ describe("remove team members", () => {
 describe("delete teams", () => {
 
     test("prevent deleting team as non-member", async () => {
-        const res = await http.delete("/teams/" + adminTeam, regular.config)
+        const res = await http.delete("/teams/" + adminTeam, regular1.config)
         expect(res.status).toBe(403)
     })
 
@@ -387,7 +403,7 @@ describe("delete teams", () => {
     })
 
     test("prevent deleting team as member", async () => {
-        const res = await http.delete("/teams/" + playerTeam, regular.config)
+        const res = await http.delete("/teams/" + playerTeam, regular1.config)
         expect(res.status).toBe(403)
     })
 
@@ -401,7 +417,7 @@ describe("delete teams", () => {
         let res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "test" }, admin.config)
         const teamId = res.data.id
 
-        res = await http.delete("/teams/" + teamId, regular.config)
+        res = await http.delete("/teams/" + teamId, regular1.config)
         expect(res.status).toBe(204)
     })
 
