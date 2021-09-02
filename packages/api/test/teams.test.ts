@@ -22,7 +22,7 @@ beforeAll(async () => {
 
     // create tournaments
     const tournament =
-        { name: "t", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 2 }
+        { name: "t", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 2, team_count_max: 2 }
 
     let res = await http.post(`/events/${ event1 }/tournaments`, tournament, admin.config)
     hiddenTournament = res.data.id
@@ -83,7 +83,8 @@ describe("create teams", () => {
     })
 
     test("prevent adding team to already started tournament", async () => {
-        // add team before starting
+        // add teams before starting
+        await http.post(`/tournaments/${ startedTournament }/teams`, { name: "random" }, admin.config)
         let res = await http.post(`/tournaments/${ startedTournament }/teams`, { name: "started" }, admin.config)
         expect(res.status).toBe(201)
         startedTeam = res.data.id

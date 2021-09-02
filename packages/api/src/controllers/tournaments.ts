@@ -2,7 +2,7 @@ import {
     BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
     Param, Post, UseBefore,
 } from "routing-controllers"
-import { getRepository, Not } from "typeorm"
+import { getRepository, In, Not } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
@@ -13,7 +13,7 @@ import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { EventNotFoundError } from "./events"
 import { distributeExp } from "../util/points-distribution"
-import { getCompleteTeamsCount } from "./teams"
+import { getFullTeams } from "./teams"
 
 /**
  * Make sure the tournament is happening during the event.
@@ -270,13 +270,19 @@ export class TournamentController {
                     throw new BadRequestError("Cannot start tournament if it is not ready")
 
                 // get all complete teams
-                const fullTeams = await getCompleteTeamsCount(tournament)
-                if (fullTeams < tournament.team_count_min)
+                const fullTeams = await getFullTeams(tournament)
+                if (fullTeams.length < tournament.team_count_min)
                     throw new BadRequestError(
                         `Cannot start tournament without at least ${ tournament.team_count_min } complete teams`)
-                if (fullTeams > tournament.team_count_max)
+                if (fullTeams.length > tournament.team_count_max)
                     throw new BadRequestError(
                         `Cannot start tournament with more than ${ tournament.team_count_min } complete teams`)
+
+                // delete teams that are incomplete
+                await getRepository(Team).delete({
+                    id: Not(In(fullTeams.map(({ id }) => id))),
+                    tournamentId: tournament.id,
+                })
             }
         }
 

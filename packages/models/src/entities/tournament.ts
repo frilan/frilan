@@ -99,12 +99,11 @@ export class Tournament extends Id {
 
     @Column()
     @IsInt()
-    @IsPositive()
+    @Min(2)
     team_count_min!: number
 
     @Column()
     @IsInt()
-    @Min(2)
     @GreaterOrEqual("team_count_min")
     team_count_max!: number
 

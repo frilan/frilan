@@ -25,17 +25,16 @@ export async function isOrganizer(user: AuthUser, team: Team): Promise<boolean> 
  * Returns the number of complete teams from a tournament.
  * @param tournament The tournament entity
  */
-export async function getCompleteTeamsCount(tournament: Tournament): Promise<number> {
-    return (await getRepository(Team)
+export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
+    return await getRepository(Team)
         .createQueryBuilder("team")
-        .select("team.id")
         .where("team.tournamentId = :id", { id: tournament.id })
         .leftJoin("team.members", "members")
         .groupBy("team.id")
         .having("COUNT(members) BETWEEN :min AND :max", {
             min: tournament.team_size_min,
             max: tournament.team_size_max,
-        }).getMany()).length
+        }).getMany()
 }
 
 /**
@@ -166,8 +165,8 @@ export class TournamentTeamController {
         if (!registration && !user.admin)
             throw new ForbiddenError("Only users registered to this event can create teams")
 
-        const fullTeams = await getCompleteTeamsCount(tournament)
-        if (fullTeams >= tournament.team_count_max)
+        const fullTeams = await getFullTeams(tournament)
+        if (fullTeams.length >= tournament.team_count_max)
             throw new BadRequestError(
                 `This tournament is full (max ${ tournament.team_count_max } teams)`)
 
@@ -395,8 +394,8 @@ export class TeamController {
                     `This team is full (max ${ team.tournament.team_size_max } members)`)
 
             if (team.members.length + 1 === team.tournament.team_size_min) {
-                const fullTeams = await getCompleteTeamsCount(team.tournament)
-                if (fullTeams >= team.tournament.team_count_max)
+                const fullTeams = await getFullTeams(team.tournament)
+                if (fullTeams.length >= team.tournament.team_count_max)
                     throw new BadRequestError(
                         `This tournament is full (max ${ team.tournament.team_count_max } teams)`)
             }
