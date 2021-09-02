@@ -6,7 +6,6 @@ import { getConnection, getRepository } from "typeorm"
 import { Registration, Role, Status, Team, Tournament } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
-import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
@@ -15,12 +14,28 @@ import { FiltersParser } from "../middlewares/filters-parser"
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
- *
  * @param user The authenticated user
  * @param team The target team
  */
-async function isOrganizer(user: AuthUser, team: Team) {
-    return team.tournament && user.roles[team.tournament?.eventId] === Role.Organizer
+export async function isOrganizer(user: AuthUser, team: Team): Promise<boolean> {
+    return Boolean(team.tournament && user.roles[team.tournament?.eventId] === Role.Organizer)
+}
+
+/**
+ * Returns the number of complete teams from a tournament.
+ * @param tournament The tournament entity
+ */
+export async function getCompleteTeamsCount(tournament: Tournament): Promise<number> {
+    return (await getRepository(Team)
+        .createQueryBuilder("team")
+        .select("team.id")
+        .where("team.tournamentId = :id", { id: tournament.id })
+        .leftJoin("team.members", "members")
+        .groupBy("team.id")
+        .having("COUNT(members) BETWEEN :min AND :max", {
+            min: tournament.team_size_min,
+            max: tournament.team_size_max,
+        }).getMany()).length
 }
 
 /**
@@ -151,19 +166,16 @@ export class TournamentTeamController {
         if (!registration && !user.admin)
             throw new ForbiddenError("Only users registered to this event can create teams")
 
-        try {
-            team.tournamentId = tournamentId
-            // add current user into the team if registered to the event
-            team.members = registration ? [registration] : []
+        const fullTeams = await getCompleteTeamsCount(tournament)
+        if (fullTeams >= tournament.team_count_max)
+            throw new BadRequestError(
+                `This tournament is full (max ${ tournament.team_count_max } teams)`)
 
-            return await getRepository(Team).save(team)
+        team.tournamentId = tournamentId
+        // add current user into the team if registered to the event
+        team.members = registration ? [registration] : []
 
-        } catch (err) {
-            if (err.code === PG_FOREIGN_KEY_VIOLATION)
-                throw new NotFoundError(err.detail)
-            else
-                throw err
-        }
+        return await getRepository(Team).save(team)
     }
 }
 
@@ -373,13 +385,29 @@ export class TeamController {
             throw new BadRequestError("Cannot add member that is not registered to the event")
 
         // skip if member already in team
-        if (!team.members?.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
-            // for some reason, members.push(registration) + save(team) doesn't work here
-            await getConnection()
-                .createQueryBuilder()
-                .relation(Team, "members")
-                .of(team)
-                .add({ userId: registration.userId, eventId: registration.eventId })
+        if (team.members?.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
+            return
+
+        // check that team and tournament aren't full
+        if (team.members && team.tournament) {
+            if (team.members.length + 1 > team.tournament.team_size_max)
+                throw new BadRequestError(
+                    `This team is full (max ${ team.tournament.team_size_max } members)`)
+
+            if (team.members.length + 1 === team.tournament.team_size_min) {
+                const fullTeams = await getCompleteTeamsCount(team.tournament)
+                if (fullTeams >= team.tournament.team_count_max)
+                    throw new BadRequestError(
+                        `This tournament is full (max ${ team.tournament.team_count_max } teams)`)
+            }
+        }
+
+        // for some reason, members.push(registration) + save(team) doesn't work here
+        await getConnection()
+            .createQueryBuilder()
+            .relation(Team, "members")
+            .of(team)
+            .add({ userId: registration.userId, eventId: registration.eventId })
     }
 
     /**

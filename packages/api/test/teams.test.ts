@@ -22,7 +22,7 @@ beforeAll(async () => {
 
     // create tournaments
     const tournament =
-        { name: "t", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 8 }
+        { name: "t", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 1, team_count_max: 2 }
 
     let res = await http.post(`/events/${ event1 }/tournaments`, tournament, admin.config)
     hiddenTournament = res.data.id
@@ -92,6 +92,11 @@ describe("create teams", () => {
         await http.patch(`/tournaments/${ startedTournament }`, { status: Status.Started }, admin.config)
 
         res = await http.post(`/tournaments/${ startedTournament }/teams`, { name: "garbage" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent adding team to a tournament that is full", async () => {
+        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "garbage" }, admin.config)
         expect(res.status).toBe(400)
     })
 
@@ -238,7 +243,15 @@ describe("add team members", () => {
         expect(res.status).toBe(204)
     })
 
+    test("prevent joining team when already full", async () => {
+        const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {}, regular.config)
+        expect(res.status).toBe(400)
+    })
+
     test("join team as player", async () => {
+        // update maximum team size
+        await http.patch("tournaments/" + hiddenTournament, { team_size_max: 2 }, admin.config)
+
         const res = await http.put(`/teams/${ adminTeam }/members/${ regular.id }`, {}, regular.config)
         expect(res.status).toBe(204)
     })

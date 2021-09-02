@@ -8,8 +8,8 @@ type Comparable = number | string | Date
 export class GreaterOrEqualConstraint implements ValidatorConstraintInterface {
     validate(value: Comparable, args: ValidationArguments): boolean {
         const [property] = args.constraints
-        const other = (args.object as Record<string, Comparable>)[property]
-        return value >= other
+        const other = (args.object as Record<string, Comparable | undefined>)[property]
+        return !other || value >= other
     }
 
     defaultMessage(args: ValidationArguments): string {

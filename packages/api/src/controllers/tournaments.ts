@@ -13,6 +13,7 @@ import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { EventNotFoundError } from "./events"
 import { distributeExp } from "../util/points-distribution"
+import { getCompleteTeamsCount } from "./teams"
 
 /**
  * Make sure the tournament is happening during the event.
@@ -261,10 +262,22 @@ export class TournamentController {
                 throw new BadRequestError("Cannot hide tournament if it has already started")
             if (updatedTournament.status === Status.Ready && tournament.status !== Status.Hidden)
                 throw new BadRequestError("Cannot make tournament ready if it has already started")
-            if (updatedTournament.status === Status.Started && tournament.status !== Status.Ready)
-                throw new BadRequestError("Cannot start tournament if it is not ready")
             if (updatedTournament.status === Status.Finished)
                 throw new BadRequestError("Cannot set status to finished before the tournament ended")
+
+            if (updatedTournament.status === Status.Started) {
+                if (tournament.status !== Status.Ready)
+                    throw new BadRequestError("Cannot start tournament if it is not ready")
+
+                // get all complete teams
+                const fullTeams = await getCompleteTeamsCount(tournament)
+                if (fullTeams < tournament.team_count_min)
+                    throw new BadRequestError(
+                        `Cannot start tournament without at least ${ tournament.team_count_min } complete teams`)
+                if (fullTeams > tournament.team_count_max)
+                    throw new BadRequestError(
+                        `Cannot start tournament with more than ${ tournament.team_count_min } complete teams`)
+            }
         }
 
         Object.assign(tournament, updatedTournament)

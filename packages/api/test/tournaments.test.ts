@@ -8,6 +8,8 @@ let event1: number
 let event2: number
 let team1: number
 let team2: number
+let team3: number
+let team4: number
 
 const tournament1 = {
     id: NaN,
@@ -15,7 +17,7 @@ const tournament1 = {
     date: new Date(5).toISOString(),
     duration: 120,
     rules: "5v5 matches, best of 3",
-    team_size_min: 5,
+    team_size_min: 1,
     team_size_max: 6,
     team_count_min: 2,
     team_count_max: 16,
@@ -202,18 +204,6 @@ describe("update tournaments", () => {
         expect(res.data).toMatchObject(tournament2)
     })
 
-    test("prevent starting tournament that is not ready", async () => {
-        const res = await http.patch("/tournaments/" + tournament2.id, { status: Status.Started }, admin.config)
-        expect(res.status).toBe(400)
-    })
-
-    test("prevent hiding tournament that has started", async () => {
-        let res = await http.post(`events/${ event1 }/tournaments`, tournament1, admin.config)
-        await http.patch("/tournaments/" + res.data.id, { status: Status.Started }, admin.config)
-        res = await http.patch("/tournaments/" + res.data.id, { status: Status.Hidden }, admin.config)
-        expect(res.status).toBe(400)
-    })
-
     test("prevent updating tournament as unregistered", async () => {
         const res = await http.patch("/tournaments/" + tournament1.id, { name: "Garbage" }, regular.config)
         expect(res.status).toBe(403)
@@ -238,11 +228,12 @@ describe("update tournaments", () => {
         expect(res.status).toBe(404)
     })
 
-})
+    test("prevent starting tournament without enough teams", async () => {
+        const res = await http.patch("/tournaments/" + tournament1.id, { status: Status.Started }, admin.config)
+        expect(res.status).toBe(400)
+    })
 
-describe("end tournaments", () => {
-
-    test("prevent ending tournament that hasn't started", async () => {
+    test("start tournament as admin", async () => {
         // register user to event
         await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Organizer }, admin.config)
         await refreshPrivilege(regular)
@@ -253,16 +244,45 @@ describe("end tournaments", () => {
         res = await http.post(`/tournaments/${ tournament1.id }/teams`, { name: "team 2" }, regular.config)
         team2 = res.data.id
 
+        res = await http.patch("/tournaments/" + tournament1.id, { status: Status.Started }, admin.config)
+        expect(res.status).toBe(200)
+    })
+
+    test("start tournament as organizer", async () => {
+        // add teams to tournament
+        let res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 3" }, admin.config)
+        team3 = res.data.id
+        res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 4" }, regular.config)
+        team4 = res.data.id
+
+        res = await http.patch("/tournaments/" + tournament3.id, { status: Status.Ready }, regular.config)
+        expect(res.status).toBe(200)
+        res = await http.patch("/tournaments/" + tournament3.id, { status: Status.Started }, regular.config)
+        expect(res.status).toBe(200)
+    })
+
+    test("prevent starting tournament that is not ready", async () => {
+        const res = await http.patch("/tournaments/" + tournament2.id, { status: Status.Started }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent hiding tournament that has started", async () => {
+        const res = await http.patch("/tournaments/" + tournament1.id, { status: Status.Hidden }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+})
+
+describe("end tournaments", () => {
+
+    test("prevent ending tournament that hasn't started", async () => {
         // try ending the tournament
-        res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        const res = await http.post(`/tournaments/${ tournament2.id }/end`,
             { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(400)
     })
 
     test("end tournament as admin", async () => {
-        // start tournament
-        await http.patch(`/tournaments/${ tournament1.id }`, { status: Status.Started }, admin.config)
-
         // end tournament and update scores
         let res = await http.post(`/tournaments/${ tournament1.id }/end`,
             { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
@@ -281,18 +301,8 @@ describe("end tournaments", () => {
     })
 
     test("end tournament as organizer", async () => {
-        // add teams to tournament
-        let res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 3" }, admin.config)
-        const team3 = res.data.id
-        res = await http.post(`/tournaments/${ tournament3.id }/teams`, { name: "team 4" }, regular.config)
-        const team4 = res.data.id
-
-        // start tournament
-        await http.patch(`/tournaments/${ tournament3.id }`, { status: Status.Ready }, admin.config)
-        await http.patch(`/tournaments/${ tournament3.id }`, { status: Status.Started }, admin.config)
-
         // end tournament and update scores
-        res = await http.post(`/tournaments/${ tournament3.id }/end`,
+        let res = await http.post(`/tournaments/${ tournament3.id }/end`,
             { ranks: [[team4, team3]], points: 50, distribution: "exponential" }, regular.config)
         expect(res.status).toBe(200)
 
