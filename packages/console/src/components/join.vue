@@ -1,3 +1,26 @@
+<script setup lang="ts">
+import { reactive } from "vue"
+import { useRouter } from "vue-router"
+import { useStore } from "../store/store"
+import http from "../utils/http"
+import { User } from "@frilan/models"
+
+const router = useRouter()
+const store = useStore()
+
+const fields = reactive({
+  username: "",
+  displayName: "",
+  profilePicture: "",
+} as User)
+
+async function join() {
+  const user = await http.post("/users", fields, User)
+  await store.commit("setUser", user)
+  router.push({ name: "home" })
+}
+</script>
+
 <template lang="pug">
 h2 Create a new account
 form(@submit.prevent="join")
@@ -14,36 +37,6 @@ form(@submit.prevent="join")
 
 router-link(:to="{ name: 'login' }") Log in to an existing account
 </template>
-
-<script lang="ts">
-import { defineComponent, reactive } from "vue"
-import { useRouter } from "vue-router"
-import { useStore } from "../store/store"
-import http from "../utils/http"
-import { User } from "@frilan/models"
-
-export default defineComponent({
-  name: "Join",
-  setup() {
-    const router = useRouter()
-    const store = useStore()
-
-    const fields = reactive({
-      username: "",
-      displayName: "",
-      profilePicture: "",
-    } as User)
-
-    const join = async () => {
-      const user = await http.post("/users", fields, User)
-      await store.commit("setUser", user)
-      router.push({ name: "home" })
-    }
-
-    return { fields, join }
-  },
-})
-</script>
 
 <style lang="sass" scoped>
 
