@@ -14,6 +14,7 @@ import { FiltersParser } from "../middlewares/filters-parser"
 import { EventNotFoundError } from "./events"
 import { distributeExp } from "../util/points-distribution"
 import { getFullTeams } from "./teams"
+import { isDbError } from "../util/is-db-error"
 
 /**
  * Make sure the tournament is happening during the event.
@@ -157,7 +158,7 @@ export class EventTournamentController {
             tournament.eventId = eventId
             return await getRepository(Tournament).save(tournament)
         } catch (err) {
-            if (err.code === PG_FOREIGN_KEY_VIOLATION)
+            if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
             else
                 throw err

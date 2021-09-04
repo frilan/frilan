@@ -5,7 +5,7 @@ import { startServer } from "./server"
         console.log("Starting server...")
         const address = await startServer()
         console.info("Listening on " + address)
-    } catch (error) {
-        console.error(error.stack)
+    } catch (err) {
+        console.error(err instanceof Error ? err.stack : err)
     }
 })()

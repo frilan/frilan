@@ -1,6 +1,8 @@
 import { Context, Next } from "koa"
 import { BadRequestError, KoaMiddlewareInterface } from "routing-controllers"
-import { EntityColumnNotFound, In, QueryFailedError } from "typeorm"
+import { EntityColumnNotFound, In } from "typeorm"
+import { PG_INVALID_TEXT_REPRESENTATION } from "@drdgvhbh/postgres-error-codes"
+import { isDbError } from "../util/is-db-error"
 
 export class FiltersParser implements KoaMiddlewareInterface {
 
@@ -21,25 +23,14 @@ export class FiltersParser implements KoaMiddlewareInterface {
 
         try {
             await next()
-        } catch (e) {
-            if (e instanceof EntityColumnNotFound)
-                throw new BadRequestError(e.message)
-            else if (isQueryError(e) && e.code === "22P02")
-                throw new BadRequestError(e.message)
+        } catch (err) {
+            if (err instanceof EntityColumnNotFound)
+                throw new BadRequestError(err.message)
+            // if input syntax is invalid
+            else if (isDbError(err) && err.code === PG_INVALID_TEXT_REPRESENTATION)
+                throw new BadRequestError(err.message)
             else
-                throw e
+                throw err
         }
     }
-}
-
-// interface for QueryFailedError objects, required because the
-// type declaration is missing some properties such as "code"
-interface QueryError {
-    name: string
-    code: string
-    message: string
-}
-
-function isQueryError(error: Error): error is QueryError {
-    return error instanceof QueryFailedError
 }

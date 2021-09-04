@@ -12,6 +12,7 @@ import { Context } from "koa"
 import bcrypt from "bcrypt"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
+import { isDbError } from "../util/is-db-error"
 
 /**
  * @openapi
@@ -147,7 +148,7 @@ export class UserController {
             return await getRepository(User).save(user)
 
         } catch (err) {
-            if (err.code === PG_UNIQUE_VIOLATION)
+            if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
                 throw new UserConflictError()
             else
                 throw err
@@ -236,7 +237,7 @@ export class UserController {
             return getRepository(User).findOne(id)
 
         } catch (err) {
-            if (err.code === PG_UNIQUE_VIOLATION)
+            if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
                 throw new UserConflictError()
             else
                 throw err

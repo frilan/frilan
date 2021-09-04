@@ -17,6 +17,7 @@
   "dependencies": {
     "@drdgvhbh/postgres-error-codes": "^0.0.6",
     "@koa/cors": "^3.1.0",
+    "@types/pg": "^8.6.1",
     "basic-auth": "^2.0.1",
     "bcrypt": "^5.0.1",
     "jsonwebtoken": "^8.5.1",

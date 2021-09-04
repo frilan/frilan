@@ -9,6 +9,7 @@ import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
+import { isDbError } from "../util/is-db-error"
 
 /**
  * @openapi
@@ -123,7 +124,7 @@ export class RegistrationController {
             registration.userId = userId
             return await getRepository(Registration).save(registration)
         } catch (err) {
-            if (err.code === PG_FOREIGN_KEY_VIOLATION)
+            if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
             else
                 throw err
