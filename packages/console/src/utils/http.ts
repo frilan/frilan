@@ -10,26 +10,40 @@ export class Http {
     private readonly axiosInstance: AxiosInstance
 
     constructor(baseURL: string) {
-        console.log(baseURL)
         this.axiosInstance = axios.create({ baseURL })
     }
 
-    public get<T>(url: string, cls: ClassConstructor<T>, auth: AxiosBasicCredentials): Promise<T | void> {
+    public get<T>(url: string, cls: ClassConstructor<T>, auth?: AxiosBasicCredentials): Promise<T> {
         return this.sendRequest({ method: "get", url, auth }, cls)
     }
 
+    public post<T>(url: string, body: T): Promise<void>
+    public post<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
     public post<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
-        return this.sendRequest({ method: "post", url, data: body }, cls)
+        if (cls) return this.sendRequest({ method: "post", url, data: body }, cls)
+        else return this.sendRequest({ method: "post", url, data: body })
     }
 
+    public put<T>(url: string, body: T): Promise<void>
+    public put<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
+    public put<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
+        if (cls) return this.sendRequest({ method: "put", url, data: body }, cls)
+        else return this.sendRequest({ method: "put", url, data: body })
+    }
+
+    public patch<T>(url: string, body: T): Promise<void>
+    public patch<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
     public patch<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
-        return this.sendRequest({ method: "patch", url, data: body }, cls)
+        if (cls) return this.sendRequest({ method: "patch", url, data: body }, cls)
+        else return this.sendRequest({ method: "patch", url, data: body })
     }
 
-    public delete<T>(url: string, cls?: ClassConstructor<T>): Promise<T | void> {
-        return this.sendRequest({ method: "delete", url }, cls)
+    public delete(url: string): Promise<void> {
+        return this.sendRequest({ method: "delete", url })
     }
 
+    private async sendRequest(config: AxiosRequestConfig): Promise<void>
+    private async sendRequest<T>(config: AxiosRequestConfig, cls: ClassConstructor<T>): Promise<T>
     private async sendRequest<T>(config: AxiosRequestConfig, cls?: ClassConstructor<T>): Promise<T | void> {
         const response = await this.axiosInstance(config)
         if (cls)

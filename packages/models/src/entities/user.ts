@@ -48,7 +48,6 @@ export class User extends Id {
     @Column({ unique: true })
     @MinLength(2)
     @MaxLength(30)
-    @IsNotEmpty()
     @Trim()
     username!: string
 
@@ -60,7 +59,6 @@ export class User extends Id {
     @Column()
     @MinLength(2)
     @MaxLength(30)
-    @IsNotEmpty()
     @Trim()
     displayName!: string
 

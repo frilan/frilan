@@ -5,12 +5,14 @@ import { useStore } from "./store/store"
 
 const store = useStore()
 
-onErrorCaptured(err => {
-  // only handle axios errors
-  const axiosError = err as AxiosError
-  if (axiosError.response)
-    store.commit("setError", axiosError.response.data.message)
-  else if (axiosError.request)
+// catch unhandled errors
+onErrorCaptured((err: AxiosError) => {
+  if (err.response) {
+    const res = err.response.data
+    store.commit("setError", res.message ?? res)
+    if (res.errors)
+      store.commit("setValidationErrors", res.errors)
+  } else if (err.request)
     store.commit("setError", "Cannot connect to the server")
 
   else
@@ -20,13 +22,21 @@ onErrorCaptured(err => {
 })
 
 let error = $computed(() => store.state.error)
+let constraintsList = $computed(() =>
+  store.state.validationErrors
+    .map(e => e.constraints)
+    .filter((c): c is { [p: string]: string } => !!c)
+    .map(c => Object.values(c).join(", ")))
 </script>
 
 <template lang="pug">
 header
   h1 Console
 main
-  p#error(v-if="error") {{ error }}
+  #error(v-if="error")
+    p {{ error }}
+    ul(v-if="constraintsList")
+      li(v-for="constraints in constraintsList") {{ constraints }}
   router-view
 </template>
 

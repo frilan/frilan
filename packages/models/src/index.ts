@@ -5,3 +5,4 @@ export { Tournament, Status } from "./entities/tournament"
 export { Team } from "./entities/team"
 
 export { Ranking, Distribution } from "./payloads/ranking"
+export { UserAndToken } from "./payloads/user-and-token"

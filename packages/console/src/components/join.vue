@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { reactive } from "vue"
 import { useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
@@ -8,15 +7,14 @@ import { User } from "@frilan/models"
 const router = useRouter()
 const store = useStore()
 
-const fields = reactive({
-  username: "",
-  displayName: "",
-  profilePicture: "",
-} as User)
+let username = $ref("")
+let password = $ref("")
 
 async function join() {
-  const user = await http.post("/users", fields, User)
-  await store.commit("setUser", user)
+  const user = new User()
+  Object.assign(user, { username, password, displayName: username })
+  await http.post("/users", user)
+  await store.dispatch("login", user)
   router.push({ name: "home" })
 }
 </script>
@@ -26,13 +24,10 @@ h2 Create a new account
 form(@submit.prevent="join")
   .field
     label(for="username") Username
-    input(id="username" v-model="fields.username")
+    input(id="username" autocomplete="username" v-model="username")
   .field
-    label(for="display") Display name
-    input(id="display" v-model="fields.displayName")
-  .field
-    label(for="picture") Profile picture
-    input(id="picture" v-model="fields.profilePicture")
+    label(for="password") Password
+    input(id="password" type="password" autocomplete="new-password" v-model="password")
   button(type="submit") Join
 
 router-link(:to="{ name: 'login' }") Log in to an existing account

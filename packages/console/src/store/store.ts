@@ -1,12 +1,15 @@
 import { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
-import { User } from "@frilan/models"
+import { User, UserAndToken } from "@frilan/models"
 import http from "../utils/http"
+import { ValidationError } from "class-validator"
+import { AxiosBasicCredentials } from "axios"
 
 export interface State {
     user: User
     logged: boolean
     error: string | null
+    validationErrors: ValidationError[]
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
@@ -16,6 +19,7 @@ export const store = createStore<State>({
         user: new User(),
         logged: false,
         error: null,
+        validationErrors: [],
     },
     mutations: {
         setUser(state, user: User) {
@@ -28,13 +32,17 @@ export const store = createStore<State>({
         setError(state, error: string) {
             state.error = error
         },
+        setValidationErrors(state, errors: ValidationError[]) {
+            state.validationErrors = errors
+        },
         clearError(state) {
             state.error = null
+            state.validationErrors = []
         },
     },
     actions: {
-        async login(context, username) {
-            const user = await http.get("/login", User, { username, password: "" })
+        async login(context, credentials: AxiosBasicCredentials) {
+            const { user } = await http.get("/login", UserAndToken, credentials)
             context.commit("setUser", user)
         },
         logout(context) {
