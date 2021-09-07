@@ -9,8 +9,21 @@ export class Http {
 
     private readonly axiosInstance: AxiosInstance
 
-    constructor(baseURL: string) {
+    public constructor(baseURL: string) {
         this.axiosInstance = axios.create({ baseURL })
+        const token = localStorage.getItem("token")
+        if (token)
+            this.setToken(token)
+    }
+
+    public setToken(token: string): void {
+        this.axiosInstance.defaults.headers.common["Authorization"] = "Bearer " + token
+        localStorage.setItem("token", token)
+    }
+
+    public clearToken(): void {
+        delete this.axiosInstance.defaults.headers.common["Authorization"]
+        localStorage.removeItem("token")
     }
 
     public get<T>(url: string, cls: ClassConstructor<T>, auth?: AxiosBasicCredentials): Promise<T> {
