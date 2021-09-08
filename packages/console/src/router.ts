@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router"
-import Home from "./components/home.vue"
-import Join from "./components/join.vue"
-import Login from "./components/login.vue"
+import Home from "./pages/home.vue"
+import Join from "./pages/join.vue"
+import Login from "./pages/login.vue"
 import { store } from "./store/store"
 
 const router = createRouter({

@@ -18,6 +18,8 @@
     "defineEmits": "readonly",
     "defineExpose": "readonly",
     "withDefaults": "readonly",
+    "$": "readonly",
+    "$$": "readonly",
     "$ref": "readonly",
     "$computed": "readonly",
     "$shallowRef": "readonly"

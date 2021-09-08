@@ -2,15 +2,13 @@ import { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
 import { User, UserAndToken } from "@frilan/models"
 import http from "../utils/http"
-import { ValidationError } from "class-validator"
 import { AxiosBasicCredentials } from "axios"
 import { classToPlain, plainToClass } from "class-transformer"
 
 export interface State {
     user: User
     logged: boolean
-    error: string | null
-    validationErrors: ValidationError[]
+    error: unknown
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
@@ -23,7 +21,6 @@ export const store = createStore<State>({
         user: currentUser ? plainToClass(User, JSON.parse(currentUser)) : new User(),
         logged: !!localStorage.getItem("token"),
         error: null,
-        validationErrors: [],
     },
     mutations: {
         setUser(state, user: User) {
@@ -38,12 +35,8 @@ export const store = createStore<State>({
         setError(state, error: string) {
             state.error = error
         },
-        setValidationErrors(state, errors: ValidationError[]) {
-            state.validationErrors = errors
-        },
         clearError(state) {
             state.error = null
-            state.validationErrors = []
         },
     },
     actions: {
