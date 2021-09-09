@@ -2,9 +2,10 @@ import { Column, Entity, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm"
 import { User } from "./user"
 import { Event } from "./event"
 import { IsDate, IsEnum, IsInt, IsOptional } from "class-validator"
-import { Exclude, Type } from "class-transformer"
+import { Type } from "class-transformer"
 import { GreaterOrEqual } from "../decorators/greater-or-equal"
 import { Team } from "./team"
+import { ExcludeServerSide } from "../decorators/exclude-server-side"
 
 /**
  * @openapi
@@ -53,11 +54,11 @@ export enum Role {
 export class Registration {
 
     @PrimaryColumn()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     userId!: number
 
     @PrimaryColumn()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     eventId!: number
 
     @Column({ type: "enum", enum: Role, default: Role.Player })
@@ -81,7 +82,7 @@ export class Registration {
     @Column({ default: 0 })
     @IsInt()
     @IsOptional()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     score!: number
 
     @ManyToOne("User", { onDelete: "CASCADE" })

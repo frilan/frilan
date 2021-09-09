@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn } from "typeorm"
-import { Exclude } from "class-transformer"
+import { ExcludeServerSide } from "../../decorators/exclude-server-side"
 
 /**
  * @openapi
@@ -17,7 +17,7 @@ import { Exclude } from "class-transformer"
 export abstract class Id {
 
     @PrimaryGeneratedColumn()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     id!: number
 
 }

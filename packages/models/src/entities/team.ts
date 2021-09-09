@@ -3,8 +3,8 @@ import { Id } from "./common/id"
 import { IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Tournament } from "./tournament"
-import { Exclude } from "class-transformer"
 import { Registration } from "./registration"
+import { ExcludeServerSide } from "../decorators/exclude-server-side"
 
 /**
  * @openapi
@@ -41,16 +41,16 @@ export class Team extends Id {
     @Column({ default: 0 })
     @IsInt()
     @IsOptional()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     result!: number
 
     @Column({ nullable: true })
     @IsOptional()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     rank?: number
 
     @Column()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     tournamentId!: number
 
     @ManyToOne("Tournament", { onDelete: "CASCADE" })

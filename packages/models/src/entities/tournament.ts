@@ -2,10 +2,11 @@ import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
 import { Id } from "./common/id"
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Min } from "class-validator"
 import { Trim } from "../decorators/trim"
-import { Exclude, Type } from "class-transformer"
+import { Type } from "class-transformer"
 import { Event } from "./event"
 import { Team } from "./team"
 import { GreaterOrEqual } from "../decorators/greater-or-equal"
+import { ExcludeServerSide } from "../decorators/exclude-server-side"
 
 /**
  * @openapi
@@ -113,7 +114,7 @@ export class Tournament extends Id {
     status!: Status
 
     @Column()
-    @Exclude({ toClassOnly: true })
+    @ExcludeServerSide()
     eventId!: number
 
     @ManyToOne("Event", { onDelete: "CASCADE" })
