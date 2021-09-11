@@ -4,6 +4,7 @@ import { User, UserAndToken } from "@frilan/models"
 import http from "../utils/http"
 import { AxiosBasicCredentials } from "axios"
 import { classToPlain, plainToClass } from "class-transformer"
+import { parseJwt } from "../utils/parse-jwt"
 
 export interface State {
     user: User
@@ -12,6 +13,13 @@ export interface State {
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
+
+// check if token is still valid
+const expiration = localStorage.getItem("exp")
+if (expiration && Number(expiration) * 1000 < Date.now()) {
+    localStorage.removeItem("token")
+    localStorage.removeItem("exp")
+}
 
 // if logged, user data should be stored in local storage
 const currentUser = localStorage.getItem("user")
@@ -44,6 +52,8 @@ export const store = createStore<State>({
             const { user, token } = await http.get("/login", UserAndToken, credentials)
             context.commit("setUser", user)
             http.setToken(token)
+
+            localStorage.setItem("exp", parseJwt(token).exp.toString())
         },
         logout(context) {
             context.commit("clearUser")
