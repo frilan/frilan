@@ -27,16 +27,16 @@ import { ExcludeServerSide } from "../decorators/exclude-server-side"
  *         rules:
  *           type: string
  *           example: 5v5 matches, best of 3
- *         team_size_min:
+ *         teamSizeMin:
  *           type: number
  *           example: 5
- *         team_size_max:
+ *         teamSizeMax:
  *           type: number
  *           example: 6
- *         team_count_min:
+ *         teamCountMin:
  *           type: number
  *           example: 4
- *         team_count_max:
+ *         teamCountMax:
  *           type: number
  *           example: 16
  *         status:
@@ -61,7 +61,7 @@ export enum Status {
     Hidden = "hidden",
     Ready = "ready",
     Started = "started",
-    Finished = "finished"
+    Finished = "finished",
 }
 
 @Entity()
@@ -90,23 +90,23 @@ export class Tournament extends Id {
     @Column()
     @IsInt()
     @IsPositive()
-    team_size_min!: number
+    teamSizeMin!: number
 
     @Column()
     @IsInt()
     @IsPositive()
-    @GreaterOrEqual("team_size_min")
-    team_size_max!: number
+    @GreaterOrEqual("teamSizeMin")
+    teamSizeMax!: number
 
     @Column()
     @IsInt()
     @Min(2)
-    team_count_min!: number
+    teamCountMin!: number
 
     @Column()
     @IsInt()
-    @GreaterOrEqual("team_count_min")
-    team_count_max!: number
+    @GreaterOrEqual("teamCountMin")
+    teamCountMax!: number
 
     @Column({ type: "enum", enum: Status, default: Status.Hidden })
     @IsEnum(Status)

@@ -16,8 +16,15 @@ beforeAll(async () => {
     await refreshPrivilege(admin)
 
     // create tournament
-    const tournament =
-        { name: "foo", date: 5, duration: 1, team_size_min: 1, team_size_max: 1, team_count_min: 2, team_count_max: 8 }
+    const tournament = {
+        name: "foo",
+        date: 5,
+        duration: 1,
+        teamSizeMin: 1,
+        teamSizeMax: 1,
+        teamCountMin: 2,
+        teamCountMax: 8,
+    }
     const res = await http.post(`/events/${ eventId }/tournaments`, tournament, admin.config)
     const tournamentId = res.data.id
 

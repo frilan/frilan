@@ -25,7 +25,7 @@ import { RankList } from "../decorators/rank-list"
  */
 
 export enum Distribution {
-    Exponential = "exponential"
+    Exponential = "exponential",
 }
 
 export class Ranking {

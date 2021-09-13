@@ -19,15 +19,11 @@ const options: Options = {
         ],
         components: {
             responses: {
-                ValidationError: {
-                    description: "body validation failed",
-                },
-                AuthenticationRequired: {
-                    description: "authentication is required",
-                },
-                NotEnoughPrivilege: {
-                    description: "not enough privilege",
-                },
+                /* eslint-disable @typescript-eslint/naming-convention */
+                ValidationError: { description: "body validation failed" },
+                AuthenticationRequired: { description: "authentication is required" },
+                NotEnoughPrivilege: { description: "not enough privilege" },
+                /* eslint-enable */
             },
         },
     },

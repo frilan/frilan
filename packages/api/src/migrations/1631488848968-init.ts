@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1630585817671 implements MigrationInterface {
-    name = "init1630585817671"
+export class init1631488848968 implements MigrationInterface {
+    name = "init1631488848968"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -51,17 +51,17 @@ export class init1630585817671 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE "tournament"
             (
-                "id"             SERIAL                   NOT NULL,
-                "name"           character varying        NOT NULL,
-                "date"           TIMESTAMP                NOT NULL,
-                "duration"       integer                  NOT NULL,
-                "rules"          character varying        NOT NULL DEFAULT '',
-                "team_size_min"  integer                  NOT NULL,
-                "team_size_max"  integer                  NOT NULL,
-                "team_count_min" integer                  NOT NULL,
-                "team_count_max" integer                  NOT NULL,
-                "status"         "tournament_status_enum" NOT NULL DEFAULT 'hidden',
-                "eventId"        integer                  NOT NULL,
+                "id"           SERIAL                   NOT NULL,
+                "name"         character varying        NOT NULL,
+                "date"         TIMESTAMP                NOT NULL,
+                "duration"     integer                  NOT NULL,
+                "rules"        character varying        NOT NULL DEFAULT '',
+                "teamSizeMin"  integer                  NOT NULL,
+                "teamSizeMax"  integer                  NOT NULL,
+                "teamCountMin" integer                  NOT NULL,
+                "teamCountMax" integer                  NOT NULL,
+                "status"       "tournament_status_enum" NOT NULL DEFAULT 'hidden',
+                "eventId"      integer                  NOT NULL,
                 CONSTRAINT "PK_449f912ba2b62be003f0c22e767" PRIMARY KEY ("id")
             )
         `)

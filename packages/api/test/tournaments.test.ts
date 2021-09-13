@@ -17,10 +17,10 @@ const tournament1 = {
     date: new Date(5).toISOString(),
     duration: 120,
     rules: "5v5 matches, best of 3",
-    team_size_min: 1,
-    team_size_max: 6,
-    team_count_min: 2,
-    team_count_max: 16,
+    teamSizeMin: 1,
+    teamSizeMax: 6,
+    teamCountMin: 2,
+    teamCountMax: 16,
     status: Status.Ready,
 }
 
@@ -66,19 +66,19 @@ describe("create tournaments", () => {
 
     test("prevent creating tournament with single team", async () => {
         const res = await http.post(`/events/${ event1 }/tournaments`,
-            { ...tournament1, team_count_min: 1, team_count_max: 1 }, admin.config)
+            { ...tournament1, teamCountMin: 1, teamCountMax: 1 }, admin.config)
         expect(res.status).toBe(400)
     })
 
     test("prevent creating tournament with maximum teams lower than minimum", async () => {
         const res = await http.post(`/events/${ event1 }/tournaments`,
-            { ...tournament1, team_count_min: 2, team_count_max: 1 }, admin.config)
+            { ...tournament1, teamCountMin: 2, teamCountMax: 1 }, admin.config)
         expect(res.status).toBe(400)
     })
 
     test("prevent creating tournament with maximum teams size lower than minimum", async () => {
         const res = await http.post(`/events/${ event1 }/tournaments`,
-            { ...tournament1, team_size_min: 2, team_size_max: 1 }, admin.config)
+            { ...tournament1, teamSizeMin: 2, teamSizeMax: 1 }, admin.config)
         expect(res.status).toBe(400)
     })
 

@@ -8,7 +8,7 @@
  */
 export function distributeExp(rank: number, tiedTeams: number, totalTeams: number, points: number, curve = 5): number {
     const ranksRange = Array.from(new Array(tiedTeams), (_, i) => i + rank)
-    const score = ranksRange.reduce((acc, rank) => acc + totalTeams * points *
-        (Math.exp((1 - rank) / totalTeams * curve) - Math.exp((-rank) / totalTeams * curve)), 0)
+    const score = ranksRange.reduce((acc, rank) => acc + totalTeams * points
+        * (Math.exp((1 - rank) / totalTeams * curve) - Math.exp((-rank) / totalTeams * curve)), 0)
     return Math.round(score / tiedTeams)
 }

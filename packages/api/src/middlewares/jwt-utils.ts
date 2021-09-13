@@ -11,9 +11,9 @@ export function tokenDecoder() {
 }
 
 export interface AuthUser {
-    id: number,
-    admin: boolean,
-    roles: { [key: number]: Role }
+    id: number
+    admin: boolean
+    roles: Record<number, Role>
 }
 
 /**

@@ -5,9 +5,8 @@ import {
 @ValidatorConstraint({ name: "rankList", async: false })
 export class RankConstraint implements ValidatorConstraintInterface {
     validate(ids: unknown): boolean {
-        return Array.isArray(ids) &&
-            ids.every(id => Number.isInteger(id) ||
-                Array.isArray(id) && id.every(i => Number.isInteger(i)))
+        return Array.isArray(ids)
+            && ids.every(id => Number.isInteger(id) || Array.isArray(id) && id.every(i => Number.isInteger(i)))
     }
 
     defaultMessage(args: ValidationArguments): string {

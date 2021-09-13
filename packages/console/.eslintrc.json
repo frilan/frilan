@@ -4,6 +4,9 @@
   },
   "extends": ["plugin:vue/vue3-recommended"],
   "plugins": ["vue"],
+  "rules": {
+    "no-console": "warn"
+  },
   "overrides": [
     {
       "files": ["*.vue"],

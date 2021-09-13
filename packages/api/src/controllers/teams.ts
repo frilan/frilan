@@ -32,8 +32,8 @@ export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
         .leftJoin("team.members", "members")
         .groupBy("team.id")
         .having("COUNT(members) BETWEEN :min AND :max", {
-            min: tournament.team_size_min,
-            max: tournament.team_size_max,
+            min: tournament.teamSizeMin,
+            max: tournament.teamSizeMax,
         }).getMany()
 }
 
@@ -189,9 +189,9 @@ export class TournamentTeamController {
                 throw new BadRequestError("Cannot join multiple teams in the same tournament")
 
         const fullTeams = await getFullTeams(tournament)
-        if (fullTeams.length >= tournament.team_count_max)
+        if (fullTeams.length >= tournament.teamCountMax)
             throw new BadRequestError(
-                `This tournament is full (max ${ tournament.team_count_max } teams)`)
+                `This tournament is full (max ${ tournament.teamCountMax } teams)`)
 
         team.tournamentId = tournamentId
         // add current user into the team if registered to the event
@@ -402,7 +402,7 @@ export class TeamController {
             throw new BadRequestError("Cannot add member to the team if the tournament has already started")
 
         const registration = await getRepository(Registration)
-            .findOne({ userId: userId, eventId: team.tournament?.eventId })
+            .findOne({ userId, eventId: team.tournament?.eventId })
         if (!registration)
             throw new BadRequestError("Cannot add member that is not registered to the event")
 
@@ -415,15 +415,15 @@ export class TeamController {
 
         // check that team and tournament aren't full
         if (team.members && team.tournament) {
-            if (team.members.length + 1 > team.tournament.team_size_max)
+            if (team.members.length + 1 > team.tournament.teamSizeMax)
                 throw new BadRequestError(
-                    `This team is full (max ${ team.tournament.team_size_max } members)`)
+                    `This team is full (max ${ team.tournament.teamSizeMax } members)`)
 
-            if (team.members.length + 1 === team.tournament.team_size_min) {
+            if (team.members.length + 1 === team.tournament.teamSizeMin) {
                 const fullTeams = await getFullTeams(team.tournament)
-                if (fullTeams.length >= team.tournament.team_count_max)
+                if (fullTeams.length >= team.tournament.teamCountMax)
                     throw new BadRequestError(
-                        `This tournament is full (max ${ team.tournament.team_count_max } teams)`)
+                        `This tournament is full (max ${ team.tournament.teamCountMax } teams)`)
             }
         }
 

@@ -47,7 +47,7 @@ import { ExcludeServerSide } from "../decorators/exclude-server-side"
 
 export enum Role {
     Organizer = "organizer",
-    Player = "player"
+    Player = "player",
 }
 
 @Entity()

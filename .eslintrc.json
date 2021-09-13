@@ -14,13 +14,75 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "indent": ["error", 4],
-    "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "double"],
-    "semi": ["error", "never"],
-    "eqeqeq": ["error", "always"],
-    "eol-last": ["error", "always"],
+    // misc
+    "@typescript-eslint/quotes": ["error", "double"],
+    "@typescript-eslint/semi": ["error", "never"],
+
+    // spacing
     "no-multi-spaces": "error",
-    "no-trailing-spaces": "error"
-  }
+    "space-in-parens": "error",
+    "space-unary-ops": "error",
+    "no-whitespace-before-property": "error",
+    "no-trailing-spaces": "error",
+    "key-spacing": "error",
+    "switch-colon-spacing": "error",
+    "arrow-spacing": "error",
+    "rest-spread-spacing": "error",
+    "array-bracket-spacing": "error",
+    "@typescript-eslint/comma-spacing": "error",
+    "@typescript-eslint/func-call-spacing": "error",
+    "@typescript-eslint/keyword-spacing": "error",
+    "@typescript-eslint/object-curly-spacing": ["error", "always"],
+    "@typescript-eslint/space-before-function-paren": ["error", {"named": "never"}],
+    "@typescript-eslint/space-infix-ops": "error",
+    "@typescript-eslint/type-annotation-spacing": "error",
+
+    // lines
+    "indent": ["error", 4],
+    "max-len": ["error", 120],
+    "eol-last": ["error", "always"],
+    "linebreak-style": ["error", "unix"],
+    "no-multiple-empty-lines": ["error", {"max": 1, "maxBOF": 0, "maxEOF": 0}],
+    "array-bracket-newline": "error",
+    "array-element-newline": ["error", "consistent"],
+    "object-curly-newline": ["error", {"ObjectExpression": {"multiline": true}}],
+    "object-property-newline": ["error", {"allowAllPropertiesOnSameLine": true}],
+    "operator-linebreak": ["error", "before"],
+    "dot-location": ["error", "property"],
+    "comma-style": ["error", "last"],
+    "@typescript-eslint/brace-style": "error",
+    "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
+
+    // best practice
+    "eqeqeq": ["error", "always"],
+    "no-unneeded-ternary": "error",
+    "operator-assignment": "error",
+    "@typescript-eslint/prefer-for-of": "error",
+    "object-shorthand": "error",
+    "prefer-arrow-callback": "error",
+
+    // types
+    "@typescript-eslint/array-type": ["error", {"default": "array"}],
+    "@typescript-eslint/consistent-indexed-object-style": "error",
+    "@typescript-eslint/consistent-type-assertions": [
+      "error", {"assertionStyle": "as", "objectLiteralTypeAssertions": "never"}
+    ],
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/member-delimiter-style": ["error", {"multiline": {"delimiter": "none"}}],
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {"selector": "default", "format": ["camelCase"]},
+      {"selector": "parameter", "format": null, "modifiers": ["unused"], "custom": {"regex": "^_$", "match": true}},
+      {"selector": ["typeLike", "enumMember"], "format": ["PascalCase"]}
+    ]
+  },
+  "overrides": [
+    {
+      // unlike regular functions, decorators should be in PascalCase
+      "files": ["**/decorators/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/naming-convention": ["error", {"selector": "function", "format": ["PascalCase"]}]
+      }
+    }
+  ]
 }

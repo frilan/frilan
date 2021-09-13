@@ -2,8 +2,8 @@ import { startServer, stopServer } from "../src/server"
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios"
 
 export interface TestUser {
-    username: string,
-    id: number,
+    username: string
+    id: number
     config: AxiosRequestConfig
 }
 
@@ -21,7 +21,7 @@ export async function createUsers(amount: number): Promise<TestUser[]> {
         users.push({
             username,
             id: res.data.user.id,
-            config: { headers: { Authorization: "Bearer " + res.data.token } },
+            config: { headers: { authorization: "Bearer " + res.data.token } },
         })
     }
     return users

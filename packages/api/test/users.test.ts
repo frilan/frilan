@@ -1,20 +1,23 @@
 import { http } from "./setup"
 import { AxiosRequestConfig } from "axios"
+import { User } from "@frilan/models"
 
 // shared states
-const admin = {
+const admin: User & { config: AxiosRequestConfig } = {
     id: NaN,
     username: "admin",
     displayName: "The Administrator",
     password: "secure-password",
-    config: {} as AxiosRequestConfig,
+    admin: true,
+    config: {},
 }
-const regular = {
+const regular: User & { config: AxiosRequestConfig } = {
     id: NaN,
     username: "test",
     displayName: "Someone",
     password: "another-password",
-    config: {} as AxiosRequestConfig,
+    admin: false,
+    config: {},
 }
 
 describe("create users", () => {
@@ -25,7 +28,7 @@ describe("create users", () => {
         expect(res.data).toMatchObject({
             username: admin.username,
             displayName: admin.displayName,
-            admin: true,
+            admin: admin.admin,
         })
         expect(res.data).not.toHaveProperty("password")
     })
@@ -36,17 +39,17 @@ describe("create users", () => {
         expect(res.data.user).toMatchObject({
             username: admin.username,
             displayName: admin.displayName,
-            admin: true,
+            admin: admin.admin,
         })
         expect(typeof res.data.user.id).toBe("number")
         admin.id = res.data.user.id
         expect(typeof res.data.token).toBe("string")
-        admin.config = { headers: { Authorization: "Bearer " + res.data.token } }
+        admin.config = { headers: { authorization: "Bearer " + res.data.token } }
     })
 
     test("create regular account", async () => {
         const res = await http.post("/users", { ...regular, admin: true })
-        expect(res.data).toMatchObject({ admin: false })
+        expect(res.data).toMatchObject({ admin: regular.admin })
         expect(res.status).toBe(201)
     })
 
@@ -59,7 +62,7 @@ describe("create users", () => {
         const res = await http.get("/login", { auth: regular })
         expect(res.status).toBe(200)
         regular.id = res.data.user.id
-        regular.config = { headers: { Authorization: "Bearer " + res.data.token } }
+        regular.config = { headers: { authorization: "Bearer " + res.data.token } }
     })
 
     test("prevent logging in with wrong password", async () => {

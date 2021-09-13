@@ -272,12 +272,12 @@ export class TournamentController {
 
                 // get all complete teams
                 const fullTeams = await getFullTeams(tournament)
-                if (fullTeams.length < tournament.team_count_min)
+                if (fullTeams.length < tournament.teamCountMin)
                     throw new BadRequestError(
-                        `Cannot start tournament without at least ${ tournament.team_count_min } complete teams`)
-                if (fullTeams.length > tournament.team_count_max)
+                        `Cannot start tournament without at least ${ tournament.teamCountMin } complete teams`)
+                if (fullTeams.length > tournament.teamCountMax)
                     throw new BadRequestError(
-                        `Cannot start tournament with more than ${ tournament.team_count_min } complete teams`)
+                        `Cannot start tournament with more than ${ tournament.teamCountMin } complete teams`)
 
                 // delete teams that are incomplete
                 await getRepository(Team).delete({
