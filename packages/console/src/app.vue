@@ -35,7 +35,8 @@ header
     button(@click="logout") Log out
 main
   error-handler
-  router-view
+  suspense
+    router-view
 </template>
 
 <style lang="sass">

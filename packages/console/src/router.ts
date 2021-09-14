@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router"
-import Home from "./pages/home.vue"
+import Planning from "./pages/planning.vue"
 import Join from "./pages/join.vue"
 import Login from "./pages/login.vue"
 import { store } from "./store/store"
@@ -7,7 +7,7 @@ import { store } from "./store/store"
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: "/", name: "home", component: Home },
+        { path: "/", name: "home", component: Planning },
         { path: "/login", name: "login", component: Login, meta: { visitor: true } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true } },
     ],

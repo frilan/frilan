@@ -3,6 +3,15 @@ import { ClassConstructor } from "class-transformer/types/interfaces"
 import { plainToClass } from "class-transformer"
 
 /**
+ * A wrapper around entities indicating that many entities will be returned.
+ */
+export class Many<T> {
+    constructor(public entity: ClassConstructor<T>) {}
+}
+
+export type OneOrMany<T> = ClassConstructor<T> | Many<T>
+
+/**
  * A Wrapper around axios that transforms response body into specified class.
  */
 export class Http {
@@ -26,8 +35,12 @@ export class Http {
         localStorage.removeItem("token")
     }
 
-    public get<T>(url: string, cls: ClassConstructor<T>, auth?: AxiosBasicCredentials): Promise<T> {
+    public getOne<T>(url: string, cls: ClassConstructor<T>, auth?: AxiosBasicCredentials): Promise<T> {
         return this.sendRequest({ method: "get", url, auth }, cls)
+    }
+
+    public getMany<T>(url: string, cls: ClassConstructor<T>, auth?: AxiosBasicCredentials): Promise<T[]> {
+        return this.sendRequest({ method: "get", url, auth }, new Many(cls))
     }
 
     public post<T>(url: string, body: T): Promise<void>
@@ -57,10 +70,12 @@ export class Http {
 
     private async sendRequest(config: AxiosRequestConfig): Promise<void>
     private async sendRequest<T>(config: AxiosRequestConfig, cls: ClassConstructor<T>): Promise<T>
-    private async sendRequest<T>(config: AxiosRequestConfig, cls?: ClassConstructor<T>): Promise<T | void> {
+    private async sendRequest<T>(config: AxiosRequestConfig, cls: Many<T>): Promise<T[]>
+    private async sendRequest<T>(config: AxiosRequestConfig, cls: OneOrMany<T>): Promise<T | T[]>
+    private async sendRequest<T>(config: AxiosRequestConfig, cls?: OneOrMany<T>): Promise<T | T[] | void> {
         const response = await this.axiosInstance(config)
         if (cls)
-            return plainToClass(cls, response.data)
+            return plainToClass(cls instanceof Many ? cls.entity : cls, response.data)
     }
 }
 
