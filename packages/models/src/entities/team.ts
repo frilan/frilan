@@ -44,10 +44,10 @@ export class Team extends Id {
     @ExcludeServerSide()
     result!: number
 
-    @Column({ nullable: true })
+    @Column({ default: 0 })
     @IsOptional()
     @ExcludeServerSide()
-    rank?: number
+    rank!: number
 
     @Column()
     @ExcludeServerSide()

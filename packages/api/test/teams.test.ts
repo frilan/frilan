@@ -61,7 +61,7 @@ describe("create teams", () => {
         expect(res.data.tournamentId).toBe(hiddenTournament)
         // make sure result and rank are set to default values
         expect(res.data.result).toBe(0)
-        expect(res.data.rank).toBeNull()
+        expect(res.data.rank).toBe(0)
         adminTeam = res.data.id
     })
 

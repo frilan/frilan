@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1631488848968 implements MigrationInterface {
-    name = "init1631488848968"
+export class init1631819317656 implements MigrationInterface {
+    name = "init1631819317656"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -71,7 +71,7 @@ export class init1631488848968 implements MigrationInterface {
                 "id"           SERIAL            NOT NULL,
                 "name"         character varying NOT NULL,
                 "result"       integer           NOT NULL DEFAULT '0',
-                "rank"         integer,
+                "rank"         integer           NOT NULL DEFAULT '0',
                 "tournamentId" integer           NOT NULL,
                 CONSTRAINT "PK_f57d8293406df4af348402e4b74" PRIMARY KEY ("id")
             )
