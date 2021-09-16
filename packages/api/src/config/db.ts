@@ -1,4 +1,5 @@
 import { ConnectionOptions } from "typeorm"
+import { SnakeNamingStrategy } from "typeorm-naming-strategies"
 import { Event, Registration, Team, Tournament, User } from "@frilan/models"
 import { env } from "./env"
 
@@ -27,6 +28,7 @@ const config: ConnectionOptions = {
     migrationsRun: true,
     logging: env === "dev",
     dropSchema: env === "test",
+    namingStrategy: new SnakeNamingStrategy(),
     entities: [User, Event, Registration, Tournament, Team],
     migrations: [root + "/migrations/*." + ext],
     subscribers: [root + "/subscribers/*." + ext],
