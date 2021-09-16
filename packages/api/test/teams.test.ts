@@ -52,7 +52,7 @@ beforeAll(async () => {
 describe("create teams", () => {
 
     test("create team as admin", async () => {
-        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`,
+        let res = await http.post(`/tournaments/${ hiddenTournament }/teams`,
             { name: "admin", result: 999, rank: 2 }, admin.config)
         expect(res.status).toBe(201)
         expect(res.data.name).toBe("admin")
@@ -63,28 +63,44 @@ describe("create teams", () => {
         expect(res.data.result).toBe(0)
         expect(res.data.rank).toBe(0)
         adminTeam = res.data.id
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.status).toBe(200)
+        expect(res.data.teamCount).toBe(1)
     })
 
     test("create team as organizer", async () => {
-        const res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "organizer" }, regular1.config)
+        let res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "organizer" }, regular1.config)
         expect(res.status).toBe(201)
         expect(res.data.tournamentId).toBe(readyTournament)
         expect(res.data.members[0].userId).toBe(regular1.id)
         organizerTeam = res.data.id
+
+        res = await http.get(`/tournaments/${ readyTournament }`, regular1.config)
+        expect(res.status).toBe(200)
+        expect(res.data.teamCount).toBe(1)
     })
 
     test("create team as player", async () => {
-        const res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "player" }, regular1.config)
+        let res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "player" }, regular1.config)
         expect(res.status).toBe(201)
         expect(res.data.members[0].userId).toBe(regular1.id)
         playerTeam = res.data.id
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.status).toBe(200)
+        expect(res.data.teamCount).toBe(2)
     })
 
     test("create empty team as unregistered admin", async () => {
-        const res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "empty" }, admin.config)
+        let res = await http.post(`/tournaments/${ readyTournament }/teams`, { name: "empty" }, admin.config)
         expect(res.status).toBe(201)
         expect(res.data.members.length).toBe(0)
         emptyTeam = res.data.id
+
+        res = await http.get(`/tournaments/${ readyTournament }`, admin.config)
+        expect(res.status).toBe(200)
+        expect(res.data.teamCount).toBe(1)
     })
 
     test("prevent creating team with empty name", async () => {
@@ -250,13 +266,19 @@ describe("update teams", () => {
 describe("add team members", () => {
 
     test("add member as admin", async () => {
-        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, admin.config)
+        let res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, admin.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ readyTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(2)
     })
 
     test("add member as organizer", async () => {
-        const res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, regular1.config)
+        let res = await http.put(`/teams/${ emptyTeam }/members/${ regular1.id }`, {}, regular1.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ readyTournament }`, regular1.config)
+        expect(res.data.teamCount).toBe(2)
     })
 
     test("prevent joining team when already full", async () => {
@@ -265,19 +287,24 @@ describe("add team members", () => {
     })
 
     test("join team as player", async () => {
-        // update maximum team size
-        await http.patch("tournaments/" + hiddenTournament, { teamSizeMax: 2 }, admin.config)
+        // update team size
+        await http.patch("tournaments/" + hiddenTournament, { teamSizeMin: 2, teamSizeMax: 2 }, admin.config)
+        let res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(0)
 
-        const res = await http.put(`/teams/${ adminTeam }/members/${ regular2.id }`, {}, regular2.config)
+        res = await http.put(`/teams/${ adminTeam }/members/${ regular2.id }`, {}, regular2.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(1)
     })
 
     test("prevent joining another team in the same tournament", async () => {
-        // update maximum team size
-        await http.patch("tournaments/" + hiddenTournament, { teamSizeMax: 2 }, admin.config)
-
-        const res = await http.put(`/teams/${ adminTeam }/members/${ regular1.id }`, {}, regular1.config)
+        let res = await http.put(`/teams/${ adminTeam }/members/${ regular1.id }`, {}, regular1.config)
         expect(res.status).toBe(400)
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(1)
     })
 
     test("prevent adding members when tournament has already started", async () => {
@@ -345,11 +372,14 @@ describe("read team members", () => {
 describe("remove team members", () => {
 
     test("remove member as admin", async () => {
-        const res = await http.delete(`/teams/${ emptyTeam }/members/${ regular1.id }`, admin.config)
+        let res = await http.delete(`/teams/${ emptyTeam }/members/${ regular1.id }`, admin.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ readyTournament }`, regular1.config)
+        expect(res.data.teamCount).toBe(1)
     })
 
-    test("delete empty team after removing member", async () => {
+    test("prevent reading team after removing last member", async () => {
         const res = await http.get(`/teams/${ emptyTeam }`, admin.config)
         expect(res.status).toBe(404)
     })
@@ -361,11 +391,17 @@ describe("remove team members", () => {
 
         res = await http.delete(`/teams/${ teamId }/members/${ regular1.id }`, regular1.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ readyTournament }`, regular1.config)
+        expect(res.data.teamCount).toBe(1)
     })
 
-    test("leaving team as member", async () => {
-        const res = await http.delete(`/teams/${ adminTeam }/members/${ regular2.id }`, regular2.config)
+    test("leave team as member", async () => {
+        let res = await http.delete(`/teams/${ adminTeam }/members/${ regular2.id }`, regular2.config)
         expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(0)
     })
 
     test("prevent removing members when tournament has already started", async () => {
@@ -390,12 +426,30 @@ describe("remove team members", () => {
         expect(res.data[0].username).not.toBe(regular2.username)
     })
 
+    test("leave team as admin", async () => {
+        // change team size to update team count
+        await http.patch(`/tournaments/${ hiddenTournament }`, { teamSizeMin: 1 }, admin.config)
+        let res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(2)
+
+        res = await http.delete(`/teams/${ adminTeam }/members/${ admin.id }`, admin.config)
+        expect(res.status).toBe(204)
+
+        res = await http.get(`/tournaments/${ hiddenTournament }`, admin.config)
+        expect(res.data.teamCount).toBe(1)
+    })
+
 })
 
 describe("delete teams", () => {
 
     test("prevent deleting team as non-member", async () => {
-        const res = await http.delete("/teams/" + adminTeam, regular1.config)
+        // recreate team
+        let res = await http.post(`/tournaments/${ hiddenTournament }/teams`, { name: "admin" }, admin.config)
+        expect(res.status).toBe(201)
+        adminTeam = res.data.id
+
+        res = await http.delete("/teams/" + adminTeam, regular1.config)
         expect(res.status).toBe(403)
     })
 

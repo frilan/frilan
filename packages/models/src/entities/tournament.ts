@@ -98,6 +98,10 @@ export class Tournament extends Id {
     @GreaterOrEqual("teamSizeMin")
     teamSizeMax!: number
 
+    @Column({ default: 0 })
+    @ExcludeServerSide()
+    teamCount!: number
+
     @Column()
     @IsInt()
     @Min(2)

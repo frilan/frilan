@@ -288,6 +288,13 @@ export class TournamentController {
         }
 
         Object.assign(tournament, updatedTournament)
+
+        // update number of full teams if needed
+        if ("teamSizeMin" in updatedTournament || "teamSizeMax" in updatedTournament) {
+            const fullTeams = await getFullTeams(tournament)
+            tournament.teamCount = fullTeams.length
+        }
+
         return await getRepository(Tournament).save(tournament)
     }
 
@@ -372,7 +379,6 @@ export class TournamentController {
         if (tournament.status !== Status.Started && tournament.status !== Status.Finished)
             throw new BadRequestError("Cannot end a tournament that hasn't started")
 
-        // const teams = tournament.teams
         if (ranking.ranks.length > tournament.teams.length)
             throw new BadRequestError("Too many teams in ranking")
 

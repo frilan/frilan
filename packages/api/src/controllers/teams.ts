@@ -18,11 +18,11 @@ import { FiltersParser } from "../middlewares/filters-parser"
  * @param team The target team
  */
 export async function isOrganizer(user: AuthUser, team: Team): Promise<boolean> {
-    return Boolean(team.tournament && user.roles[team.tournament?.eventId] === Role.Organizer)
+    return Boolean(team.tournament && user.roles[team.tournament.eventId] === Role.Organizer)
 }
 
 /**
- * Returns the number of complete teams from a tournament.
+ * Returns all complete teams from a tournament.
  * @param tournament The tournament entity
  */
 export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
@@ -197,7 +197,15 @@ export class TournamentTeamController {
         // add current user into the team if registered to the event
         team.members = initialMembers
 
-        return await getRepository(Team).save(team)
+        const savedTeam = await getRepository(Team).save(team)
+
+        // increment the current number of full teams if needed
+        if (initialMembers.length >= tournament.teamSizeMin) {
+            ++tournament.teamCount
+            await getRepository(Tournament).save(tournament)
+        }
+
+        return savedTeam
     }
 }
 
@@ -272,14 +280,14 @@ export class TeamController {
     ): Promise<Team | undefined> {
 
         const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
-        if (!team)
+        if (!team || !team.members || !team.tournament)
             throw new TeamNotFoundError()
 
-        const isMember = team.members?.map(({ userId }) => userId).includes(user.id)
+        const isMember = team.members.map(({ userId }) => userId).includes(user.id)
         if (!user.admin && !isMember && !await isOrganizer(user, team))
             throw new ForbiddenError("Only members of this team can update the team")
 
-        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+        if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot update team if the tournament has already started")
 
         delete team.members
@@ -311,17 +319,23 @@ export class TeamController {
     @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
-        const team = await getRepository(Team).findOne({ where: { id }, relations: ["tournament"] })
-        if (!team)
+        const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
+        if (!team || !team.members || !team.tournament)
             throw new TeamNotFoundError()
 
         if (!user.admin && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can delete teams")
 
-        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+        if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot delete team if the tournament has already started")
 
         await getRepository(Team).delete(id)
+
+        // decrement the number of full teams if needed
+        if (team.members.length >= team.tournament.teamSizeMin) {
+            --team.tournament.teamCount
+            await getRepository(Tournament).save(team.tournament)
+        }
     }
 
     /**
@@ -392,22 +406,22 @@ export class TeamController {
     ): Promise<void> {
 
         const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
-        if (!team)
+        if (!team || !team.members || !team.tournament)
             throw new TeamNotFoundError()
 
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can add other users to the team")
 
-        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+        if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot add member to the team if the tournament has already started")
 
         const registration = await getRepository(Registration)
-            .findOne({ userId, eventId: team.tournament?.eventId })
+            .findOne({ userId, eventId: team.tournament.eventId })
         if (!registration)
             throw new BadRequestError("Cannot add member that is not registered to the event")
 
         // skip if member already in team
-        if (team.members?.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
+        if (team.members.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
             return
 
         if (await hasAlreadyJoined(user.id, team.tournamentId))
@@ -424,6 +438,10 @@ export class TeamController {
                 if (fullTeams.length >= team.tournament.teamCountMax)
                     throw new BadRequestError(
                         `This tournament is full (max ${ team.tournament.teamCountMax } teams)`)
+
+                // increment the number of full teams
+                ++team.tournament.teamCount
+                await getRepository(Tournament).save(team.tournament)
             }
         }
 
@@ -466,24 +484,30 @@ export class TeamController {
     ): Promise<void> {
 
         const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
-        if (!team)
+        if (!team || !team.members || !team.tournament)
             throw new TeamNotFoundError()
 
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
             throw new ForbiddenError("Only administrators and organizers can remove other users from the team")
 
-        if (team.tournament?.status === Status.Started || team.tournament?.status === Status.Finished)
+        if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot remove member from the team if the tournament has already started")
 
-        team.members = team.members?.filter(member => member.userId !== userId)
-        if (!team.members?.length)
+        const membersLeft = team.members.filter(member => member.userId !== userId)
+        if (!membersLeft.length) {
             // also remove team if empty
             await getRepository(Team).delete(id)
-        else
+        } else
             // for some reason, save(team) doesn't work here
             await getConnection()
                 .createQueryBuilder()
                 .relation(Team, "members").of(team)
-                .remove({ userId, eventId: team.tournament?.eventId })
+                .remove({ userId, eventId: team.tournament.eventId })
+
+        // decrement the number of full teams if needed
+        if (membersLeft.length < team.members.length && team.members.length === team.tournament.teamSizeMin) {
+            --team.tournament.teamCount
+            await getRepository(Tournament).save(team.tournament)
+        }
     }
 }
