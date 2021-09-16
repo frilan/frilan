@@ -23,10 +23,11 @@ function endDate(tournament: Tournament) {
 </script>
 
 <template lang="pug">
-h2 Tournaments planning
+h1 Tournaments planning
 
 .tournament(v-for="tournament in tournaments")
-  h3 {{ tournament.name }}
+  h2
+    router-link(:to="{ name: 'tournament', params: { id: tournament.id } }") {{ tournament.name }}
   p.date {{ weekday(tournament.date) }}, {{ time(tournament.date) }} — {{ time(endDate(tournament)) }}
   p.players {{ tournament.teams?.length }} / {{ tournament.teamCountMax }}!{" "}
     | registered {{ tournament.teamSizeMax > 1 ? "teams" : "players" }}

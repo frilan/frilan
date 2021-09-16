@@ -29,7 +29,7 @@ function logout() {
 
 <template lang="pug">
 header
-  h1 Console
+  .title Console
   template(v-if="logged")
     p Logged in as {{ user.displayName }}
     button(@click="logout") Log out
@@ -44,4 +44,7 @@ main
   font-family: Avenir, Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
+
+.title
+  font-size: 2em
 </style>

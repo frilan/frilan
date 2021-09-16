@@ -15,7 +15,7 @@ async function login() {
 </script>
 
 <template lang="pug">
-h2 Log in to your account
+h1 Log in to your account
 form(@submit.prevent="login")
   .field
     label(for="username") Username

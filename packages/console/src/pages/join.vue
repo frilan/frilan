@@ -20,7 +20,7 @@ async function join() {
 </script>
 
 <template lang="pug">
-h2 Create a new account
+h1 Create a new account
 form(@submit.prevent="join")
   .field
     label(for="username") Username
