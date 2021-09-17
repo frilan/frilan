@@ -17,15 +17,22 @@ const options: Options = {
             { name: "tournaments" },
             { name: "teams" },
         ],
+        /* eslint-disable @typescript-eslint/naming-convention */
         components: {
             responses: {
-                /* eslint-disable @typescript-eslint/naming-convention */
                 ValidationError: { description: "body validation failed" },
                 AuthenticationRequired: { description: "authentication is required" },
                 NotEnoughPrivilege: { description: "not enough privilege" },
-                /* eslint-enable */
+            },
+            securitySchemes: {
+                BearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                },
             },
         },
+        security: [{ BearerAuth: [] }],
+        /* eslint-enable */
     },
     apis: [
         "../models/src/entities/**/*.ts",

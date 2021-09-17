@@ -118,6 +118,7 @@ export class UserController {
      *     summary: create a new user
      *     tags:
      *       - users
+     *     security: []
      *     requestBody:
      *       required: true
      *       content:
