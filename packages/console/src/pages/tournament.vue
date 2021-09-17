@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import Markdown from "../components/markdown.vue"
+import { computed } from "vue"
 import { useRoute } from "vue-router"
 import http from "../utils/http"
 import { Status, Tournament } from "@frilan/models"
-import { computed } from "vue"
+import Markdown from "../components/markdown.vue"
+import UserLink from "../components/user-link.vue"
 
 const route = useRoute()
 
@@ -51,8 +52,9 @@ template(v-for="(teams, index) in teamsGroups")
         template(v-if="tournament.teamSizeMax > 1")
           span.name {{ team.name }}
           ul.members
-            li.member(v-for="member in team.members") {{ member.user?.displayName }}
-        template(v-else) {{ team.members?.[0].user?.displayName }}
+            li.member(v-for="member in team.members")
+              user-link(:user="member.user")
+        user-link(v-else :user="team.members?.[0].user")
       td.result(v-if="tournament.status === Status.Finished") {{ team.result }} pts
 </template>
 

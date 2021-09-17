@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onErrorCaptured, toRefs } from "vue"
 import { useStore } from "./store/store"
-import ErrorHandler from "./components/error-handler.vue"
-import { useRouter } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
+import ErrorHandler from "./components/error-handler.vue"
+import UserLink from "./components/user-link.vue"
 
 const store = useStore()
 const router = useRouter()
+const route = useRoute()
 
 let { user, logged } = $(toRefs(store.state))
 
@@ -31,12 +33,14 @@ function logout() {
 header
   .title Console
   template(v-if="logged")
-    p Logged in as {{ user.displayName }}
+    p Logged in as!{" "}
+      user-link(:user="user")
     button(@click="logout") Log out
 main
   error-handler
   suspense
-    router-view
+    router-view(v-slot="{ Component }")
+      component(:is="Component" :key="route.fullPath")
 </template>
 
 <style lang="sass">
@@ -47,4 +51,11 @@ main
 
 .title
   font-size: 2em
+
+@media (prefers-color-scheme: dark)
+  html
+    background: #2f3136
+    color: white
+  a
+    color: cornflowerblue
 </style>

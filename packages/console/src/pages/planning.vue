@@ -2,6 +2,7 @@
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Tournament } from "@frilan/models"
+import TournamentLink from "../components/tournament-link.vue"
 
 const store = useStore()
 const event = store.state.event
@@ -27,9 +28,9 @@ h1 Tournaments planning
 
 .tournament(v-for="tournament in tournaments")
   h2
-    router-link(:to="{ name: 'tournament', params: { id: tournament.id } }") {{ tournament.name }}
+    tournament-link(:tournament="tournament")
   p.date {{ weekday(tournament.date) }}, {{ time(tournament.date) }} — {{ time(endDate(tournament)) }}
-  p.players {{ tournament.teams?.length }} / {{ tournament.teamCountMax }}!{" "}
+  p.players {{ tournament.teamCount }} / {{ tournament.teamCountMax }}!{" "}
     | registered {{ tournament.teamSizeMax > 1 ? "teams" : "players" }}
   p.status Status: {{ tournament.status }}
 </template>
