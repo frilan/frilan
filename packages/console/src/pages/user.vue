@@ -23,7 +23,7 @@ let registration = $ref(new Registration())
 
 try {
   registration
-    = await http.getOne(`/events/${ event }/registrations/${ user.id }?load=${ relations }`, Registration)
+    = await http.getOne(`/events/${ event.id }/registrations/${ user.id }?load=${ relations }`, Registration)
 } catch (err) {
   if (axios.isAxiosError(err) && err.response?.status === 404)
     registered = false

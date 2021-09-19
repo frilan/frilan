@@ -1,6 +1,6 @@
 import { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
-import { Event, User, UserAndToken } from "@frilan/models"
+import { Event, Role, User, UserAndToken } from "@frilan/models"
 import http from "../utils/http"
 import { AxiosBasicCredentials } from "axios"
 import { classToPlain, plainToClass } from "class-transformer"
@@ -9,7 +9,7 @@ import { parseJwt } from "../utils/parse-jwt"
 export interface State {
     user: User
     logged: boolean
-    event?: number
+    event: Event
     error: unknown
 }
 
@@ -30,8 +30,16 @@ export const store = createStore<State>({
     state: {
         user: currentUser ? plainToClass(User, JSON.parse(currentUser)) : new User(),
         logged: !!localStorage.getItem("token"),
-        event: currentEvent ? Number(currentEvent) : undefined,
+        event: currentEvent ? plainToClass(Event, JSON.parse(currentEvent)) : new Event(),
         error: null,
+    },
+    getters: {
+        isOrganizer(state) {
+            return state.user.admin
+                || state.user.registrations.some(r =>
+                    r.eventId === state.event.id
+                    && r.role === Role.Organizer)
+        },
     },
     mutations: {
         setUser(state, user: User) {
@@ -43,9 +51,9 @@ export const store = createStore<State>({
             state.logged = false
             localStorage.removeItem("user")
         },
-        setEvent(state, event: number) {
+        setEvent(state, event: Event) {
             state.event = event
-            localStorage.setItem("event", event.toString())
+            localStorage.setItem("event", JSON.stringify(event))
         },
         setError(state, error: string) {
             state.error = error
@@ -62,7 +70,7 @@ export const store = createStore<State>({
 
             const events = await http.getMany("/events", Event)
             events.sort((a, b) => a.start.getTime() - b.start.getTime())
-            context.commit("setEvent", events[0].id)
+            context.commit("setEvent", events[0])
 
             localStorage.setItem("exp", parseJwt(token).exp.toString())
         },

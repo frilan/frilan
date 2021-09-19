@@ -8,7 +8,7 @@ import UserLink from "../components/user-link.vue"
 const store = useStore()
 
 const { event } = store.state
-const registrations = await http.getMany(`/events/${ event }/registrations?load=user`, Registration)
+const registrations = await http.getMany(`/events/${ event.id }/registrations?load=user`, Registration)
 registrations.sort((a, b) => b.score - a.score)
 
 let filtered = $(computed(() => registrations.filter(({ score }) => score > 0)))

@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { useRoute } from "vue-router"
+import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Status, Tournament } from "@frilan/models"
 import Markdown from "../components/markdown.vue"
 import UserLink from "../components/user-link.vue"
 
 const route = useRoute()
+const store = useStore()
+
+const { user } = store.state
+const { isOrganizer } = store.getters
 
 const { id } = route.params
 const relations = ["teams", "teams.members", "teams.members.user"].join(",")
@@ -32,6 +37,7 @@ let teamsGroups = $(computed(() =>
 
 <template lang="pug">
 h1 {{ tournament.name }}
+router-link(v-if="isOrganizer" :to="{ name: 'edit-tournament', params: { id } }") Edit
 
 p.info {{ fullTeams.length }}!{" "}
   template(v-if="!tournamentStarted") / {{ tournament.teamCountMax }}

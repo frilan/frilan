@@ -5,9 +5,10 @@ import { Tournament } from "@frilan/models"
 import TournamentLink from "../components/tournament-link.vue"
 
 const store = useStore()
-const event = store.state.event
+const { event } = store.state
+const { isOrganizer } = store.getters
 
-const tournaments = await http.getMany(`/events/${ event }/tournaments?load=teams`, Tournament)
+const tournaments = await http.getMany(`/events/${ event.id }/tournaments?load=teams`, Tournament)
 tournaments.sort((a, b) => a.date.getTime() - b.date.getTime())
 
 function weekday(date: Date) {
@@ -25,6 +26,7 @@ function endDate(tournament: Tournament) {
 
 <template lang="pug">
 h1 Tournaments planning
+router-link(v-if="isOrganizer" :to="{ name: 'new-tournament' }") New tournament
 
 .tournament(v-for="tournament in tournaments")
   h2
