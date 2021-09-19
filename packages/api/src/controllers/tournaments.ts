@@ -255,7 +255,7 @@ export class TournamentController {
         if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can update tournaments")
 
-        await checkDate(tournament.eventId, tournament)
+        await checkDate(tournament.eventId, updatedTournament)
 
         // check for updated status
         if (updatedTournament.status && updatedTournament.status !== tournament.status) {
