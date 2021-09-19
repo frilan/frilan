@@ -75,6 +75,6 @@ export class User extends Id {
     admin!: boolean
 
     @OneToMany("Registration", "user")
-    registrations?: Registration[]
+    registrations!: Registration[]
 
 }

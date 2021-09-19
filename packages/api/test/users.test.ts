@@ -1,9 +1,9 @@
-import { http } from "./setup"
-import { AxiosRequestConfig } from "axios"
+import { http, TestUser } from "./setup"
+import { AxiosBasicCredentials } from "axios"
 import { User } from "@frilan/models"
 
 // shared states
-const admin: User & { config: AxiosRequestConfig } = {
+const admin: TestUser & AxiosBasicCredentials & Partial<User> = {
     id: NaN,
     username: "admin",
     displayName: "The Administrator",
@@ -11,7 +11,7 @@ const admin: User & { config: AxiosRequestConfig } = {
     admin: true,
     config: {},
 }
-const regular: User & { config: AxiosRequestConfig } = {
+const regular: TestUser & AxiosBasicCredentials & Partial<User> = {
     id: NaN,
     username: "test",
     displayName: "Someone",

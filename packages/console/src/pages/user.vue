@@ -33,18 +33,17 @@ try {
 
 // hide incomplete teams if the tournament is finished
 let visibleTeams = $(computed(() => registered
-  ? registration.teams?.filter(team => team.tournament?.status !== Status.Finished || team.rank > 0)
+  ? registration.teams.filter(team => team.tournament.status !== Status.Finished || team.rank > 0)
   : []))
 
 let finishedTeams = $(computed(() => visibleTeams
-  .filter(team => team.tournament?.status === Status.Finished)
+  .filter(team => team.tournament.status === Status.Finished)
   .sort((a, b) => b.result - a.result)))
 
 let registeredTeams = $(computed(() => visibleTeams.filter(team => !finishedTeams.includes(team))))
 
 function isTeamRegistered(team: Team) {
-  return team.members && team.tournament
-    && team.members.length >= team.tournament.teamSizeMin
+  return team.members.length >= team.tournament.teamSizeMin
     && team.members.length <= team.tournament.teamSizeMax
 }
 
@@ -64,8 +63,8 @@ template(v-if="registered")
     tr(v-for="team in finishedTeams")
       td
         tournament-link(:tournament="team.tournament")
-      td {{ team.tournament?.teamSizeMax > 1 ? team.name : "" }}
-      td {{ team.rank }} / {{ team.tournament?.teamCount }}
+      td {{ team.tournament.teamSizeMax > 1 ? team.name : "" }}
+      td {{ team.rank }} / {{ team.tournament.teamCount }}
       td {{ team.result }} pts
 
   template(v-if="registeredTeams.length")
@@ -78,11 +77,11 @@ template(v-if="registered")
       tr(v-for="team in registeredTeams")
         td
           tournament-link(:tournament="team.tournament")
-        td {{ team.tournament?.teamSizeMax > 1 ? team.name : "" }}
+        td {{ team.tournament.teamSizeMax > 1 ? team.name : "" }}
         td(v-if="isTeamRegistered(team)") Registered
-        td(v-else) &#9888; {{ team.members?.length }} / {{ team.tournament?.teamSizeMin }}
-          span.max(v-if="team.tournament?.teamSizeMax > team.tournament?.teamSizeMin")
-            | !{" "}({{ team.tournament?.teamSizeMax }})
+        td(v-else) &#9888; {{ team.members.length }} / {{ team.tournament.teamSizeMin }}
+          span.max(v-if="team.tournament.teamSizeMax > team.tournament.teamSizeMin")
+            | !{" "}({{ team.tournament.teamSizeMax }})
 
 p(v-else) This user isn't registered to the event.
 </template>

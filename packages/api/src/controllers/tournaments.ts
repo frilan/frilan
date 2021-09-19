@@ -370,7 +370,7 @@ export class TournamentController {
     ): Promise<Tournament> {
 
         const tournament = await getRepository(Tournament).findOne(id, { relations: ["teams", "teams.members"] })
-        if (!tournament || !tournament.teams)
+        if (!tournament)
             throw new TournamentNotFoundError()
 
         if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
@@ -408,7 +408,7 @@ export class TournamentController {
                     throw new BadRequestError(`Team ${ team } is not registered to this tournament`)
 
                 // needed if results are being updated
-                const prevResult = team.result ?? 0
+                const prevResult = team.result
 
                 team.rank = trueRank
                 team.result = result
@@ -416,11 +416,9 @@ export class TournamentController {
                 const { members, ...teamWithoutMembers } = team
 
                 // adjust members scores
-                if (members) {
-                    for (const member of members)
-                        member.score += result - prevResult
-                    await getRepository(Registration).save(members)
-                }
+                for (const member of members)
+                    member.score += result - prevResult
+                await getRepository(Registration).save(members)
 
                 // for some reason, save(team) fails if it contains members
                 await getRepository(Team).save(teamWithoutMembers)

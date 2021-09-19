@@ -13,18 +13,17 @@ const relations = ["teams", "teams.members", "teams.members.user"].join(",")
 const tournament = await http.getOne(`/tournaments/${ id }?load=${ relations }`, Tournament)
 
 if (tournament.status === Status.Finished)
-  tournament.teams?.sort(({ rank: a }, { rank: b }) => a - b)
+  tournament.teams.sort(({ rank: a }, { rank: b }) => a - b)
 
-let fullTeams = $(computed(() => tournament.teams
-  ?.filter(t => t.members
-    && t.members.length >= tournament.teamSizeMin
-    && t.members.length <= tournament.teamSizeMax)))
+let fullTeams = $(computed(() => tournament.teams.filter(team =>
+  team.members.length >= tournament.teamSizeMin
+  && team.members.length <= tournament.teamSizeMax)))
 
 let tournamentStarted = $(computed(() =>
   tournament.status === Status.Started || tournament.status === Status.Finished))
 
 let incompleteTeams = $(computed(() =>
-  tournamentStarted ? [] : tournament.teams?.filter(t => !fullTeams.includes(t))))
+  tournamentStarted ? [] : tournament.teams.filter(team => !fullTeams.includes(team))))
 
 // don't show incomplete teams once the tournament has started
 let teamsGroups = $(computed(() =>
@@ -54,7 +53,7 @@ template(v-for="(teams, index) in teamsGroups")
           ul.members
             li.member(v-for="member in team.members")
               user-link(:user="member.user")
-        user-link(v-else :user="team.members?.[0].user")
+        user-link(v-else :user="team.members[0].user")
       td.result(v-if="tournament.status === Status.Finished") {{ team.result }} pts
 </template>
 

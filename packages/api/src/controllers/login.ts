@@ -54,14 +54,14 @@ export class LoginController {
             throw new UnauthorizedError("Wrong username and/or password")
 
         // the user's roles during every event they're registered to
-        const roles = user.registrations?.map(({ eventId, role }) => [eventId, role])
+        const roles = user.registrations.map(({ eventId, role }) => [eventId, role])
 
         return {
             user,
             token: jwt.sign({
                 id: user.id,
                 admin: user.admin,
-                roles: Object.fromEntries(roles || []),
+                roles: Object.fromEntries(roles),
                 exp: jwtConfig.expiration(),
             }, jwtConfig.secret),
         }

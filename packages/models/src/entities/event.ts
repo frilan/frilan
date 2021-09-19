@@ -51,9 +51,9 @@ export class Event extends Id {
     end!: Date
 
     @OneToMany("Registration", "event")
-    registrations?: Registration[]
+    registrations!: Registration[]
 
     @OneToMany("Tournament", "event")
-    tournaments?: Tournament[]
+    tournaments!: Tournament[]
 
 }

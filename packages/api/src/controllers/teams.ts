@@ -18,7 +18,7 @@ import { FiltersParser } from "../middlewares/filters-parser"
  * @param team The target team
  */
 export async function isOrganizer(user: AuthUser, team: Team): Promise<boolean> {
-    return Boolean(team.tournament && user.roles[team.tournament.eventId] === Role.Organizer)
+    return Boolean(user.roles[team.tournament.eventId] === Role.Organizer)
 }
 
 /**
@@ -280,7 +280,7 @@ export class TeamController {
     ): Promise<Team | undefined> {
 
         const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
-        if (!team || !team.members || !team.tournament)
+        if (!team)
             throw new TeamNotFoundError()
 
         const isMember = team.members.map(({ userId }) => userId).includes(user.id)
@@ -290,8 +290,8 @@ export class TeamController {
         if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot update team if the tournament has already started")
 
-        delete team.members
-        Object.assign(team, updatedTeam)
+        // assign updated fields and remove relations
+        Object.assign(team, { ...updatedTeam, members: undefined, tournament: undefined })
         return await getRepository(Team).save(team)
     }
 
@@ -320,7 +320,7 @@ export class TeamController {
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
         const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
-        if (!team || !team.members || !team.tournament)
+        if (!team)
             throw new TeamNotFoundError()
 
         if (!user.admin && !await isOrganizer(user, team))
@@ -406,7 +406,7 @@ export class TeamController {
     ): Promise<void> {
 
         const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
-        if (!team || !team.members || !team.tournament)
+        if (!team)
             throw new TeamNotFoundError()
 
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))
@@ -428,21 +428,19 @@ export class TeamController {
             throw new BadRequestError("Cannot join multiple teams in the same tournament")
 
         // check that team and tournament aren't full
-        if (team.members && team.tournament) {
-            if (team.members.length + 1 > team.tournament.teamSizeMax)
+        if (team.members.length + 1 > team.tournament.teamSizeMax)
+            throw new BadRequestError(
+                `This team is full (max ${ team.tournament.teamSizeMax } members)`)
+
+        if (team.members.length + 1 === team.tournament.teamSizeMin) {
+            const fullTeams = await getFullTeams(team.tournament)
+            if (fullTeams.length >= team.tournament.teamCountMax)
                 throw new BadRequestError(
-                    `This team is full (max ${ team.tournament.teamSizeMax } members)`)
+                    `This tournament is full (max ${ team.tournament.teamCountMax } teams)`)
 
-            if (team.members.length + 1 === team.tournament.teamSizeMin) {
-                const fullTeams = await getFullTeams(team.tournament)
-                if (fullTeams.length >= team.tournament.teamCountMax)
-                    throw new BadRequestError(
-                        `This tournament is full (max ${ team.tournament.teamCountMax } teams)`)
-
-                // increment the number of full teams
-                ++team.tournament.teamCount
-                await getRepository(Tournament).save(team.tournament)
-            }
+            // increment the number of full teams
+            ++team.tournament.teamCount
+            await getRepository(Tournament).save(team.tournament)
         }
 
         // for some reason, members.push(registration) + save(team) doesn't work here
@@ -484,7 +482,7 @@ export class TeamController {
     ): Promise<void> {
 
         const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
-        if (!team || !team.members || !team.tournament)
+        if (!team)
             throw new TeamNotFoundError()
 
         if (!user.admin && user.id !== userId && !await isOrganizer(user, team))

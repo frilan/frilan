@@ -29,7 +29,7 @@ table
   tr(v-for="(registration, index) in filtered")
     td {{ getRank(index) }}
     td
-      user-link(:user="registration?.user")
+      user-link(:user="registration.user")
     td {{ registration.score }} pts
 </template>
 

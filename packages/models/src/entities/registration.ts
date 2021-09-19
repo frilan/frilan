@@ -86,12 +86,12 @@ export class Registration {
     score!: number
 
     @ManyToOne("User", { onDelete: "CASCADE" })
-    user?: User
+    user!: User
 
     @ManyToOne("Event", { onDelete: "CASCADE" })
-    event?: Event
+    event!: Event
 
     @ManyToMany("Team", "members", { onDelete: "CASCADE" })
-    teams?: Team[]
+    teams!: Team[]
 
 }

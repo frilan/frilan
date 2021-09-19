@@ -54,10 +54,10 @@ export class Team extends Id {
     tournamentId!: number
 
     @ManyToOne("Tournament", { onDelete: "CASCADE" })
-    tournament?: Tournament
+    tournament!: Tournament
 
     @ManyToMany("Registration", "teams")
     @JoinTable()
-    members?: Registration[]
+    members!: Registration[]
 
 }
