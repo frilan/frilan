@@ -4,38 +4,29 @@ import { useStore } from "./store/store"
 import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
 import ErrorHandler from "./components/error-handler.vue"
-import UserLink from "./components/user-link.vue"
+import AppHeader from "./components/app-header.vue"
 
 const store = useStore()
 const router = useRouter()
 const route = useRoute()
 
-let { user, logged } = $(toRefs(store.state))
+let { logged } = $(toRefs(store.state))
 
 // catch unhandled errors
 onErrorCaptured(err => {
   // if authentication failed, log user out
-  if (axios.isAxiosError(err) && err.response?.status === 401) {
-    logout()
+  if (logged && axios.isAxiosError(err) && err.response?.status === 401) {
+    store.dispatch("logout")
+    router.push({ name: "login" })
     return false
   }
   store.commit("setError", err)
   return true
 })
-
-function logout() {
-  store.dispatch("logout")
-  router.push({ name: "login" })
-}
 </script>
 
 <template lang="pug">
-header
-  .title Console
-  template(v-if="logged")
-    p Logged in as!{" "}
-      user-link(:user="user")
-    button(@click="logout") Log out
+app-header
 main
   error-handler
   suspense
@@ -49,13 +40,7 @@ main
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
 
-.title
-  font-size: 2em
-
-@media (prefers-color-scheme: dark)
-  html
-    background: #2f3136
-    color: white
-  a
-    color: cornflowerblue
+main
+  max-width: 800px
+  margin: 30px auto
 </style>
