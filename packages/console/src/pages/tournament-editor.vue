@@ -3,7 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
-import { computed } from "vue"
+import { computed, watchEffect } from "vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +28,9 @@ let tournament = $ref(editing
     teamCountMax: 32,
     status: Status.Hidden,
   })
+
+if (editing)
+  watchEffect(() => document.title = `Edit ${ tournament.name } - Console`)
 
 function formatDate(date: Date) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, -1)

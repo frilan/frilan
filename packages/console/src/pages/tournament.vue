@@ -17,6 +17,8 @@ const { id } = route.params
 const relations = ["teams", "teams.members", "teams.members.user"].join(",")
 const tournament = await http.getOne(`/tournaments/${ id }?load=${ relations }`, Tournament)
 
+document.title = `${ tournament.name } - ${ document.title }`
+
 if (tournament.status === Status.Finished)
   tournament.teams.sort(({ rank: a }, { rank: b }) => a - b)
 

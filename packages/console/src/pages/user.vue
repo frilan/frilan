@@ -16,6 +16,8 @@ const user = (await http.getMany(`/users?username=${ name }`, User))[0]
 if (!user)
   throw "User not found"
 
+document.title = `${ user.displayName } - ${ document.title }`
+
 const { event } = store.state
 const relations = ["teams", "teams.members", "teams.tournament"].join(",")
 let registered = $ref(true)
