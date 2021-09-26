@@ -44,22 +44,22 @@ export class Http {
     }
 
     public post<T>(url: string, body: T): Promise<void>
-    public post<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
-    public post<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
+    public post<T>(url: string, body: Partial<T>, cls: ClassConstructor<T>): Promise<T>
+    public post<T>(url: string, body: Partial<T>, cls?: ClassConstructor<T>): Promise<T | void> {
         if (cls) return this.sendRequest({ method: "post", url, data: body }, cls)
         else return this.sendRequest({ method: "post", url, data: body })
     }
 
     public put<T>(url: string, body: T): Promise<void>
-    public put<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
-    public put<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
+    public put<T>(url: string, body: Partial<T>, cls: ClassConstructor<T>): Promise<T>
+    public put<T>(url: string, body: Partial<T>, cls?: ClassConstructor<T>): Promise<T | void> {
         if (cls) return this.sendRequest({ method: "put", url, data: body }, cls)
         else return this.sendRequest({ method: "put", url, data: body })
     }
 
     public patch<T>(url: string, body: T): Promise<void>
-    public patch<T>(url: string, body: T, cls: ClassConstructor<T>): Promise<T>
-    public patch<T>(url: string, body: T, cls?: ClassConstructor<T>): Promise<T | void> {
+    public patch<T>(url: string, body: Partial<T>, cls: ClassConstructor<T>): Promise<T>
+    public patch<T>(url: string, body: Partial<T>, cls?: ClassConstructor<T>): Promise<T | void> {
         if (cls) return this.sendRequest({ method: "patch", url, data: body }, cls)
         else return this.sendRequest({ method: "patch", url, data: body })
     }
@@ -79,5 +79,5 @@ export class Http {
     }
 }
 
-const baseURL = import.meta.env.VITE_API_URL as string ?? "http://localhost:8080"
-export default new Http(baseURL)
+const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080"
+export default new Http(String(baseURL))

@@ -10,6 +10,7 @@ export interface State {
     user: User
     logged: boolean
     event: Event
+    latestEvent: number
     error: unknown
 }
 
@@ -23,14 +24,16 @@ if (expiration && Number(expiration) * 1000 < Date.now()) {
 }
 
 // if logged, user data should be stored in local storage
-const currentUser = localStorage.getItem("user")
-const currentEvent = localStorage.getItem("event")
+const user = localStorage.getItem("user")
+const event = localStorage.getItem("event")
+const latestEvent = localStorage.getItem("latest")
 
 export const store = createStore<State>({
     state: {
-        user: currentUser ? plainToClass(User, JSON.parse(currentUser)) : new User(),
+        user: user ? plainToClass(User, JSON.parse(user)) : new User(),
         logged: !!localStorage.getItem("token"),
-        event: currentEvent ? plainToClass(Event, JSON.parse(currentEvent)) : new Event(),
+        event: event ? plainToClass(Event, JSON.parse(event)) : new Event(),
+        latestEvent: latestEvent ? Number(latestEvent) : -1,
         error: null,
     },
     getters: {
@@ -55,6 +58,10 @@ export const store = createStore<State>({
             state.event = event
             localStorage.setItem("event", JSON.stringify(event))
         },
+        setLatestEvent(state, latestEvent: number) {
+            state.latestEvent = latestEvent
+            localStorage.setItem("latest", JSON.stringify(latestEvent))
+        },
         setError(state, error: string) {
             state.error = error
         },
@@ -69,14 +76,22 @@ export const store = createStore<State>({
             http.setToken(token)
 
             const events = await http.getMany("/events", Event)
-            events.sort((a, b) => a.start.getTime() - b.start.getTime())
+            events.sort((a, b) => b.start.getTime() - a.start.getTime())
             context.commit("setEvent", events[0])
+            context.commit("setLatestEvent", events[0].id)
 
             localStorage.setItem("exp", parseJwt(token).exp.toString())
         },
         logout(context) {
             context.commit("clearUser")
             http.clearToken()
+        },
+        async loadEvent(context, id: number) {
+            if (id === context.state.event.id)
+                return
+
+            const event = await http.getOne("/events/" + id, Event)
+            context.commit("setEvent", event)
         },
     },
     plugins: process.env.NODE_ENV !== "production" ? [createLogger()] : [],

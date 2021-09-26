@@ -4,18 +4,19 @@ import { useStore } from "../store/store"
 import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
 import { computed, watchEffect } from "vue"
+import { routeInEvent } from "../utils/route-in-event"
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
 
 const { id } = route.params
-const { event } = store.state
+const { event, latestEvent } = store.state
 
 // if true, we are editing an existing tournament
 const editing = !!id
 
-let tournament = $ref(editing
+let tournament = (editing
   ? await http.getOne("/tournaments/" + id, Tournament)
   : {
     name: "",
@@ -51,11 +52,18 @@ let started = $(computed(() =>
   || tournament.status === Status.Finished))
 
 async function save() {
-  if (editing)
+  let next: number
+  if (editing) {
     await http.patch("/tournaments/" + id, tournament)
+    next = Number(id)
+  } else {
+    const res = await http.post(`/events/${ event.id }/tournaments`, tournament, Tournament)
+    next = res.id
+  }
+  if (event.id === latestEvent)
+    router.push({ name: "tournament", params: { id: next } })
   else
-    await http.post("/tournaments", tournament)
-  router.push({ name: "tournament", params: { id } })
+    router.push(routeInEvent("tournament", event.id, { id: next }))
 }
 
 </script>
