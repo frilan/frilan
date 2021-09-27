@@ -1,5 +1,5 @@
 import {
-    Authorized, Body, Ctx, Get, HttpCode, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+    Authorized, Body, Ctx, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
 import { Event } from "@frilan/models"
@@ -8,6 +8,8 @@ import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
 import { FiltersParser } from "../middlewares/filters-parser"
+import { isDbError } from "../util/is-db-error"
+import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 
 /**
  * @openapi
@@ -21,6 +23,21 @@ export class EventNotFoundError extends NotFoundError {
 
     constructor() {
         super("This event does not exist")
+    }
+}
+
+/**
+ * @openapi
+ * components:
+ *   responses:
+ *     EventConflict:
+ *       description: short name already taken
+ */
+export class EventConflictError extends HttpError {
+    name = "EventConflictError"
+
+    constructor() {
+        super(409, "An event with this short name already exists")
     }
 }
 
@@ -102,12 +119,21 @@ export class EventController {
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
      *         $ref: "#/components/responses/NotEnoughPrivilege"
+     *       409:
+     *         $ref: "#/components/responses/EventConflict"
      */
     @Post()
     @HttpCode(201)
     @Authorized("admin")
-    create(@Body() event: Event): Promise<Event> {
-        return getRepository(Event).save(event)
+    async create(@Body() event: Event): Promise<Event> {
+        try {
+            return await getRepository(Event).save(event)
+        } catch (err) {
+            if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
+                throw new EventConflictError()
+            else
+                throw err
+        }
     }
 
     /**

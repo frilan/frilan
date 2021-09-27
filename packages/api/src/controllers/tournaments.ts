@@ -1,9 +1,9 @@
 import {
-    BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, JsonController, NotFoundError, OnUndefined,
-    Param, Post, UseBefore,
+    BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
+    OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository, In, Not } from "typeorm"
-import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
+import { PG_FOREIGN_KEY_VIOLATION, PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
 import { Distribution, Event, Ranking, Registration, Role, Status, Team, Tournament } from "@frilan/models"
@@ -39,6 +39,21 @@ export class TournamentNotFoundError extends NotFoundError {
 
     constructor() {
         super("This tournament does not exist")
+    }
+}
+
+/**
+ * @openapi
+ * components:
+ *   responses:
+ *     TournamentConflict:
+ *       description: short name already taken
+ */
+export class TournamentConflictError extends HttpError {
+    name = "TournamentConflictError"
+
+    constructor() {
+        super(409, "A tournament with this short name already exists in this event")
     }
 }
 
@@ -137,6 +152,8 @@ export class EventTournamentController {
      *         $ref: "#/components/responses/NotEnoughPrivilege"
      *       404:
      *         description: the specified event doesn't exist
+     *       409:
+     *         $ref: "#/components/responses/TournamentConflict"
      */
     @Post()
     @HttpCode(201)
@@ -160,6 +177,8 @@ export class EventTournamentController {
         } catch (err) {
             if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
+            if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
+                throw new TournamentConflictError()
             else
                 throw err
         }

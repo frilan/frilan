@@ -18,6 +18,7 @@ beforeAll(async () => {
     // create tournament
     const tournament = {
         name: "foo",
+        shortName: "f",
         date: 5,
         duration: 1,
         teamSizeMin: 1,

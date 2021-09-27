@@ -10,28 +10,37 @@ const route = useRoute()
 const router = useRouter()
 const store = useStore()
 
-const { id } = route.params
-const { event, latestEvent } = store.state
+const { name } = route.params
+const { event, mainEvent } = store.state
 
 // if true, we are editing an existing tournament
-const editing = !!id
+const editing = !!name
 
-let tournament = (editing
-  ? await http.getOne("/tournaments/" + id, Tournament)
-  : {
-    name: "",
-    date: event.start,
-    duration: 120,
-    rules: "",
-    teamSizeMin: 1,
-    teamSizeMax: 1,
-    teamCountMin: 2,
-    teamCountMax: 32,
-    status: Status.Hidden,
-  })
+let tournament = $ref({
+  id: NaN,
+  name: "",
+  shortName: "",
+  date: event.start,
+  duration: 120,
+  rules: "",
+  teamSizeMin: 1,
+  teamSizeMax: 1,
+  teamCountMin: 2,
+  teamCountMax: 32,
+  status: Status.Hidden,
+})
 
-if (editing)
+if (editing) {
+  const tournaments = await http.getMany(`/events/${ event.id }/tournaments?shortName=${ name }`, Tournament)
+  if (!tournaments.length)
+    throw "Tournament not found: " + name
+  tournament = tournaments[0]
+
   watchEffect(() => document.title = `Edit ${ tournament.name } - Console`)
+
+} else
+  watchEffect(() => tournament.shortName = [...tournament.name.matchAll(/^\w|(?<= )\w|[A-Z\d]/g)]
+    .map(([c]) => c).join("").toLowerCase())
 
 function formatDate(date: Date) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, -1)
@@ -52,18 +61,15 @@ let started = $(computed(() =>
   || tournament.status === Status.Finished))
 
 async function save() {
-  let next: number
-  if (editing) {
-    await http.patch("/tournaments/" + id, tournament)
-    next = Number(id)
-  } else {
-    const res = await http.post(`/events/${ event.id }/tournaments`, tournament, Tournament)
-    next = res.id
-  }
-  if (event.id === latestEvent)
-    router.push({ name: "tournament", params: { id: next } })
+  if (editing)
+    await http.patch("/tournaments/" + tournament.id, tournament)
   else
-    router.push(routeInEvent("tournament", event.id, { id: next }))
+    await http.post(`/events/${ event.id }/tournaments`, tournament, Tournament)
+
+  if (event.shortName === mainEvent)
+    router.push({ name: "tournament", params: { name: tournament.shortName } })
+  else
+    router.push(routeInEvent("tournament", event.shortName, { name: tournament.shortName }))
 }
 
 </script>
@@ -76,6 +82,9 @@ form(@submit.prevent="save")
   .field
     label(for="name") Name
     input(id="name" minlength=1 autofocus v-model="tournament.name")
+  .field
+    label(for="short-name") Short name
+    input(id="short-name" pattern="^[a-z0-9-]+$" v-model="tournament.shortName")
   .field
     label(for="date") Date
     input(id="date" type="datetime-local" v-model="localDate"

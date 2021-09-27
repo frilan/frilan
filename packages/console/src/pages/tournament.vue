@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, toRefs } from "vue"
 import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
@@ -11,12 +11,17 @@ import EventLink from "../components/event-link.vue"
 const route = useRoute()
 const store = useStore()
 
-const { user } = store.state
+let { user, event } = $(toRefs(store.state))
 const { isOrganizer } = store.getters
 
-const { id } = route.params
+const { name } = route.params
 const relations = ["teams", "teams.members", "teams.members.user"].join(",")
-const tournament = await http.getOne(`/tournaments/${ id }?load=${ relations }`, Tournament)
+const url = `/events/${ event.id }/tournaments?shortName=${ name }&load=${ relations }`
+const tournaments = await http.getMany(url, Tournament)
+if (!tournaments.length)
+  throw "Tournament not found"
+
+const tournament = tournaments[0]
 
 document.title = `${ tournament.name } - ${ document.title }`
 
@@ -40,7 +45,7 @@ let teamsGroups = $(computed(() =>
 
 <template lang="pug">
 h1 {{ tournament.name }}
-event-link(v-if="isOrganizer" to="edit-tournament" :params="{ id }") Edit
+event-link(v-if="isOrganizer" to="edit-tournament" :params="{ name }") Edit
 
 p.info {{ fullTeams.length }}!{" "}
   template(v-if="!tournamentStarted") / {{ tournament.teamCountMax }}

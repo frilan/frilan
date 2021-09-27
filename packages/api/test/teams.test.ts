@@ -24,6 +24,7 @@ beforeAll(async () => {
     // create tournaments
     const tournament = {
         name: "t",
+        shortName: "t",
         date: 5,
         duration: 1,
         teamSizeMin: 1,
@@ -36,6 +37,7 @@ beforeAll(async () => {
     hiddenTournament = res.data.id
     res = await http.post(`/events/${ event2 }/tournaments`, { ...tournament, status: Status.Ready }, admin.config)
     readyTournament = res.data.id
+    tournament.shortName = "t2" // prevent unique violation
     res = await http.post(`/events/${ event1 }/tournaments`, { ...tournament, status: Status.Ready }, admin.config)
     startedTournament = res.data.id
 

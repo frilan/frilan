@@ -10,11 +10,11 @@ const props = defineProps<{
 }>()
 
 const store = useStore()
-let { event, latestEvent } = $(toRefs(store.state))
+let { event, mainEvent } = $(toRefs(store.state))
 
-const location = computed(() => event.id === latestEvent
+const location = computed(() => event.shortName === mainEvent
   ? { name: props.to, params: props.params }
-  : routeInEvent(props.to, event.id, props.params))
+  : routeInEvent(props.to, event.shortName, props.params))
 </script>
 
 <template lang="pug">

@@ -20,12 +20,12 @@ const eventRoutes = [
         meta: { title: "New Tournament", organizer: true },
     },
     {
-        path: "/tournaments/:id",
+        path: "/tournaments/:name",
         name: "tournament",
         component: Tournament,
     },
     {
-        path: "/tournaments/:id/edit",
+        path: "/tournaments/:name/edit",
         name: "edit-tournament",
         component: TournamentEditor,
         meta: { organizer: true },
@@ -34,7 +34,7 @@ const eventRoutes = [
 
 const nestedRoutes = eventRoutes
     .map(({ path, name, component, meta }) => ({
-        path: "/:eventId" + path,
+        path: "/:eventName" + path,
         name: "event-" + name,
         component,
         meta,
@@ -62,10 +62,10 @@ router.beforeEach(async to => {
     try {
         // load specific event if needed
         if (store.state.logged)
-            if ("eventId" in to.params)
-                await store.dispatch("loadEvent", Number(to.params.eventId))
+            if ("eventName" in to.params)
+                await store.dispatch("loadEvent", to.params.eventName)
             else
-                await store.dispatch("loadEvent", store.state.latestEvent)
+                await store.dispatch("loadEvent", store.state.mainEvent)
     } catch (err) {
         // cancel navigation if specified event couldn't be loaded
         return false

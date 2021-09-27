@@ -1,6 +1,6 @@
-import { Column, Entity, OneToMany } from "typeorm"
+import { Column, Entity, Index, OneToMany } from "typeorm"
 import { Id } from "./common/id"
-import { IsDate, IsNotEmpty, IsString } from "class-validator"
+import { IsDate, IsNotEmpty, IsString, Matches } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Registration } from "./registration"
@@ -17,6 +17,9 @@ import { GreaterOrEqual } from "../decorators/greater-or-equal"
  *         name:
  *           type: string
  *           example: FriLAN 2022
+ *         shortName:
+ *           type: string
+ *           example: 2022
  *         start:
  *           type: string
  *           example: 2022-03-11T16:00
@@ -38,6 +41,11 @@ export class Event extends Id {
     @IsNotEmpty()
     @Trim()
     name!: string
+
+    @Column()
+    @Matches(/^[a-z0-9-]+$/)
+    @Index({ unique: true })
+    shortName!: string
 
     @Column()
     @IsDate()

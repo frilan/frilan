@@ -40,7 +40,8 @@ export async function refreshPrivilege(user: TestUser): Promise<void> {
  */
 export async function createEvents(amount: number, config: AxiosRequestConfig): Promise<number[]> {
     return Promise.all([...Array(amount).keys()].map(async index => {
-        const res = await http.post("/events", { name: "event-" + index, start: 1, end: 10 }, config)
+        const event = { name: "event-" + index, shortName: index.toString(), start: 1, end: 10 }
+        const res = await http.post("/events", event, config)
         return res.data.id
     }))
 }

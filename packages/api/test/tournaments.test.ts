@@ -14,6 +14,7 @@ let team4: number
 const tournament1 = {
     id: NaN,
     name: "League Of Legends",
+    shortName: "lol",
     date: new Date(5).toISOString(),
     duration: 120,
     rules: "5v5 matches, best of 3",
@@ -92,6 +93,22 @@ describe("create tournaments", () => {
         expect(res.status).toBe(400)
     })
 
+    test("prevent creating tournament with invalid short name", async () => {
+        let res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, shortName: "hello world" }, admin.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, shortName: "LoL" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating multiple tournaments with same short name in same event", async () => {
+        const res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament1, shortName: "lol" }, admin.config)
+        expect(res.status).toBe(409)
+    })
+
     test("prevent creating tournament as player", async () => {
         const res = await http.post(`/events/${ event1 }/tournaments`, tournament2, regular.config)
         expect(res.status).toBe(403)
@@ -122,7 +139,8 @@ describe("read tournaments", () => {
 
     test("read all tournaments as admin", async () => {
         // create one more tournament
-        let res = await http.post(`/events/${ event1 }/tournaments`, tournament2, admin.config)
+        let res = await http.post(`/events/${ event1 }/tournaments`,
+            { ...tournament2, shortName: "foo" }, admin.config)
         tournament3.id = res.data.id
 
         res = await http.get(`/events/${ event1 }/tournaments`, admin.config)

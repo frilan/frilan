@@ -7,6 +7,7 @@ let regular: TestUser
 const event = {
     id: NaN,
     name: "FriLAN 2022",
+    shortName: "2022",
     start: new Date("2022-03-11T16:00").toISOString(),
     end: new Date("2022-03-13T20:00").toISOString(),
 }
@@ -23,8 +24,21 @@ describe("create events", () => {
     })
 
     test("prevent creating event ending before starting", async () => {
-        const res = await http.post("/events", { name: "a", start: 10, end: 5 }, admin.config)
+        const res = await http.post("/events", { name: "a", shortName: "a", start: 10, end: 5 }, admin.config)
         expect(res.status).toBe(400)
+    })
+
+    test("prevent creating event with invalid short name", async () => {
+        let res = await http.post("/events", { ...event, shortName: "hello world" }, admin.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post("/events", { ...event, shortName: "FL" }, admin.config)
+        expect(res.status).toBe(400)
+    })
+
+    test("prevent creating multiple events with same short name in same event", async () => {
+        const res = await http.post("/events", { ...event, name: "garbage" }, admin.config)
+        expect(res.status).toBe(409)
     })
 
     test("prevent creating event without privilege", async () => {

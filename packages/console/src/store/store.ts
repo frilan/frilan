@@ -10,7 +10,7 @@ export interface State {
     user: User
     logged: boolean
     event: Event
-    latestEvent: number
+    mainEvent: string
     error: unknown
 }
 
@@ -18,22 +18,20 @@ export const key: InjectionKey<Store<State>> = Symbol()
 
 // check if token is still valid
 const expiration = localStorage.getItem("exp")
-if (expiration && Number(expiration) * 1000 < Date.now()) {
-    localStorage.removeItem("token")
-    localStorage.removeItem("exp")
-}
+if (expiration && Number(expiration) * 1000 < Date.now())
+    localStorage.clear()
 
 // if logged, user data should be stored in local storage
 const user = localStorage.getItem("user")
 const event = localStorage.getItem("event")
-const latestEvent = localStorage.getItem("latest")
+const main = localStorage.getItem("main")
 
 export const store = createStore<State>({
     state: {
         user: user ? plainToClass(User, JSON.parse(user)) : new User(),
         logged: !!localStorage.getItem("token"),
         event: event ? plainToClass(Event, JSON.parse(event)) : new Event(),
-        latestEvent: latestEvent ? Number(latestEvent) : -1,
+        mainEvent: main ?? "",
         error: null,
     },
     getters: {
@@ -50,17 +48,13 @@ export const store = createStore<State>({
             state.logged = true
             localStorage.setItem("user", JSON.stringify(classToPlain(user)))
         },
-        clearUser(state) {
-            state.logged = false
-            localStorage.removeItem("user")
-        },
         setEvent(state, event: Event) {
             state.event = event
             localStorage.setItem("event", JSON.stringify(event))
         },
-        setLatestEvent(state, latestEvent: number) {
-            state.latestEvent = latestEvent
-            localStorage.setItem("latest", JSON.stringify(latestEvent))
+        setMainEvent(state, mainEvent: string) {
+            state.mainEvent = mainEvent
+            localStorage.setItem("main", mainEvent)
         },
         setError(state, error: string) {
             state.error = error
@@ -72,26 +66,29 @@ export const store = createStore<State>({
     actions: {
         async login(context, credentials: AxiosBasicCredentials) {
             const { user, token } = await http.getOne("/login", UserAndToken, credentials)
-            context.commit("setUser", user)
             http.setToken(token)
 
             const events = await http.getMany("/events", Event)
             events.sort((a, b) => b.start.getTime() - a.start.getTime())
             context.commit("setEvent", events[0])
-            context.commit("setLatestEvent", events[0].id)
+            context.commit("setMainEvent", events[0].shortName)
+            context.commit("setUser", user)
 
             localStorage.setItem("exp", parseJwt(token).exp.toString())
         },
         logout(context) {
-            context.commit("clearUser")
+            context.state.logged = false
+            localStorage.clear()
             http.clearToken()
         },
-        async loadEvent(context, id: number) {
-            if (id === context.state.event.id)
+        async loadEvent(context, name: string) {
+            if (name === context.state.event.shortName)
                 return
 
-            const event = await http.getOne("/events/" + id, Event)
-            context.commit("setEvent", event)
+            const events = await http.getMany("/events?shortName=" + name, Event)
+            if (!events.length)
+                throw "Event not found: " + name
+            context.commit("setEvent", events[0])
         },
     },
     plugins: process.env.NODE_ENV !== "production" ? [createLogger()] : [],

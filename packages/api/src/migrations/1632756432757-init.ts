@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1631835298477 implements MigrationInterface {
-    name = "init1631835298477"
+export class init1632756432757 implements MigrationInterface {
+    name = "init1632756432757"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -23,12 +23,16 @@ export class init1631835298477 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE "event"
             (
-                "id"    SERIAL            NOT NULL,
-                "name"  character varying NOT NULL,
-                "start" TIMESTAMP         NOT NULL,
-                "end"   TIMESTAMP         NOT NULL,
+                "id"         SERIAL            NOT NULL,
+                "name"       character varying NOT NULL,
+                "short_name" character varying NOT NULL,
+                "start"      TIMESTAMP         NOT NULL,
+                "end"        TIMESTAMP         NOT NULL,
                 CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id")
             )
+        `)
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX "IDX_915bba865d833015a56360cde7" ON "event" ("short_name")
         `)
         await queryRunner.query(`
             CREATE TYPE "registration_role_enum" AS ENUM('organizer', 'player')
@@ -53,6 +57,7 @@ export class init1631835298477 implements MigrationInterface {
             (
                 "id"             SERIAL                   NOT NULL,
                 "name"           character varying        NOT NULL,
+                "short_name"     character varying        NOT NULL,
                 "date"           TIMESTAMP                NOT NULL,
                 "duration"       integer                  NOT NULL,
                 "rules"          character varying        NOT NULL DEFAULT '',
@@ -63,6 +68,7 @@ export class init1631835298477 implements MigrationInterface {
                 "team_count_max" integer                  NOT NULL,
                 "status"         "tournament_status_enum" NOT NULL DEFAULT 'hidden',
                 "event_id"       integer                  NOT NULL,
+                CONSTRAINT "locator" UNIQUE ("event_id", "short_name"),
                 CONSTRAINT "PK_449f912ba2b62be003f0c22e767" PRIMARY KEY ("id")
             )
         `)
@@ -170,6 +176,9 @@ export class init1631835298477 implements MigrationInterface {
         `)
         await queryRunner.query(`
             DROP TYPE "registration_role_enum"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "IDX_915bba865d833015a56360cde7"
         `)
         await queryRunner.query(`
             DROP TABLE "event"

@@ -1,6 +1,6 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
+import { Column, Entity, ManyToOne, OneToMany, Unique } from "typeorm"
 import { Id } from "./common/id"
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Min } from "class-validator"
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Matches, Min } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Event } from "./event"
@@ -18,6 +18,9 @@ import { ExcludeServerSide } from "../decorators/exclude-server-side"
  *         name:
  *           type: string
  *           example: League Of Legends
+ *         shortName:
+ *           type: string
+ *           example: lol
  *         date:
  *           type: string
  *           example: 2022-03-12T14:00
@@ -65,6 +68,7 @@ export enum Status {
 }
 
 @Entity()
+@Unique("locator", ["eventId", "shortName"])
 export class Tournament extends Id {
 
     @Column()
@@ -72,6 +76,10 @@ export class Tournament extends Id {
     @IsNotEmpty()
     @Trim()
     name!: string
+
+    @Column()
+    @Matches(/^[a-z0-9-]+$/)
+    shortName!: string
 
     @Column()
     @Type(() => Date)
