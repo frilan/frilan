@@ -4,6 +4,7 @@ import Join from "./pages/join.vue"
 import Login from "./pages/login.vue"
 import Tournament from "./pages/tournament.vue"
 import TournamentEditor from "./pages/tournament-editor.vue"
+import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
 import { store } from "./store/store"
@@ -45,6 +46,18 @@ const router = createRouter({
     routes: [
         { path: "/login", name: "login", component: Login, meta: { visitor: true, title: "Log In" } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
+        {
+            path: "/events/new",
+            name: "new-event",
+            component: EventEditor,
+            meta: { title: "New Event", admin: true },
+        },
+        {
+            path: "/events/:name/edit",
+            name: "edit-event",
+            component: EventEditor,
+            meta: { admin: true },
+        },
         ...eventRoutes,
         ...nestedRoutes,
     ],
@@ -72,6 +85,9 @@ router.beforeEach(async to => {
     }
 
     if (to.meta.organizer && !store.getters.isOrganizer)
+        return false
+
+    if (to.meta.admin && !store.state.user.admin)
         return false
 
     // set page title accordingly

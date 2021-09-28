@@ -5,6 +5,7 @@ import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
 import { computed, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
+import { computedDate, formatDate } from "../utils/date-helpers"
 
 const route = useRoute()
 const router = useRouter()
@@ -42,14 +43,7 @@ if (editing) {
   watchEffect(() => tournament.shortName = [...tournament.name.matchAll(/^\w|(?<= )\w|[A-Z\d]/g)]
     .map(([c]) => c).join("").toLowerCase())
 
-function formatDate(date: Date) {
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, -1)
-}
-
-let localDate = $(computed({
-  get: () => formatDate(tournament.date),
-  set: val => tournament.date = new Date(val),
-}))
+let localDate = $(computedDate(tournament, "date"))
 
 let hidden = $(computed({
   get: () => tournament.status === Status.Hidden,

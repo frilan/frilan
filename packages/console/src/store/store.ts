@@ -64,14 +64,17 @@ export const store = createStore<State>({
         },
     },
     actions: {
-        async login(context, credentials: AxiosBasicCredentials) {
-            const { user, token } = await http.getOne("/login", UserAndToken, credentials)
-            http.setToken(token)
-
+        async loadEvents(context) {
             const events = await http.getMany("/events", Event)
             events.sort((a, b) => b.start.getTime() - a.start.getTime())
             context.commit("setEvent", events[0])
             context.commit("setMainEvent", events[0].shortName)
+        },
+        async login(context, credentials: AxiosBasicCredentials) {
+            const { user, token } = await http.getOne("/login", UserAndToken, credentials)
+            http.setToken(token)
+
+            await context.dispatch("loadEvents")
             context.commit("setUser", user)
 
             localStorage.setItem("exp", parseJwt(token).exp.toString())
