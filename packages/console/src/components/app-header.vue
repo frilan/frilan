@@ -32,6 +32,7 @@ header(:class="{ archive: pastEvent }")
     .menu(:class="{ open: openMenu }" @click="openMenu = false")
       .menu-items
         event-link(to="user" :params="{ name: user.username }") Profile
+        router-link(:to="{ name: 'events' }") All events
         button.link(@click="logout") Log out
 </template>
 

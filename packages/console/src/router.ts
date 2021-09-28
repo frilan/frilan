@@ -4,6 +4,7 @@ import Join from "./pages/join.vue"
 import Login from "./pages/login.vue"
 import Tournament from "./pages/tournament.vue"
 import TournamentEditor from "./pages/tournament-editor.vue"
+import Events from "./pages/events.vue"
 import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
@@ -47,10 +48,20 @@ const router = createRouter({
         { path: "/login", name: "login", component: Login, meta: { visitor: true, title: "Log In" } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
         {
+            path: "/events",
+            name: "events",
+            component: Events,
+            meta: { title: "Events" },
+        },
+        {
             path: "/events/new",
             name: "new-event",
             component: EventEditor,
             meta: { title: "New Event", admin: true },
+        },
+        {
+            path: "/events/:name",
+            redirect: to => ({ name: "event-home", params: { eventName: to.params.name } }),
         },
         {
             path: "/events/:name/edit",
