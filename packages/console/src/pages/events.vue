@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
@@ -7,11 +8,17 @@ import http from "../utils/http"
 const store = useStore()
 const { user, mainEvent } = store.state
 
-// if not admin, only fetch events the user is registered to
-const filter = user.admin ? "" : "&id=" + user.registrations.map(r => r.eventId)
+// true if registered to at least one event
+let registered = $(computed(() => !!user.registrations.length))
 
-const events = await http.getMany("/events?load=registrations" + filter, Event)
-events.sort((a, b) => b.start.getTime() - a.start.getTime())
+let events: Event[]
+if (registered) {
+// if not admin, only fetch events the user is registered to
+  const filter = user.admin ? "" : "&id=" + user.registrations.map(r => r.eventId)
+
+  events = await http.getMany("/events?load=registrations" + filter, Event)
+  events.sort((a, b) => b.start.getTime() - a.start.getTime())
+}
 
 function isMainEvent(event: Event) {
   return event.shortName === mainEvent
@@ -27,7 +34,7 @@ function homeInEvent(event: Event) {
 h1 Events
 router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
 
-.event(v-for="event in events")
+.event(v-if="registered" v-for="event in events")
   h2
     router-link(v-if="isMainEvent(event)" :to="{ name: 'home' }") {{ event.name }}
     router-link(v-else :to="homeInEvent(event)") {{ event.name }}
@@ -36,6 +43,8 @@ router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
   p {{ event.registrations.length }} attendants
   p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
     | You are an organizer of this event
+
+p(v-else) You are not registered to an event yet.
 </template>
 
 <style scoped lang="sass">

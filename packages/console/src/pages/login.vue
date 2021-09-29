@@ -10,7 +10,16 @@ let password = $ref("")
 
 async function login() {
   await store.dispatch("login", { username, password })
-  router.push({ name: "home" })
+
+  // redirect to active event if registered to it
+  if (store.state.user.registrations.length) {
+    const eventName = store.state.event.shortName
+    if (store.state.mainEvent === eventName)
+      router.push({ name: "home" })
+    else
+      router.push({ name: "event-home", params: { eventName } })
+  } else
+    router.push({ name: "events" })
 }
 </script>
 

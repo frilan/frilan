@@ -12,7 +12,12 @@ let { user, logged, event, mainEvent } = $(toRefs(store.state))
 
 let openMenu = $ref(false)
 let isHome = $(computed(() => route.name === "home" || null))
+
+// true if active event is not the current one
 let pastEvent = $(computed(() => logged && event.shortName !== mainEvent))
+
+// true if registered to active event
+let registered = $(computed(() => user.registrations.some(r => r.eventId === event.id)))
 
 function logout() {
   store.dispatch("logout")
@@ -31,7 +36,7 @@ header(:class="{ archive: pastEvent }")
     button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
     .menu(:class="{ open: openMenu }" @click="openMenu = false")
       .menu-items
-        event-link(to="user" :params="{ name: user.username }") Profile
+        event-link(v-if="registered" to="user" :params="{ name: user.username }") Profile
         router-link(:to="{ name: 'events' }") All events
         button.link(@click="logout") Log out
 </template>

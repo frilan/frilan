@@ -45,7 +45,6 @@ export const store = createStore<State>({
     mutations: {
         setUser(state, user: User) {
             state.user = user
-            state.logged = true
             localStorage.setItem("user", JSON.stringify(classToPlain(user)))
         },
         setEvent(state, event: Event) {
@@ -64,27 +63,36 @@ export const store = createStore<State>({
         },
     },
     actions: {
-        async loadEvents(context) {
+        async reloadEvents(context) {
             const events = await http.getMany("/events", Event)
+
+            // the most recent event is the main one
             events.sort((a, b) => b.start.getTime() - a.start.getTime())
-            context.commit("setEvent", events[0])
             context.commit("setMainEvent", events[0].shortName)
+
+            // select the most recent event that the user is registered to
+            if (context.state.user.registrations.length) {
+                const userEvents = context.state.user.registrations.map(r => r.eventId)
+                context.commit("setEvent", events.find(({ id }) => userEvents.includes(id)))
+            } else
+                // select main event if user is not registered to any event
+                context.commit("setEvent", events[0])
         },
         async login(context, credentials: AxiosBasicCredentials) {
             const { user, token } = await http.getOne("/login", UserAndToken, credentials)
             http.setToken(token)
-
-            await context.dispatch("loadEvents")
-            context.commit("setUser", user)
-
             localStorage.setItem("exp", parseJwt(token).exp.toString())
+            context.commit("setUser", user)
+            await context.dispatch("reloadEvents")
+            context.state.logged = true
         },
         logout(context) {
             context.state.logged = false
             localStorage.clear()
             http.clearToken()
         },
-        async loadEvent(context, name: string) {
+        async setActiveEvent(context, name: string) {
+            // skip if already active
             if (name === context.state.event.shortName)
                 return
 

@@ -10,27 +10,36 @@ import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
 import { store } from "./store/store"
 
+/**
+ * Meta properties:
+ * - tile:      a static document title for the page
+ * - event:     true if the page is about a specific event
+ * - organizer: true if the page is only for organizers & admins
+ * - admin:     true if the page is only for adins
+ */
+
 const eventRoutes = [
-    { path: "/", name: "home", component: Planning, meta: { title: "Planning" } },
-    { path: "/planning", name: "planning", component: Planning, meta: { title: "Planning" } },
-    { path: "/ranking", name: "ranking", component: Ranking, meta: { title: "Ranking" } },
-    { path: "/user/:name", name: "user", component: User },
+    { path: "/", name: "home", component: Planning, meta: { title: "Planning", event: true } },
+    { path: "/planning", name: "planning", component: Planning, meta: { title: "Planning", event: true } },
+    { path: "/ranking", name: "ranking", component: Ranking, meta: { title: "Ranking", event: true } },
+    { path: "/user/:name", name: "user", component: User, meta: { event: true } },
     {
         path: "/tournaments/new",
         name: "new-tournament",
         component: TournamentEditor,
-        meta: { title: "New Tournament", organizer: true },
+        meta: { title: "New Tournament", organizer: true, event: true },
     },
     {
         path: "/tournaments/:name",
         name: "tournament",
         component: Tournament,
+        meta: { event: true },
     },
     {
         path: "/tournaments/:name/edit",
         name: "edit-tournament",
         component: TournamentEditor,
-        meta: { organizer: true },
+        meta: { organizer: true, event: true },
     },
 ]
 
@@ -83,17 +92,18 @@ router.beforeEach(async to => {
     if (!to.meta.visitor && !store.state.logged)
         return { name: "login" }
 
-    try {
-        // load specific event if needed
-        if (store.state.logged)
+    // if page is about a specific event
+    if (store.state.logged && to.meta.event)
+        try {
+            // update active event
             if ("eventName" in to.params)
-                await store.dispatch("loadEvent", to.params.eventName)
+                await store.dispatch("setActiveEvent", to.params.eventName)
             else
-                await store.dispatch("loadEvent", store.state.mainEvent)
-    } catch (err) {
-        // cancel navigation if specified event couldn't be loaded
-        return false
-    }
+                await store.dispatch("setActiveEvent", store.state.mainEvent)
+        } catch (err) {
+            // cancel navigation if specified event doesn't exist
+            return false
+        }
 
     if (to.meta.organizer && !store.getters.isOrganizer)
         return false

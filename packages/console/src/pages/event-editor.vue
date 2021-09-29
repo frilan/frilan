@@ -44,7 +44,7 @@ async function save() {
     await http.patch("/events/" + event.id, event)
   else {
     await http.post("events", event, Event)
-    await store.dispatch("loadEvents")
+    await store.dispatch("reloadEvents")
   }
 
   if (event.shortName === store.state.mainEvent)
@@ -65,7 +65,7 @@ form(@submit.prevent="save")
     input(id="name" minlength=1 autofocus v-model="event.name")
   .field
     label(for="short-name") Short name
-    input(id="short-name" pattern="^[a-z0-9-]+$" autofocus v-model="event.shortName")
+    input(id="short-name" pattern="^[a-z0-9-]+$" v-model="event.shortName")
   .field
     label(for="start") Start date
     input(id="start" type="datetime-local" v-model="localStart")
