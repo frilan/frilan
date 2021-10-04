@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
 import { useStore } from "../store/store"
+import { redirectToEvent } from "../utils/redirect-to-event"
 
 const router = useRouter()
 const store = useStore()
@@ -13,11 +14,7 @@ async function login() {
 
   // redirect to active event if registered to it
   if (store.state.user.registrations.length) {
-    const eventName = store.state.event.shortName
-    if (store.state.mainEvent === eventName)
-      router.push({ name: "home" })
-    else
-      router.push({ name: "event-home", params: { eventName } })
+    redirectToEvent("home")
   } else
     router.push({ name: "events" })
 }

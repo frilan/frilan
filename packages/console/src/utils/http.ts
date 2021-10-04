@@ -73,6 +73,11 @@ export class Http {
     private async sendRequest<T>(config: AxiosRequestConfig, cls: Many<T>): Promise<T[]>
     private async sendRequest<T>(config: AxiosRequestConfig, cls: OneOrMany<T>): Promise<T | T[]>
     private async sendRequest<T>(config: AxiosRequestConfig, cls?: OneOrMany<T>): Promise<T | T[] | void> {
+        // replace undefined with null
+        for (const key in config.data)
+            if (typeof config.data[key] === "undefined")
+                config.data[key] = null
+
         const response = await this.axiosInstance(config)
         if (cls)
             return plainToClass(cls instanceof Many ? cls.entity : cls, response.data)

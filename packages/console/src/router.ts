@@ -8,6 +8,7 @@ import Events from "./pages/events.vue"
 import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
+import UserEditor from "./pages/user-editor.vue"
 import { store } from "./store/store"
 
 /**
@@ -15,7 +16,8 @@ import { store } from "./store/store"
  * - tile:      a static document title for the page
  * - event:     true if the page is about a specific event
  * - organizer: true if the page is only for organizers & admins
- * - admin:     true if the page is only for adins
+ * - self:      true if the page is only for the current user & admins
+ * - admin:     true if the page is only for admins
  */
 
 const eventRoutes = [
@@ -56,6 +58,7 @@ const router = createRouter({
     routes: [
         { path: "/login", name: "login", component: Login, meta: { visitor: true, title: "Log In" } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
+        { path: "/user/:name/edit", name: "edit-user", component: UserEditor, meta: { self: true } },
         {
             path: "/events",
             name: "events",
@@ -106,6 +109,9 @@ router.beforeEach(async to => {
         }
 
     if (to.meta.organizer && !store.getters.isOrganizer)
+        return false
+
+    if (to.meta.self && !store.state.user.admin && store.state.user.username !== to.params.name)
         return false
 
     if (to.meta.admin && !store.state.user.admin)

@@ -1,16 +1,17 @@
 <script setup lang="ts">
+import { computed, toRefs } from "vue"
 import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
-import http from "../utils/http"
 import { Registration, Status, Team, User } from "@frilan/models"
-import TournamentLink from "../components/tournament-link.vue"
-import { computed } from "vue"
+import http from "../utils/http"
 import axios from "axios"
+import TournamentLink from "../components/tournament-link.vue"
 
 const route = useRoute()
 const store = useStore()
 
 const { name } = route.params
+let { event, user: currentUser } = $(toRefs(store.state))
 
 const user = (await http.getMany(`/users?username=${ name }`, User))[0]
 if (!user)
@@ -18,7 +19,6 @@ if (!user)
 
 document.title = `${ user.displayName } - ${ document.title }`
 
-const { event } = store.state
 const relations = ["teams", "teams.members", "teams.tournament"].join(",")
 let registered = $ref(true)
 let registration = $ref(new Registration())
@@ -53,6 +53,10 @@ function isTeamRegistered(team: Team) {
 
 <template lang="pug">
 h1 {{ user.displayName }}
+router-link(
+  v-if="currentUser.admin || user.id === currentUser.id"
+  :to="{ name: 'edit-user', params: { name } }")
+  | Edit profile
 
 template(v-if="registered")
   h2 Score: {{ registration.score }}
