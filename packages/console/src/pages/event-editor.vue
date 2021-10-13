@@ -57,6 +57,7 @@ async function save() {
 
 <template lang="pug">
 h1(v-if="editing") Edit {{ event.name }}
+h1(v-else-if="store.state.init") Initial event
 h1(v-else) New event
 
 form(@submit.prevent="save")

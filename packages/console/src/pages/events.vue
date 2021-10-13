@@ -12,8 +12,8 @@ const { user, mainEvent } = store.state
 let registered = $(computed(() => !!user.registrations.length))
 
 let events: Event[]
-if (registered) {
-// if not admin, only fetch events the user is registered to
+if (registered || user.admin) {
+  // if not admin, only fetch events the user is registered to
   const filter = user.admin ? "" : "&id=" + user.registrations.map(r => r.eventId)
 
   events = await http.getMany("/events?load=registrations" + filter, Event)
@@ -34,7 +34,7 @@ function homeInEvent(event: Event) {
 h1 Events
 router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
 
-.event(v-if="registered" v-for="event in events")
+.event(v-if="registered || user.admin" v-for="event in events")
   h2
     router-link(v-if="isMainEvent(event)" :to="{ name: 'home' }") {{ event.name }}
     router-link(v-else :to="homeInEvent(event)") {{ event.name }}

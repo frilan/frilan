@@ -90,10 +90,14 @@ router.beforeEach(async to => {
     store.commit("clearError")
 
     if (to.meta.visitor && store.state.logged)
-        return { name: "/" }
+        return { name: "home" }
 
     if (!to.meta.visitor && !store.state.logged)
         return { name: "login" }
+
+    // if there are no events yet, redirect to event creation page
+    if (store.state.init && to.name !== "new-event")
+        return { name: "new-event" }
 
     // if page is about a specific event
     if (store.state.logged && to.meta.event)

@@ -7,10 +7,34 @@ import { classToPlain, plainToClass } from "class-transformer"
 import { parseJwt } from "../utils/parse-jwt"
 
 export interface State {
+    /**
+     * The user currently logged in
+     */
     user: User
+
+    /**
+     * True if the user is logged in
+     */
     logged: boolean
+
+    /**
+     * The active event
+     */
     event: Event
+
+    /**
+     * The main (most recent) event name
+     */
     mainEvent: string
+
+    /**
+     * True if there are no events yet
+     */
+    init?: boolean
+
+    /**
+     * The last thrown error
+     */
     error: unknown
 }
 
@@ -33,6 +57,7 @@ export const store = createStore<State>({
         event: event ? plainToClass(Event, JSON.parse(event)) : new Event(),
         mainEvent: main ?? "",
         error: null,
+        init: !!user && !event,
     },
     getters: {
         isOrganizer(state) {
@@ -65,6 +90,14 @@ export const store = createStore<State>({
     actions: {
         async reloadEvents(context) {
             const events = await http.getMany("/events", Event)
+            if (!events.length)
+                if (context.state.user.admin) {
+                    context.state.init = true
+                    return
+                } else {
+                    await context.dispatch("logout")
+                    throw "There are no events yet"
+                }
 
             // the most recent event is the main one
             events.sort((a, b) => b.start.getTime() - a.start.getTime())
@@ -77,6 +110,9 @@ export const store = createStore<State>({
             } else
                 // select main event if user is not registered to any event
                 context.commit("setEvent", events[0])
+
+            // no need to create the initial event
+            context.state.init = false
         },
         async login(context, credentials: AxiosBasicCredentials) {
             const { user, token } = await http.getOne("/login", UserAndToken, credentials)
@@ -88,6 +124,7 @@ export const store = createStore<State>({
         },
         logout(context) {
             context.state.logged = false
+            context.state.init = false
             localStorage.clear()
             http.clearToken()
         },

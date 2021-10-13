@@ -8,13 +8,13 @@ const store = useStore()
 const router = useRouter()
 const route = useRoute()
 
-let { user, logged, event, mainEvent } = $(toRefs(store.state))
+let { user, logged, event, mainEvent, init } = $(toRefs(store.state))
 
 let openMenu = $ref(false)
 let isHome = $(computed(() => route.name === "home" || null))
 
 // true if active event is not the current one
-let pastEvent = $(computed(() => logged && event.shortName !== mainEvent))
+let pastEvent = $(computed(() => logged && !init && event.shortName !== mainEvent))
 
 // true if registered to active event
 let registered = $(computed(() => user.registrations.some(r => r.eventId === event.id)))
@@ -31,14 +31,17 @@ header(:class="{ archive: pastEvent }")
     router-link.title(:to="{ name: 'home' }") console
     span.event(v-if="pastEvent") {{ event.name }}
   nav(v-if="logged")
-    event-link.main-link(to="planning" :active="isHome") Planning
-    event-link.main-link(to="ranking") Ranking
-    button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
-    .menu(:class="{ open: openMenu }" @click="openMenu = false")
-      .menu-items
-        event-link(v-if="registered" to="user" :params="{ name: user.username }") Profile
-        router-link(:to="{ name: 'events' }") All events
-        button.link(@click="logout") Log out
+    template(v-if="init")
+      button.link(@click="logout") Log out
+    template(v-else)
+      event-link.main-link(to="planning" :active="isHome") Planning
+      event-link.main-link(to="ranking") Ranking
+      button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
+      .menu(:class="{ open: openMenu }" @click="openMenu = false")
+        .menu-items
+          event-link(v-if="registered" to="user" :params="{ name: user.username }") Profile
+          router-link(:to="{ name: 'events' }") All events
+          button.link(@click="logout") Log out
 </template>
 
 <style scoped lang="sass">
