@@ -11,6 +11,8 @@ import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { TournamentNotFoundError } from "./tournaments"
 import { FiltersParser } from "../middlewares/filters-parser"
+import { isDbError } from "../util/is-db-error"
+import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
@@ -170,42 +172,56 @@ export class TournamentTeamController {
         if (tournament.status === Status.Started || tournament.status === Status.Finished)
             throw new BadRequestError("Cannot add team to tournaments have already started")
 
-        const registration = await getRepository(Registration)
-            .findOne({ userId: user.id, eventId: tournament.eventId })
+        team.tournament = tournament
+        team.tournamentId = tournamentId
 
-        // by default, the team creator is automatically part of the members
-        // however, admins can create teams without being registered to the event
-        // if they do so, then it creates an empty team
-        if (!registration && !user.admin)
-            throw new ForbiddenError("Only users registered to this event can create teams")
+        // only admins and organizers can provide a custom list of members
+        // players can only create teams with themselves as member
+        if (team.members) {
+            if (!user.admin && !await isOrganizer(user, team))
+                throw new ForbiddenError("Only administrators and organizers can provide a list of members")
+            if (team.members.length > tournament.teamSizeMax)
+                throw new BadRequestError(
+                    `Cannot create team with ${ team.members.length } members (max is ${ tournament.teamSizeMax })`)
+        } else {
+            const registration = await getRepository(Registration)
+                .findOne({ userId: user.id, eventId: tournament.eventId })
+            if (!registration)
+                throw new ForbiddenError("Only users registered to this event can create teams")
 
-        const initialMembers = registration ? [registration] : []
-
-        if (registration && await hasAlreadyJoined(user.id, tournamentId))
-            if (user.admin)
-                // create empty team if admin already in another team
-                initialMembers.pop()
-            else
-                throw new BadRequestError("Cannot join multiple teams in the same tournament")
+            team.members = [registration]
+        }
 
         const fullTeams = await getFullTeams(tournament)
         if (fullTeams.length >= tournament.teamCountMax)
             throw new BadRequestError(
                 `This tournament is full (max ${ tournament.teamCountMax } teams)`)
 
-        team.tournamentId = tournamentId
-        // add current user into the team if registered to the event
-        team.members = initialMembers
-
-        const savedTeam = await getRepository(Team).save(team)
-
-        // increment the current number of full teams if needed
-        if (initialMembers.length >= tournament.teamSizeMin) {
-            ++tournament.teamCount
-            await getRepository(Tournament).save(tournament)
+        for (const member of team.members) {
+            member.eventId = tournament.eventId
+            if (await hasAlreadyJoined(member.userId, tournamentId))
+                throw new BadRequestError(
+                    `User with ID ${ member.userId } cannot join multiple teams in the same tournament`)
         }
 
-        return savedTeam
+        try {
+            const savedTeam = await getRepository(Team).save(team)
+
+            // increment the current number of full teams if needed
+            if (team.members.length >= tournament.teamSizeMin) {
+                ++tournament.teamCount
+                await getRepository(Tournament).save(tournament)
+            }
+
+            team = savedTeam
+
+        } catch (err) {
+            // if trying to add non-existing or non-registered users
+            if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
+                throw new NotFoundError(err.detail)
+        }
+
+        return team
     }
 }
 
