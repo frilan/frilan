@@ -424,7 +424,7 @@ export class TeamController {
         if (team.members.some(m => m.eventId === registration.eventId && m.userId === registration.userId))
             return
 
-        if (await hasAlreadyJoined(user.id, team.tournamentId))
+        if (await hasAlreadyJoined(userId, team.tournamentId))
             throw new BadRequestError("Cannot join multiple teams in the same tournament")
 
         // check that team and tournament aren't full
