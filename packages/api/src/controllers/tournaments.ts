@@ -1,6 +1,6 @@
 import {
     BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
-    OnUndefined, Param, Post, UseBefore,
+    OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository, In, Not } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION, PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -351,7 +351,7 @@ export class TournamentController {
 
     /**
      * @openapi
-     * /tournaments/{tournament-id}/end:
+     * /tournaments/{tournament-id}/results:
      *   post:
      *     summary: end a running tournament and provide the ranking
      *     tags:
@@ -381,7 +381,7 @@ export class TournamentController {
      *       404:
      *         $ref: "#/components/responses/TournamentNotFound"
      */
-    @Post("/:tournament_id(\\d+)/end")
+    @Put("/:tournament_id(\\d+)/results")
     async end(
         @Param("tournament_id") id: number,
         @CurrentUser({ required: true }) user: AuthUser,

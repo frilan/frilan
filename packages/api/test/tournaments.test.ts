@@ -295,14 +295,14 @@ describe("end tournaments", () => {
 
     test("prevent ending tournament that hasn't started", async () => {
         // try ending the tournament
-        const res = await http.post(`/tournaments/${ tournament2.id }/end`,
+        const res = await http.put(`/tournaments/${ tournament2.id }/results`,
             { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(400)
     })
 
     test("end tournament as admin", async () => {
         // end tournament and update scores
-        let res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        let res = await http.put(`/tournaments/${ tournament1.id }/results`,
             { ranks: [team2, team1], points: 100, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(200)
 
@@ -320,7 +320,7 @@ describe("end tournaments", () => {
 
     test("end tournament as organizer", async () => {
         // end tournament and update scores
-        let res = await http.post(`/tournaments/${ tournament3.id }/end`,
+        let res = await http.put(`/tournaments/${ tournament3.id }/results`,
             { ranks: [[team4, team3]], points: 50, distribution: "exponential" }, regular.config)
         expect(res.status).toBe(200)
 
@@ -337,7 +337,7 @@ describe("end tournaments", () => {
     })
 
     test("overwrite ranks and scores", async () => {
-        let res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        let res = await http.put(`/tournaments/${ tournament1.id }/results`,
             { ranks: [team1, team2], points: 75, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(200)
 
@@ -354,7 +354,7 @@ describe("end tournaments", () => {
     })
 
     test("prevent missing teams in ranking", async () => {
-        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        const res = await http.put(`/tournaments/${ tournament1.id }/results`,
             { ranks: [team2], points: 100, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(400)
     })
@@ -364,19 +364,19 @@ describe("end tournaments", () => {
         await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Player }, admin.config)
         await refreshPrivilege(regular)
 
-        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        const res = await http.put(`/tournaments/${ tournament1.id }/results`,
             { ranks: [team1, team2], points: 100, distribution: "exponential" }, regular.config)
         expect(res.status).toBe(403)
     })
 
     test("prevent ending tournament when not logged in", async () => {
-        const res = await http.post(`/tournaments/${ tournament1.id }/end`,
+        const res = await http.put(`/tournaments/${ tournament1.id }/results`,
             { ranks: [team1, team2], points: 100, distribution: "exponential" })
         expect(res.status).toBe(401)
     })
 
     test("prevent ending non-existing tournament", async () => {
-        const res = await http.post("/tournaments/999/end",
+        const res = await http.put("/tournaments/999/results",
             { ranks: [team1, team2], points: 100, distribution: "exponential" }, admin.config)
         expect(res.status).toBe(404)
     })
