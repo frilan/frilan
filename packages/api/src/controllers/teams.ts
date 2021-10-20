@@ -170,7 +170,7 @@ export class TournamentTeamController {
             throw new TournamentNotFoundError()
 
         if (tournament.status === Status.Started || tournament.status === Status.Finished)
-            throw new BadRequestError("Cannot add team to tournaments have already started")
+            throw new BadRequestError("Cannot create team in tournaments that have already started")
 
         team.tournament = tournament
         team.tournamentId = tournamentId
