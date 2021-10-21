@@ -5,7 +5,7 @@ import { useStore } from "../store/store"
 import { Registration, Status, Team, User } from "@frilan/models"
 import http from "../utils/http"
 import axios from "axios"
-import TournamentLink from "../components/tournament-link.vue"
+import TournamentLink from "../components/common/tournament-link.vue"
 
 const route = useRoute()
 const store = useStore()

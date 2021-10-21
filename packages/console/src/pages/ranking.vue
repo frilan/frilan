@@ -3,7 +3,7 @@ import { computed } from "vue"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration } from "@frilan/models"
-import UserLink from "../components/user-link.vue"
+import UserLink from "../components/common/user-link.vue"
 
 const store = useStore()
 

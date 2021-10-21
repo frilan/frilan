@@ -4,9 +4,9 @@ import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration, Status, Team, Tournament, User } from "@frilan/models"
-import Markdown from "../components/markdown.vue"
-import UserLink from "../components/user-link.vue"
-import EventLink from "../components/event-link.vue"
+import Markdown from "../components/common/markdown.vue"
+import UserLink from "../components/common/user-link.vue"
+import EventLink from "../components/common/event-link.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -75,6 +75,9 @@ async function unregister() {
   await removeMember(myTeam, myself)
 }
 
+/**
+ * Creates an empty team, or register an arbitrary user.
+ */
 async function createTeam() {
   let team: Team
   if (tournament.teamSizeMax <= 1) {
@@ -169,6 +172,16 @@ async function addMemberPrompt(team: Team) {
   if (member)
     await addMember(team, member)
 }
+
+/**
+ * Locks registrations and start tournament.
+ */
+async function startTournament() {
+  if (confirm("This will lock teams and registrations permanently. Are you sure you want to start the tournament?")) {
+    await http.patch("/tournaments/" + tournament.id, { status: Status.Started })
+    tournament.status = Status.Started
+  }
+}
 </script>
 
 <template lang="pug">
@@ -184,8 +197,14 @@ template(v-if="!tournamentStarted")
     button(v-if="isRegistered" @click="unregister") Unregister
     button(v-if="!isRegistered && !isTournamentFull" @click="register") Register
 
-  button(v-if="isOrganizer && !isTournamentFull" @click="createTeam")
-    | {{ tournament.teamSizeMax > 1 ? "Create team" : "Register player" }}
+  template(v-if="isOrganizer")
+    button(v-if="!isTournamentFull" @click="createTeam")
+      | {{ tournament.teamSizeMax > 1 ? "Create team" : "Register player" }}
+    button(v-if="tournament.teamCount >= tournament.teamCountMin" @click="startTournament") Start
+    button(v-else disabled title="Not enough participants") Start
+
+event-link(v-else-if="isOrganizer" to="tournament-results" :params="{ name }")
+  | Enter results
 
 markdown.rules(:src="tournament.rules")
 

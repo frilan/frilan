@@ -2,8 +2,8 @@
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Tournament } from "@frilan/models"
-import TournamentLink from "../components/tournament-link.vue"
-import EventLink from "../components/event-link.vue"
+import TournamentLink from "../components/common/tournament-link.vue"
+import EventLink from "../components/common/event-link.vue"
 
 const store = useStore()
 const { event } = store.state

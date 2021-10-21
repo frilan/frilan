@@ -3,8 +3,8 @@ import { onErrorCaptured, toRefs } from "vue"
 import { useStore } from "./store/store"
 import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
-import ErrorHandler from "./components/error-handler.vue"
-import AppHeader from "./components/app-header.vue"
+import ErrorHandler from "./components/common/error-handler.vue"
+import AppHeader from "./components/common/app-header.vue"
 
 const store = useStore()
 const router = useRouter()

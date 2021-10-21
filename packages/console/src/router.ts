@@ -4,6 +4,7 @@ import Join from "./pages/join.vue"
 import Login from "./pages/login.vue"
 import Tournament from "./pages/tournament.vue"
 import TournamentEditor from "./pages/tournament-editor.vue"
+import ResultsEditor from "./pages/results-editor.vue"
 import Events from "./pages/events.vue"
 import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
@@ -41,6 +42,12 @@ const eventRoutes = [
         path: "/tournaments/:name/edit",
         name: "edit-tournament",
         component: TournamentEditor,
+        meta: { organizer: true, event: true },
+    },
+    {
+        path: "/tournaments/:name/results",
+        name: "tournament-results",
+        component: ResultsEditor,
         meta: { organizer: true, event: true },
     },
 ]

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRefs } from "vue"
-import { useStore } from "../store/store"
+import { useStore } from "../../store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./event-link.vue"
 

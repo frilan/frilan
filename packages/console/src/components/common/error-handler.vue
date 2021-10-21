@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from "axios"
 import { ValidationError } from "class-validator"
-import { useStore } from "../store/store"
+import { useStore } from "../../store/store"
 import { toRefs } from "vue"
 
 const store = useStore()
