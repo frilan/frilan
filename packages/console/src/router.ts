@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router"
-import Planning from "./pages/planning.vue"
 import Join from "./pages/join.vue"
 import Login from "./pages/login.vue"
+import Tournaments from "./pages/tournaments.vue"
 import Tournament from "./pages/tournament.vue"
 import TournamentEditor from "./pages/tournament-editor.vue"
 import ResultsEditor from "./pages/results-editor.vue"
@@ -9,6 +9,7 @@ import Events from "./pages/events.vue"
 import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
+import Results from "./pages/results.vue"
 import UserEditor from "./pages/user-editor.vue"
 import Registrations from "./pages/registrations.vue"
 import { store } from "./store/store"
@@ -23,16 +24,16 @@ import { store } from "./store/store"
  */
 
 const eventRoutes = [
-    { path: "/", name: "home", component: Planning, meta: { title: "Planning", event: true } },
-    { path: "/planning", name: "planning", component: Planning, meta: { title: "Planning", event: true } },
+    { path: "/", name: "home", component: Tournaments, meta: { title: "Tournaments", event: true } },
+    { path: "/tournaments", name: "tournaments", component: Tournaments, meta: { title: "Tournaments", event: true } },
     { path: "/ranking", name: "ranking", component: Ranking, meta: { title: "Ranking", event: true } },
+    { path: "/results/:name", name: "results", component: Results, meta: { event: true } },
     {
         path: "/registrations",
         name: "registrations",
         component: Registrations,
         meta: { title: "Registrations", organizer: true, event: true },
     },
-    { path: "/user/:name", name: "user", component: User, meta: { event: true } },
     {
         path: "/tournaments/new",
         name: "new-tournament",
@@ -72,6 +73,7 @@ const router = createRouter({
     routes: [
         { path: "/login", name: "login", component: Login, meta: { visitor: true, title: "Log In" } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
+        { path: "/user/:name", name: "user", component: User },
         { path: "/user/:name/edit", name: "edit-user", component: UserEditor, meta: { self: true } },
         {
             path: "/events",

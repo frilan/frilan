@@ -35,14 +35,15 @@ header(:class="{ archive: pastEvent }")
     template(v-if="init")
       button.link(@click="logout") Log out
     template(v-else)
-      event-link.main-link(to="planning" :active="isHome") Planning
+      event-link.main-link(to="tournaments" :active="isHome") Tournaments
       event-link.main-link(to="ranking") Ranking
+      event-link.main-link(to="results" :params="{ name: user.username }") Results
+      event-link.main-link(v-if="isOrganizer || user.admin" to="registrations") Registrations
       button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
       .menu(:class="{ open: openMenu }" @click="openMenu = false")
         .menu-items
-          event-link(v-if="registered" to="user" :params="{ name: user.username }") Profile
+          router-link(:to="{ name: 'user', params: { name: user.username } }") Profile
           router-link(:to="{ name: 'events' }") All events
-          event-link(v-if="isOrganizer || user.admin" to="registrations") Registrations
           button.link(@click="logout") Log out
 </template>
 

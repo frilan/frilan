@@ -1,98 +1,62 @@
 <script setup lang="ts">
-import { computed, toRefs } from "vue"
-import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
-import { Registration, Status, Team, User } from "@frilan/models"
 import http from "../utils/http"
-import axios from "axios"
-import TournamentLink from "../components/common/tournament-link.vue"
+import { toRefs } from "vue"
+import { useRoute } from "vue-router"
+import { Event, Registration, Role, User } from "@frilan/models"
+import { routeInEvent } from "../utils/route-in-event"
 
 const route = useRoute()
 const store = useStore()
 
 const { name } = route.params
-let { event, user: currentUser } = $(toRefs(store.state))
+let { user: currentUser } = $(toRefs(store.state))
 
-const user = (await http.getMany(`/users?username=${ name }`, User))[0]
+const user = (await http.getMany(`/users?username=${ name }&load=registrations`, User))[0]
 if (!user)
   throw "User not found"
 
-document.title = `${ user.displayName } - ${ document.title }`
+const filter = "&id=" + user.registrations.map(r => r.eventId)
+const events = await http.getMany("/events?load=registrations" + filter, Event)
+events.sort((a, b) => b.start.getTime() - a.start.getTime())
 
-const relations = ["teams", "teams.members", "teams.tournament"].join(",")
-let registered = $ref(true)
-let registration = $ref(new Registration())
-
-try {
-  registration
-    = await http.getOne(`/events/${ event.id }/registrations/${ user.id }?load=${ relations }`, Registration)
-} catch (err) {
-  if (axios.isAxiosError(err) && err.response?.status === 404)
-    registered = false
-  else
-    throw err
+interface EventEntry {
+  event: Event
+  registration: Registration
+  rank: number
 }
 
-// hide incomplete teams if the tournament is finished
-let visibleTeams = $(computed(() => registered
-  ? registration.teams.filter(team => team.tournament.status !== Status.Finished || team.rank > 0)
-  : []))
-
-let finishedTeams = $(computed(() => visibleTeams
-  .filter(team => team.tournament.status === Status.Finished)
-  .sort((a, b) => b.result - a.result)))
-
-let registeredTeams = $(computed(() => visibleTeams.filter(team => !finishedTeams.includes(team))))
-
-function isTeamRegistered(team: Team) {
-  return team.members.length >= team.tournament.teamSizeMin
-    && team.members.length <= team.tournament.teamSizeMax
+const entries: EventEntry[] = []
+for (const event of events) {
+  event.registrations.sort((a, b) => b.score - a.score)
+  const rank = event.registrations.findIndex(r => r.userId === user.id) + 1
+  const registration = event.registrations[rank - 1]
+  entries.push({ event, registration, rank })
 }
-
 </script>
 
 <template lang="pug">
 h1 {{ user.displayName }}
+
 router-link(
   v-if="currentUser.admin || user.id === currentUser.id"
   :to="{ name: 'edit-user', params: { name } }")
   | Edit profile
 
-template(v-if="registered")
-  h2 Score: {{ registration.score }}
-  table
-    tr
-      th Tournament
-      th Team
-      th Rank
-      th Points
-    tr(v-for="team in finishedTeams")
-      td
-        tournament-link(:tournament="team.tournament")
-      td {{ team.tournament.teamSizeMax > 1 ? team.name : "" }}
-      td {{ team.rank }} / {{ team.tournament.teamCount }}
-      td {{ team.result }} pts
+p(v-if="user.admin") Administrator
 
-  template(v-if="registeredTeams.length")
-    h2 Upcoming tournaments
-    table
-      tr
-        th Tournament
-        th Team
-        th Status
-      tr(v-for="team in registeredTeams")
-        td
-          tournament-link(:tournament="team.tournament")
-        td {{ team.tournament.teamSizeMax > 1 ? team.name : "" }}
-        td(v-if="isTeamRegistered(team)") Registered
-        td(v-else) &#9888; {{ team.members.length }} / {{ team.tournament.teamSizeMin }}
-          span.max(v-if="team.tournament.teamSizeMax > team.tournament.teamSizeMin")
-            | !{" "}({{ team.tournament.teamSizeMax }})
+template(v-if="entries.length")
+  h2 All events
+  .event(v-for="{ event, registration, rank } in entries")
+    h3 {{ event.name }}
+    p(v-if="registration.role === Role.Organizer") Organizer
+    p Score: {{ registration.score }} pts
+    p Rank: {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
+    router-link(:to="routeInEvent('results', event.shortName)") View results
 
-p(v-else) This user isn't registered to the event.
+p(v-else) This user isn't registered to any event
 </template>
 
 <style scoped lang="sass">
-table
-  text-align: center
+
 </style>

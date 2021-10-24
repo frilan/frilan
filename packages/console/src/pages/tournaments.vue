@@ -26,7 +26,7 @@ function endDate(tournament: Tournament) {
 </script>
 
 <template lang="pug">
-h1 Tournaments planning
+h1 Tournaments
 event-link(v-if="isOrganizer" to="new-tournament") New tournament
 
 template(v-if="tournaments.length")

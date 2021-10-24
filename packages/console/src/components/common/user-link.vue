@@ -6,5 +6,5 @@ defineProps<{ user: User }>()
 </script>
 
 <template lang="pug">
-event-link(to="user" :params="{ name: user.username }") {{ user.displayName }}
+event-link(to="results" :params="{ name: user.username }") {{ user.displayName }}
 </template>
