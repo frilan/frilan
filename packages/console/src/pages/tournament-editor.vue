@@ -5,7 +5,7 @@ import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
 import { computed, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
-import { computedDate, formatDate } from "../utils/date-helpers"
+import DatetimePicker from "../components/common/datetime-picker.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -43,8 +43,6 @@ if (editing) {
   watchEffect(() => tournament.shortName = [...tournament.name.matchAll(/^\w|(?<= )\w|[A-Z\d]/g)]
     .map(([c]) => c).join("").toLowerCase())
 
-let localDate = $(computedDate(tournament, "date"))
-
 let hidden = $(computed({
   get: () => tournament.status === Status.Hidden,
   set: val => tournament.status = val ? Status.Hidden : Status.Ready,
@@ -81,9 +79,9 @@ form(@submit.prevent="save")
     input(id="short-name" pattern="^[a-z0-9-]+$" v-model="tournament.shortName")
   .field
     label(for="date") Date
-    input(id="date" type="datetime-local" v-model="localDate"
-      :min="formatDate(event.start)"
-      :max="formatDate(event.end)")
+    datetime-picker(id="date" v-model="tournament.date"
+      :min="event.start"
+      :max="event.end")
   .field
     label(for="duration") Duration
     input(id="duration" type="number" min=1 v-model="tournament.duration")

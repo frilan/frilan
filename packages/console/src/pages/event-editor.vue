@@ -4,8 +4,8 @@ import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import { Event } from "@frilan/models"
 import http from "../utils/http"
-import { computedDate, formatDate } from "../utils/date-helpers"
 import { routeInEvent } from "../utils/route-in-event"
+import DatetimePicker from "../components/common/datetime-picker.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -35,9 +35,6 @@ if (editing) {
 } else
   watchEffect(() => event.shortName = [...event.name.matchAll(/\d+/g)]
     .map(([c]) => c).join("").toLowerCase())
-
-let localStart = $(computedDate(event, "start"))
-let localEnd = $(computedDate(event, "end"))
 
 async function save() {
   if (editing)
@@ -69,10 +66,10 @@ form(@submit.prevent="save")
     input(id="short-name" pattern="^[a-z0-9-]+$" v-model="event.shortName")
   .field
     label(for="start") Start date
-    input(id="start" type="datetime-local" v-model="localStart")
+    datetime-picker(id="start" v-model="event.start")
   .field
     label(for="end") End date
-    input(id="end" type="datetime-local" v-model="localEnd" :min="formatDate(event.start)")
+    datetime-picker(id="end" v-model="event.end" :min="event.start")
   button(type="submit") {{ editing ? "Save" : "Create" }}
 </template>
 

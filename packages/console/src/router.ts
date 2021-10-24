@@ -10,6 +10,7 @@ import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
 import User from "./pages/user.vue"
 import UserEditor from "./pages/user-editor.vue"
+import Registrations from "./pages/registrations.vue"
 import { store } from "./store/store"
 
 /**
@@ -25,6 +26,12 @@ const eventRoutes = [
     { path: "/", name: "home", component: Planning, meta: { title: "Planning", event: true } },
     { path: "/planning", name: "planning", component: Planning, meta: { title: "Planning", event: true } },
     { path: "/ranking", name: "ranking", component: Ranking, meta: { title: "Ranking", event: true } },
+    {
+        path: "/registrations",
+        name: "registrations",
+        component: Registrations,
+        meta: { title: "Registrations", organizer: true, event: true },
+    },
     { path: "/user/:name", name: "user", component: User, meta: { event: true } },
     {
         path: "/tournaments/new",

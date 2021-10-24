@@ -9,6 +9,7 @@ const router = useRouter()
 const route = useRoute()
 
 let { user, logged, event, mainEvent, init } = $(toRefs(store.state))
+const { isOrganizer } = store.getters
 
 let openMenu = $ref(false)
 let isHome = $(computed(() => route.name === "home" || null))
@@ -41,6 +42,7 @@ header(:class="{ archive: pastEvent }")
         .menu-items
           event-link(v-if="registered" to="user" :params="{ name: user.username }") Profile
           router-link(:to="{ name: 'events' }") All events
+          event-link(v-if="isOrganizer || user.admin" to="registrations") Registrations
           button.link(@click="logout") Log out
 </template>
 
