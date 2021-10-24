@@ -7,6 +7,7 @@ import { Distribution, Tournament } from "@frilan/models"
 import RankingEditor from "../components/results/ranking-editor.vue"
 import ScoresEditor from "../components/results/scores-editor.vue"
 import { routeInEvent } from "../utils/route-in-event"
+import { NotFoundError } from "../utils/not-found-error"
 
 const router = useRouter()
 const route = useRoute()
@@ -19,7 +20,7 @@ const relations = ["teams"].join(",")
 const url = `/events/${ event.id }/tournaments?shortName=${ name }&load=${ relations }`
 const tournaments = await http.getMany(url, Tournament)
 if (!tournaments.length)
-  throw "Tournament not found"
+  throw new NotFoundError()
 
 let tournament = $ref(tournaments[0])
 document.title = `Results for ${ tournament.name } - ${ document.title }`

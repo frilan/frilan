@@ -6,6 +6,7 @@ import http from "../utils/http"
 import { computed, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const router = useRouter()
@@ -34,7 +35,7 @@ let tournament = $ref({
 if (editing) {
   const tournaments = await http.getMany(`/events/${ event.id }/tournaments?shortName=${ name }`, Tournament)
   if (!tournaments.length)
-    throw "Tournament not found: " + name
+    throw new NotFoundError()
   tournament = tournaments[0]
 
   watchEffect(() => document.title = `Edit ${ tournament.name } - Console`)

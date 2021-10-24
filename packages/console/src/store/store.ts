@@ -42,6 +42,17 @@ export interface State {
      * The next page to redirect to after logging in
      */
     next?: RouteLocationNormalized
+
+    /**
+     * The current page status
+     */
+    status: PageStatus
+}
+
+export enum PageStatus {
+    Ok,
+    NotFound,
+    AccessDenied,
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
@@ -64,6 +75,7 @@ export const store = createStore<State>({
         mainEvent: main ?? "",
         error: null,
         init: !!user && !event,
+        status: PageStatus.Ok,
     },
     getters: {
         isOrganizer(state) {
@@ -94,6 +106,9 @@ export const store = createStore<State>({
         },
         setNext(state, next: RouteLocationNormalized) {
             state.next = next
+        },
+        setPageStatus(state, status: PageStatus) {
+            state.status = status
         },
     },
     actions: {

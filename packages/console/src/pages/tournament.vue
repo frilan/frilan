@@ -7,6 +7,7 @@ import { Registration, Status, Team, Tournament, User } from "@frilan/models"
 import Markdown from "../components/common/markdown.vue"
 import UserLink from "../components/common/user-link.vue"
 import EventLink from "../components/common/event-link.vue"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const store = useStore()
@@ -19,7 +20,7 @@ const relations = ["teams", "teams.members", "teams.members.user"].join(",")
 const url = `/events/${ event.id }/tournaments?shortName=${ name }&load=${ relations }`
 const tournaments = await http.getMany(url, Tournament)
 if (!tournaments.length)
-  throw "Tournament not found"
+  throw new NotFoundError()
 
 let tournament = $ref(tournaments[0])
 
@@ -211,8 +212,8 @@ markdown.rules(:src="tournament.rules")
 template(v-for="(teams, index) in teamsGroups")
   h2(v-if="tournament.status === Status.Finished") Results
   h2(v-else-if="teamsGroups.length > 1 && index === 0") Incomplete teams
-  h2(v-else-if="tournament.teamSizeMax > 1") Registered teams
-  h2(v-else) Registered players
+  h2(v-else-if="tournament.teamSizeMax > 1") {{ tournamentStarted ? "Teams" : "Registered teams" }}
+  h2(v-else) {{ tournamentStarted ? "Players" : "Registered players" }}
   table.teams(v-if="teams.length")
     tr(v-for="team in teams")
       td.rank(v-if="tournament.status === Status.Finished") {{ team.rank }}

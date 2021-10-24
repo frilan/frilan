@@ -5,6 +5,7 @@ import { toRefs } from "vue"
 import { useRoute } from "vue-router"
 import { Event, Registration, Role, User } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const store = useStore()
@@ -14,7 +15,7 @@ let { user: currentUser } = $(toRefs(store.state))
 
 const user = (await http.getMany(`/users?username=${ name }&load=registrations`, User))[0]
 if (!user)
-  throw "User not found"
+  throw new NotFoundError()
 
 const filter = "&id=" + user.registrations.map(r => r.eventId)
 const events = await http.getMany("/events?load=registrations" + filter, Event)

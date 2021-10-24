@@ -6,6 +6,7 @@ import { Event } from "@frilan/models"
 import http from "../utils/http"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const router = useRouter()
@@ -28,7 +29,7 @@ let event = $ref({
 if (editing) {
   const events = await http.getMany(`/events?shortName=${ name }`, Event)
   if (!events.length)
-    throw "Event not found: " + name
+    throw new NotFoundError()
   event = events[0]
 
   watchEffect(() => document.title = `Edit ${ event.name } - Console`)

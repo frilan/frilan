@@ -5,6 +5,7 @@ import { User } from "@frilan/models"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { redirectToEvent } from "../utils/redirect-to-event"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const store = useStore()
@@ -14,7 +15,7 @@ let { user: currentUser } = $(toRefs(store.state))
 
 const users = await http.getMany(`/users?username=${ name }`, User)
 if (!users.length)
-  throw "User not found"
+  throw new NotFoundError()
 
 let user = $ref(users[0])
 user.password = ""

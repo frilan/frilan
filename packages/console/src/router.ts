@@ -12,7 +12,8 @@ import User from "./pages/user.vue"
 import Results from "./pages/results.vue"
 import UserEditor from "./pages/user-editor.vue"
 import Registrations from "./pages/registrations.vue"
-import { store } from "./store/store"
+import NotFound from "./pages/not-found.vue"
+import { PageStatus, store } from "./store/store"
 
 /**
  * Meta properties:
@@ -99,6 +100,7 @@ const router = createRouter({
         },
         ...eventRoutes,
         ...nestedRoutes,
+        { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound, meta: { title: "Not Found" } },
     ],
 })
 
@@ -126,24 +128,31 @@ router.beforeEach(async to => {
             else
                 await store.dispatch("setActiveEvent", store.state.mainEvent)
         } catch (err) {
-            // cancel navigation if specified event doesn't exist
-            return false
+            store.commit("setPageStatus", PageStatus.AccessDenied)
+            return
         }
 
-    if (to.meta.organizer && !store.getters.isOrganizer)
-        return false
-
-    if (to.meta.self && !store.state.user.admin && store.state.user.username !== to.params.name)
-        return false
-
-    if (to.meta.admin && !store.state.user.admin)
-        return false
+    // check if current user is allowed to visit the page
+    if (to.meta.organizer && !store.getters.isOrganizer
+        || to.meta.self && !store.state.user.admin && store.state.user.username !== to.params.name
+        || to.meta.admin && !store.state.user.admin) {
+        store.commit("setPageStatus", PageStatus.AccessDenied)
+        return
+    }
 
     // set page title accordingly
     if (!to.meta.title)
         document.title = "Console"
     else
         document.title = to.meta.title + " - Console"
+})
+
+router.afterEach(() => {
+    // display the not-found page if access is forbidden
+    if (store.state.status === PageStatus.AccessDenied)
+        store.commit("setPageStatus", PageStatus.NotFound)
+    else
+        store.commit("setPageStatus", PageStatus.Ok)
 })
 
 export default router

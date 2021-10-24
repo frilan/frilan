@@ -6,16 +6,17 @@ import { Registration, Status, Team, User } from "@frilan/models"
 import http from "../utils/http"
 import axios from "axios"
 import TournamentLink from "../components/common/tournament-link.vue"
+import { NotFoundError } from "../utils/not-found-error"
 
 const route = useRoute()
 const store = useStore()
 
 const { name } = route.params
-let { event, user: currentUser } = $(toRefs(store.state))
+let { event } = $(toRefs(store.state))
 
 const user = (await http.getMany(`/users?username=${ name }`, User))[0]
 if (!user)
-  throw "User not found"
+  throw new NotFoundError()
 
 document.title = `${ user.displayName } - ${ document.title }`
 
