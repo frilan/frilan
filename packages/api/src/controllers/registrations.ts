@@ -113,11 +113,11 @@ export class RegistrationController {
         @Body() registration: Registration,
     ): Promise<Registration> {
 
-        if (!user.admin && user.id !== userId)
-            throw new ForbiddenError("Only administrators can register other users")
+        if (!user.admin && user.roles[eventId] !== Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can register users to this event")
 
-        if (!user.admin && registration.role === Role.Organizer)
-            throw new ForbiddenError("Only administrators can register users as organizers")
+        if (!user.admin && registration.role)
+            throw new ForbiddenError("Only administrators can define roles")
 
         try {
             registration.eventId = eventId

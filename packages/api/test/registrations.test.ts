@@ -14,9 +14,14 @@ beforeAll(async () => {
 
 describe("register users to events", () => {
 
-    test("register user by themselves", async () => {
+    test("prevent users from registering themselves", async () => {
+        const res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, regular.config)
+        expect(res.status).toBe(403)
+    })
+
+    test("register another user by admin", async () => {
         const res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`,
-            { score: 100, arrival: new Date(0), departure: new Date(999) }, regular.config)
+            { score: 100, arrival: new Date(0), departure: new Date(999) }, admin.config)
 
         expect(res.status).toBe(200)
         expect(res.data.role).toBe(Role.Player)
@@ -24,11 +29,6 @@ describe("register users to events", () => {
         expect(res.data.departure).toBe(new Date(999).toISOString())
         // make sure score is set to default value
         expect(res.data.score).toBe(0)
-    })
-
-    test("register another user by admin", async () => {
-        const res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
-        expect(res.status).toBe(200)
     })
 
     test("prevent registering another user by regular user", async () => {
@@ -43,8 +43,18 @@ describe("register users to events", () => {
         expect(res.data.role).toBe(Role.Organizer)
     })
 
-    test("prevent registering an organizer by regular user", async () => {
-        const res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`,
+    test("register another user by organizer", async () => {
+        await refreshPrivilege(regular)
+        const res = await http.put(`/events/${ event1 }/registrations/${ admin.id }`, {}, regular.config)
+        expect(res.status).toBe(200)
+    })
+
+    test("prevent organizers from defining roles", async () => {
+        let res = await http.put(`/events/${ event1 }/registrations/${ regular.id }`,
+            { role: Role.Player }, regular.config)
+        expect(res.status).toBe(403)
+
+        res = await http.put(`/events/${ event1 }/registrations/${ admin.id }`,
             { role: Role.Organizer }, regular.config)
         expect(res.status).toBe(403)
     })
