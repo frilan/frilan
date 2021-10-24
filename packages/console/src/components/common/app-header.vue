@@ -8,14 +8,14 @@ const store = useStore()
 const router = useRouter()
 const route = useRoute()
 
-let { user, logged, event, mainEvent, init } = $(toRefs(store.state))
+let { user, event, mainEvent, init } = $(toRefs(store.state))
 const { isOrganizer } = store.getters
 
 let openMenu = $ref(false)
 let isHome = $(computed(() => route.name === "home" || null))
 
 // true if active event is not the current one
-let pastEvent = $(computed(() => logged && !init && event.shortName !== mainEvent))
+let pastEvent = $(computed(() => !init && event.shortName !== mainEvent))
 
 // true if registered to active event
 let registered = $(computed(() => user.registrations.some(r => r.eventId === event.id)))
@@ -31,7 +31,7 @@ header(:class="{ archive: pastEvent }")
   div
     router-link.title(:to="{ name: 'home' }") console
     span.event(v-if="pastEvent") {{ event.name }}
-  nav(v-if="logged")
+  nav
     template(v-if="init")
       button.link(@click="logout") Log out
     template(v-else)

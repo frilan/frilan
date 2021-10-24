@@ -5,6 +5,7 @@ import http from "../utils/http"
 import { AxiosBasicCredentials } from "axios"
 import { classToPlain, plainToClass } from "class-transformer"
 import { parseJwt } from "../utils/parse-jwt"
+import { RouteLocationNormalized } from "vue-router"
 
 export interface State {
     /**
@@ -36,6 +37,11 @@ export interface State {
      * The last thrown error
      */
     error: unknown
+
+    /**
+     * The next page to redirect to after logging in
+     */
+    next?: RouteLocationNormalized
 }
 
 export const key: InjectionKey<Store<State>> = Symbol()
@@ -85,6 +91,9 @@ export const store = createStore<State>({
         },
         clearError(state) {
             state.error = null
+        },
+        setNext(state, next: RouteLocationNormalized) {
+            state.next = next
         },
     },
     actions: {

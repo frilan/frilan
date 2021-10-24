@@ -26,7 +26,7 @@ onErrorCaptured(err => {
 </script>
 
 <template lang="pug">
-app-header
+app-header(v-if="logged")
 main
   error-handler
   suspense
