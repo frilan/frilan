@@ -2,6 +2,7 @@
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { toRefs } from "vue"
+import type { RouteLocationRaw } from "vue-router"
 import { useRoute } from "vue-router"
 import { Event, Registration, Role, User } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
@@ -11,7 +12,7 @@ const route = useRoute()
 const store = useStore()
 
 const { name } = route.params
-let { user: currentUser } = $(toRefs(store.state))
+let { user: currentUser, mainEvent } = $(toRefs(store.state))
 
 const user = (await http.getMany(`/users?username=${ name }&load=registrations`, User))[0]
 if (!user)
@@ -34,6 +35,17 @@ for (const event of events) {
   const registration = event.registrations[rank - 1]
   entries.push({ event, registration, rank })
 }
+
+/**
+ * Returns the route location of the results page from the given event.
+ * @param event The event
+ */
+function resultLink(event: Event): RouteLocationRaw {
+  if (event.shortName === mainEvent)
+    return { name: "results", params: { name } }
+  else
+    return routeInEvent("results", event.shortName, { name })
+}
 </script>
 
 <template lang="pug">
@@ -53,7 +65,7 @@ template(v-if="entries.length")
     p(v-if="registration.role === Role.Organizer") Organizer
     p Score: {{ registration.score }} pts
     p Rank: {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
-    router-link(:to="routeInEvent('results', event.shortName)") View results
+    router-link(:to="resultLink(event)") View results
 
 p(v-else) This user isn't registered to any event
 </template>
