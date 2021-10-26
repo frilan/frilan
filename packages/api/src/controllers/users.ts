@@ -48,14 +48,14 @@ export class UserConflictError extends HttpError {
  * @openapi
  * components:
  *   responses:
- *     AdminDeleted:
+ *     AdminRemoved:
  *       description: this user is the only administrator and cannot be deleted
  */
-export class AdminDeletedError extends ForbiddenError {
-    name = "AdminDeletedError"
+export class AdminRemovedError extends ForbiddenError {
+    name = "AdminRemovedError"
 
     constructor() {
-        super("This user cannot be deleted because they are the only administrator.")
+        super("This action is forbidden because it would remove the only administrator.")
     }
 }
 
@@ -226,11 +226,18 @@ export class UserController {
         @PartialBody() updatedUser: User,
     ): Promise<User | undefined> {
 
-        if (!currentUser.admin)
+        if (!currentUser.admin) {
             if (currentUser.id !== id)
                 throw new ForbiddenError("Only administrators can update other users")
             else if ("admin" in updatedUser)
-                throw new ForbiddenError("Only administrators can define roles of users")
+                throw new ForbiddenError("You cannot make yourself an administrator")
+
+        } else if (currentUser.id === id && updatedUser.admin === false) {
+            // make sure the last admin doesn't remove their own privileges
+            const adminCount = await getRepository(User).count({ admin: true })
+            if (adminCount === 1)
+                throw new AdminRemovedError()
+        }
 
         try {
             if (Object.keys(updatedUser).length)
@@ -260,7 +267,7 @@ export class UserController {
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
-     *         $ref: "#/components/responses/AdminDeleted"
+     *         $ref: "#/components/responses/AdminRemoved"
      */
     @DeleteById()
     @OnUndefined(204)
@@ -274,7 +281,7 @@ export class UserController {
         if (user.admin) {
             const adminCount = await repository.count({ admin: true })
             if (adminCount === 1)
-                throw new AdminDeletedError()
+                throw new AdminRemovedError()
         }
 
         await repository.delete(id)
