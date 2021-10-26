@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, toRefs } from "vue"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration } from "@frilan/models"
@@ -7,7 +7,7 @@ import UserLink from "../components/common/user-link.vue"
 
 const store = useStore()
 
-const { event } = store.state
+let { event } = $(toRefs(store.state))
 const registrations = await http.getMany(`/events/${ event.id }/registrations?load=user`, Registration)
 registrations.sort((a, b) => b.score - a.score)
 

@@ -3,7 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
-import { computed, watchEffect } from "vue"
+import { computed, toRefs, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
 import { NotFoundError } from "../utils/not-found-error"
@@ -13,7 +13,7 @@ const router = useRouter()
 const store = useStore()
 
 const { name } = route.params
-const { event, mainEvent } = store.state
+let { event, mainEvent } = $(toRefs(store.state))
 
 // if true, we are editing an existing tournament
 const editing = !!name

@@ -9,7 +9,7 @@ const router = useRouter()
 const route = useRoute()
 
 let { user, event, mainEvent, init } = $(toRefs(store.state))
-const { isOrganizer } = store.getters
+let isOrganizer = $(computed(() => store.getters.isOrganizer))
 
 let openMenu = $ref(false)
 let isHome = $(computed(() => route.name === "home" || null))
@@ -38,7 +38,7 @@ header(:class="{ archive: pastEvent }")
       event-link.main-link(to="tournaments" :active="isHome") Tournaments
       event-link.main-link(to="ranking") Ranking
       event-link.main-link(to="results" :params="{ name: user.username }") Results
-      event-link.main-link(v-if="isOrganizer || user.admin" to="registrations") Registrations
+      event-link.main-link(v-if="isOrganizer" to="registrations") Registrations
       button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
       .menu(:class="{ open: openMenu }" @click="openMenu = false")
         .menu-items

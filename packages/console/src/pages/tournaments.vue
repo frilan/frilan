@@ -4,10 +4,11 @@ import http from "../utils/http"
 import { Tournament } from "@frilan/models"
 import TournamentLink from "../components/common/tournament-link.vue"
 import EventLink from "../components/common/event-link.vue"
+import { computed, toRefs } from "vue"
 
 const store = useStore()
-const { event } = store.state
-const { isOrganizer } = store.getters
+let { event } = $(toRefs(store.state))
+let isOrganizer = $(computed(() => store.getters.isOrganizer))
 
 const tournaments = await http.getMany(`/events/${ event.id }/tournaments?load=teams`, Tournament)
 tournaments.sort((a, b) => a.date.getTime() - b.date.getTime())

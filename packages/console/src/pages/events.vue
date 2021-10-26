@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, toRefs } from "vue"
 import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
 import http from "../utils/http"
 
 const store = useStore()
-const { user, mainEvent } = store.state
+let { user, mainEvent } = $(toRefs(store.state))
 
 // true if registered to at least one event
 let registered = $(computed(() => !!user.registrations.length))

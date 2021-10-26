@@ -13,7 +13,7 @@ const route = useRoute()
 const store = useStore()
 
 let { user, event } = $(toRefs(store.state))
-const { isOrganizer } = store.getters
+let isOrganizer = $(computed(() => store.getters.isOrganizer))
 
 const { name } = route.params
 const relations = ["teams", "teams.members", "teams.members.user"].join(",")
