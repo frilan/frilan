@@ -4,8 +4,8 @@ import { useRoute } from "vue-router"
 import { User } from "@frilan/models"
 import { useStore } from "../store/store"
 import http from "../utils/http"
-import { redirectToEvent } from "../utils/redirect-to-event"
 import { NotFoundError } from "../utils/not-found-error"
+import router from "../router"
 
 const route = useRoute()
 const store = useStore()
@@ -33,12 +33,11 @@ async function save() {
   if (!user.profilePicture?.length)
     body.profilePicture = undefined
 
-  const updateUser = await http.patch("/users/" + user.id, body, User)
+  const updatedUser = await http.patch("/users/" + user.id, body, User)
   if (isCurrentUser)
-    store.commit("setUser", { ...currentUser, ...updateUser })
+    store.commit("setUser", { ...currentUser, ...updatedUser })
 
-  // reload events to go to most recently attended event
-  redirectToEvent("user", { name })
+  router.push({ name: "user", params: { name: updatedUser.username } })
 }
 </script>
 
