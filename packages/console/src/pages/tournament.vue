@@ -54,7 +54,7 @@ let teamsGroups = $(computed(() =>
   tournamentStarted || !incompleteTeams.length ? [fullTeams] : [incompleteTeams, fullTeams]))
 
 const isTeamFull = (team: Team) => team.members.length >= tournament.teamSizeMax
-let isTournamentFull = $(computed(() => fullTeams.length >= tournament.teamCountMax))
+let isTournamentFull = $(computed(() => tournament.teamCount >= tournament.teamCountMax))
 
 /**
  * Registers the current user to the tournament by creating a new team.
@@ -67,6 +67,7 @@ async function register() {
   if (team.members.length)
     team.members[0].user = user
   tournament.teams.push(team)
+  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -93,6 +94,7 @@ async function createTeam() {
   }
 
   tournament.teams.push(team)
+  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -109,6 +111,7 @@ async function addMember(team: Team, member: Registration) {
     const targetUser = await http.getOne(`/users/${ member.userId }`, User)
     team.members.push({ ...member, user: targetUser })
   }
+  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -122,6 +125,8 @@ async function removeMember(team: Team, member: Registration) {
   // also remove team if empty
   if (!team.members.length)
     tournament.teams.splice(tournament.teams.indexOf(team), 1)
+
+  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -143,6 +148,7 @@ async function renameTeam(team: Team) {
 async function deleteTeam(team: Team) {
   await http.delete(`/teams/${ team.id }`)
   tournament.teams.splice(tournament.teams.indexOf(team), 1)
+  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -189,7 +195,7 @@ async function startTournament() {
 h1 {{ tournament.name }}
 event-link(v-if="isOrganizer" to="edit-tournament" :params="{ name }") Edit
 
-p.info {{ fullTeams.length }}!{" "}
+p.info {{ tournament.teamCount }}!{" "}
   template(v-if="!tournamentStarted") / {{ tournament.teamCountMax }}
   | !{" "}registered {{ tournament.teamSizeMax > 1 ? "teams" : "players" }}
 
