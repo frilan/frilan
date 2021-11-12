@@ -3,6 +3,9 @@ import { computed, toRefs } from "vue"
 import { useStore } from "../../store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./event-link.vue"
+// noinspection ES6UnusedImports
+import { Account, AccountMultipleCheck, Calendar, History, Medal, PodiumGold } from "mdue"
+import ConsoleIcon from "../../assets/icons/console.svg?component"
 
 const store = useStore()
 const router = useRouter()
@@ -12,7 +15,7 @@ let { user, event, mainEvent, init } = $(toRefs(store.state))
 let isOrganizer = $(computed(() => store.getters.isOrganizer))
 
 let openMenu = $ref(false)
-let isHome = $(computed(() => route.name === "home" || null))
+let isHome = $(computed(() => route.name === "home" || route.name === "event-home" || null))
 
 // true if active event is not the current one
 let pastEvent = $(computed(() => !init && event.shortName !== mainEvent))
@@ -28,18 +31,32 @@ function logout() {
 
 <template lang="pug">
 header(:class="{ archive: pastEvent }")
-  div
-    router-link.title(:to="{ name: 'home' }") console
-    span.event(v-if="pastEvent") {{ event.name }}
+  .title
+    router-link.console(:to="{ name: 'home' }")
+      console-icon
+      span console
+    .event(v-if="pastEvent")
+      history
+      span {{ event.name }}
   nav
     template(v-if="init")
       button.link(@click="logout") Log out
     template(v-else)
-      event-link.main-link(to="tournaments" :active="isHome") Tournaments
-      event-link.main-link(to="ranking") Ranking
-      event-link.main-link(to="results" :params="{ name: user.username }") Results
-      event-link.main-link(v-if="isOrganizer" to="registrations") Registrations
-      button.link.menu-button(@click="openMenu = !openMenu") {{ user.displayName }}
+      event-link.main-link(to="tournaments" :active="isHome")
+        calendar
+        span Tournaments
+      event-link.main-link(to="ranking")
+        podium-gold
+        span Ranking
+      event-link.main-link(to="results" :params="{ name: user.username }")
+        medal
+        span Results
+      event-link.main-link(v-if="isOrganizer" to="registrations")
+        account-multiple-check
+        span Registrations
+      button.link.menu-button(@click="openMenu = !openMenu")
+        account
+        span {{ user.displayName }}
       .menu(:class="{ open: openMenu }" @click="openMenu = false")
         .menu-items
           router-link(:to="{ name: 'user', params: { name: user.username } }") Profile
@@ -53,7 +70,7 @@ $border: #626269
 $border-size: 2px
 $link: white
 $link-active: #ff5878
-$pad: 25px
+$pad: 15px
 
 header
   display: flex
@@ -61,18 +78,43 @@ header
   justify-content: space-between
   background-color: $bg
   border-bottom: $border-size solid $border
-  padding: 0 20px
 
 .title
-  font-style: italic
-  font-weight: bold
+  display: flex
+  cursor: default
+  padding-left: 12px
+
+.console
+  font-weight: bolder
   font-size: 2em
-  padding: 16px 8px
+  padding: 0 8px
+
+  span
+    display: inline-block
+    transform: skew(-8.5deg)
+    text-shadow: 0.4px 0, 0.8px 0
+
+  svg
+    width: 18px
+    margin-right: 12px
 
 .event
-  font-style: italic
-  color: rgba(255, 255, 255, 0.5)
-  margin-left: 12px
+  display: flex
+  align-items: center
+  font-size: 1.2em
+  color: #bbffdd
+  margin-left: 16px
+  margin-top: 8px
+
+  span
+    transform: skew(-8.5deg)
+
+  svg
+    font-size: 1.2em
+    margin-right: 6px
+
+nav
+  padding-right: 30px
 
 a, button.link
   color: $link
@@ -96,7 +138,7 @@ nav a, nav button.link
 
     &::after
       position: absolute
-      top: 32px
+      top: 25px
       right: 26px
       content: ""
       width: 0
@@ -105,10 +147,19 @@ nav a, nav button.link
       border-right: 5px solid transparent
       border-top: 5px solid $link
 
+.main-link, .menu-button
+  display: inline-flex
+  align-items: center
+
+  svg
+    margin-right: 8px
+
 .main-link.router-link-active, .main-link[active]
+  cursor: default
+  background-color: rgba(255, 88, 120, 0.1)
   color: $link-active
-  $border-active: calc(#{$border-size} + 4px)
-  padding-bottom: calc(#{$pad} - #{$border-active} + #{$border-size})
+  $border-active: calc(#{$border-size} + 2px)
+  padding-bottom: calc(#{$pad} - #{$border-active})
   border-bottom: $border-active solid $link-active
 
 .menu
@@ -128,13 +179,14 @@ nav a, nav button.link
     width: 120px
     z-index: 100
     position: absolute
-    right: 20px
-    top: 60px
+    right: 0
+    top: 52px
     display: flex
     flex-direction: column
     background-color: $bg
     border: 2px solid $border
-    border-radius: 10px
+    border-right: none
+    border-bottom-left-radius: 10px
 
     &::before, &::after
       position: absolute
@@ -143,14 +195,14 @@ nav a, nav button.link
       height: 0
 
     &::before
-      right: 28px
+      right: 42px
       top: -11px
       border-left: 10px solid transparent
       border-right: 10px solid transparent
       border-bottom: 10px solid $border
 
     &::after
-      right: 30px
+      right: 44px
       top: -8px
       border-left: 8px solid transparent
       border-right: 8px solid transparent
@@ -165,7 +217,7 @@ nav a, nav button.link
 
 .archive
   $link-active: #2bd767
-  $bg: #2a3d29
+  $bg: #263625
   background-color: $bg
 
   a, button.link
@@ -181,6 +233,7 @@ nav a, nav button.link
           border-top-color: $link-active
 
   .main-link.router-link-active, .main-link[active]
+    background-color: rgba(43, 215, 103, 0.1)
     color: $link-active
     border-color: $link-active
 

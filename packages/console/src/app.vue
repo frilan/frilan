@@ -44,11 +44,13 @@ main
 
 <style lang="sass">
 #app
-  font-family: Avenir, Helvetica, Arial, sans-serif
-  -webkit-font-smoothing: antialiased
-  -moz-osx-font-smoothing: grayscale
+  height: 100vh
+  display: flex
+  flex-flow: column
 
 main
-  max-width: 800px
-  margin: 30px auto
+  width: 100%
+  margin: 0 auto
+  padding: 30px 0
+  overflow-y: auto
 </style>
