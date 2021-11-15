@@ -95,6 +95,13 @@ export class Tournament extends Id {
     @IsOptional()
     rules!: string
 
+    @Column({ nullable: true })
+    @IsString()
+    @IsOptional()
+    @IsNotEmpty()
+    @Trim()
+    background?: string
+
     @Column()
     @IsInt()
     @IsPositive()
