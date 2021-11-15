@@ -39,18 +39,49 @@ main
   not-found(v-if="status === PageStatus.NotFound")
   router-view(v-else v-slot="{ Component }")
     suspense
-      component(:is="Component" :key="route.fullPath")
+      .router-view
+        component(:is="Component" :key="route.fullPath")
 </template>
 
 <style lang="sass">
+@import "./assets/styles/main"
+
 #app
   height: 100vh
   display: flex
   flex-flow: column
 
 main
-  width: 100%
+  position: relative
+  min-width: 800px
   margin: 0 auto
-  padding: 30px 0
+  background-color: $main-bg
   overflow-y: auto
+
+  $scroll-track: rgba(200, 200, 255, 0.15)
+  $scroll-thumb: rgba(200, 200, 255, 0.3)
+  $scroll-hover: rgba(200, 200, 255, 0.45)
+
+  // webkit
+  &::-webkit-scrollbar
+    width: 24px
+
+  &::-webkit-scrollbar-track
+    background-color: $scroll-track
+    background-clip: padding-box
+    border: 8px solid transparent
+    border-radius: 100px
+
+  &::-webkit-scrollbar-thumb
+    background-color: $scroll-thumb
+    background-clip: padding-box
+    border: 8px solid transparent
+    border-radius: 100px
+
+    &:hover
+      background-color: $scroll-hover
+
+  // firefox
+  scrollbar-width: thin
+  scrollbar-color: $scroll-thumb $scroll-track
 </style>

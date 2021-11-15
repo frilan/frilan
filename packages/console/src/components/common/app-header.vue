@@ -5,7 +5,7 @@ import { useRoute, useRouter } from "vue-router"
 import EventLink from "./event-link.vue"
 // noinspection ES6UnusedImports
 import { Account, AccountMultipleCheck, Calendar, History, Medal, PodiumGold } from "mdue"
-import ConsoleIcon from "../../assets/icons/console.svg?component"
+import ConsoleIcon from "../../assets/images/console.svg?component"
 
 const store = useStore()
 const router = useRouter()
@@ -19,9 +19,6 @@ let isHome = $(computed(() => route.name === "home" || route.name === "event-hom
 
 // true if active event is not the current one
 let pastEvent = $(computed(() => !init && event.shortName !== mainEvent))
-
-// true if registered to active event
-let registered = $(computed(() => user.registrations.some(r => r.eventId === event.id)))
 
 function logout() {
   store.dispatch("logout")
@@ -65,8 +62,10 @@ header(:class="{ archive: pastEvent }")
 </template>
 
 <style scoped lang="sass">
+@import "../../assets/styles/main"
+
 $bg: #25252d
-$border: #626269
+$border: $main-bg
 $border-size: 2px
 $link: white
 $link-active: #ff5878

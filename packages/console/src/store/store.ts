@@ -78,6 +78,9 @@ export const store = createStore<State>({
         status: PageStatus.Ok,
     },
     getters: {
+        isRegistered(state) {
+            return state.user.registrations.some(r => r.eventId === state.event.id)
+        },
         isOrganizer(state) {
             return state.user.admin
                 || state.user.registrations.some(r =>
