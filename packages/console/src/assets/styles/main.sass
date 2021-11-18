@@ -1,4 +1,5 @@
 $main-bg: #414156
+$accent: #ff5878
 
 body
   font-family: inter, sans-serif
@@ -7,6 +8,7 @@ body
   background: linear-gradient(#31313b, #30303a) fixed
   color: white
   margin: 0
+  font-size: 15px
 
 a, button.link
   color: cornflowerblue
@@ -17,6 +19,10 @@ a, button.link
     text-decoration: underline
     cursor: pointer
 
+.icon-left
+  font-size: 1.2em
+  margin-right: 4px
+
 button.link
   background: none
   outline: none
@@ -24,5 +30,31 @@ button.link
   font-size: inherit
   font-family: inherit
 
-h1
-  text-align: center
+.button
+  display: inline-flex
+  align-items: center
+  background-color: #25252d
+  outline: 1px solid rgba(255, 255, 255, 0.1)
+  padding: 10px
+  border-radius: 5px
+  color: white
+  border: none
+  font-family: inherit
+  font-size: inherit
+  cursor: pointer
+
+  svg
+    @extend .icon-left
+
+  &:hover
+    text-decoration: none
+    background-color: #32323f
+    color: white
+    outline: 1px solid rgba(255, 255, 255, 0.2)
+
+.icon-text
+  display: flex
+  align-items: center
+
+  svg
+    @extend .icon-left

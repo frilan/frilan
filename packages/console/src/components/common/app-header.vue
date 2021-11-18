@@ -3,9 +3,9 @@ import { computed, toRefs } from "vue"
 import { useStore } from "../../store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./event-link.vue"
+import Logo from "./logo.vue"
 // noinspection ES6UnusedImports
 import { Account, AccountMultipleCheck, Calendar, History, Medal, PodiumGold } from "mdue"
-import ConsoleIcon from "../../assets/images/console.svg?component"
 
 const store = useStore()
 const router = useRouter()
@@ -29,9 +29,8 @@ function logout() {
 <template lang="pug">
 header(:class="{ archive: pastEvent }")
   .title
-    router-link.console(:to="{ name: 'home' }")
-      console-icon
-      span console
+    router-link.logo(:to="{ name: 'home' }")
+      logo
     .event(v-if="pastEvent")
       history
       span {{ event.name }}
@@ -68,7 +67,7 @@ $bg: #25252d
 $border: $main-bg
 $border-size: 2px
 $link: white
-$link-active: #ff5878
+$link-active: $accent
 $pad: 15px
 
 header
@@ -83,19 +82,8 @@ header
   cursor: default
   padding-left: 12px
 
-.console
-  font-weight: bolder
-  font-size: 2em
+.logo
   padding: 0 8px
-
-  span
-    display: inline-block
-    transform: skew(-8.5deg)
-    text-shadow: 0.4px 0, 0.8px 0
-
-  svg
-    width: 18px
-    margin-right: 12px
 
 .event
   display: flex
@@ -179,7 +167,7 @@ nav a, nav button.link
     z-index: 100
     position: absolute
     right: 0
-    top: 52px
+    top: 50px
     display: flex
     flex-direction: column
     background-color: $bg

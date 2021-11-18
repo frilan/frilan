@@ -37,10 +37,11 @@ app-header(v-if="logged")
 main
   error-handler
   not-found(v-if="status === PageStatus.NotFound")
-  router-view(v-else v-slot="{ Component }")
+  router-view(v-else v-slot="{ Component, route }")
     suspense
-      .router-view
-        component(:is="Component" :key="route.fullPath")
+      transition(:name="route.meta.transition")
+        .router-view(:key="route.fullPath")
+          component(:is="Component" :key="route.fullPath")
 </template>
 
 <style lang="sass">

@@ -49,7 +49,7 @@ let tournamentsWithTeams: (Tournament & { myTeam?: Team })[] = $(computed(() => 
 </script>
 
 <template lang="pug">
-event-link.new(v-if="isOrganizer" to="new-tournament")
+event-link.new.button(v-if="isOrganizer" to="new-tournament")
   calendar-plus
   span New tournament
 
@@ -64,7 +64,7 @@ event-link.new(v-if="isOrganizer" to="new-tournament")
       .running(v-if="tournament.status === Status.Started")
       header
         h2 {{ tournament.name }}
-        time
+        time.icon-text
           clock-outline
           span {{ getTime(tournament.date) }} — {{ getTime(endDate(tournament)) }}
       .info
@@ -99,20 +99,13 @@ p.empty(v-else) There are no tournaments in this event yet.
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
+
 .new
   z-index: 10
   position: absolute
   right: 40px
   top: 18px
-  color: inherit
-  background-color: #25252d
-  padding: 10px
-  border-radius: 5px
-
-  &:hover
-    text-decoration: none
-    background-color: #32323f
-    color: #ff5878
 
 .tournaments
   width: fit-content
@@ -248,6 +241,7 @@ p.empty(v-else) There are no tournaments in this event yet.
     opacity: 80%
 
   &:hover
+    color: white
     transform: scale(1.02)
     text-decoration: none
     filter: none
@@ -264,13 +258,8 @@ p.empty(v-else) There are no tournaments in this event yet.
       .text
         opacity: 100%
 
-.team-count, .status, time, .new
-  display: flex
-  align-items: center
-
-  svg
-    font-size: 1.2em
-    margin-right: 4px
+.team-count, .status
+  @extend .icon-text
 
 .empty
   margin: 100px

@@ -74,8 +74,8 @@ const router = createRouter({
     routes: [
         { path: "/login", name: "login", component: Login, meta: { visitor: true, title: "Log In" } },
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
-        { path: "/user/:name", name: "user", component: User },
-        { path: "/user/:name/edit", name: "edit-user", component: UserEditor, meta: { self: true } },
+        { path: "/users/:name", name: "user", component: User },
+        { path: "/users/:name/edit", name: "edit-user", component: UserEditor, meta: { self: true } },
         {
             path: "/events",
             name: "events",
@@ -147,12 +147,17 @@ router.beforeEach(async to => {
         document.title = to.meta.title + " - Console"
 })
 
-router.afterEach(() => {
+router.afterEach((to, from) => {
     // display the not-found page if access is forbidden
     if (store.state.status === PageStatus.AccessDenied)
         store.commit("setPageStatus", PageStatus.NotFound)
     else
         store.commit("setPageStatus", PageStatus.Ok)
+
+    if (from.name === "login" && !to.meta.visitor)
+        to.meta.transition = "login"
+    else
+        to.meta.transition = null
 })
 
 export default router
