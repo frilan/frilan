@@ -152,6 +152,7 @@ export const store = createStore<State>({
         logout(context) {
             context.state.logged = false
             context.state.init = false
+            context.state.next = undefined
             localStorage.clear()
             http.clearToken()
         },
