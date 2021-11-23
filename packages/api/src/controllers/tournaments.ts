@@ -314,7 +314,14 @@ export class TournamentController {
             tournament.teamCount = fullTeams.length
         }
 
-        return await getRepository(Tournament).save(tournament)
+        try {
+            return await getRepository(Tournament).save(tournament)
+        } catch (err) {
+            if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
+                throw new TournamentConflictError()
+            else
+                throw err
+        }
     }
 
     /**
@@ -352,7 +359,7 @@ export class TournamentController {
     /**
      * @openapi
      * /tournaments/{tournament-id}/results:
-     *   post:
+     *   put:
      *     summary: end a running tournament and provide the ranking
      *     tags:
      *       - tournaments

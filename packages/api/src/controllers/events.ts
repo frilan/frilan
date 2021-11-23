@@ -201,7 +201,14 @@ export class EventController {
     @Authorized("admin")
     async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | undefined> {
         if (Object.keys(event).length)
-            await getRepository(Event).update(id, event)
+            try {
+                await getRepository(Event).update(id, event)
+            } catch (err) {
+                if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
+                    throw new EventConflictError()
+                else
+                    throw err
+            }
         return getRepository(Event).findOne(id)
     }
 
