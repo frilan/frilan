@@ -4,8 +4,8 @@ import { PageStatus, useStore } from "./store/store"
 import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
 import { isNotFoundError } from "./utils/not-found-error"
-import ErrorHandler from "./components/common/error-handler.vue"
-import AppHeader from "./components/common/app-header.vue"
+import ErrorHandler from "./components/error-handler.vue"
+import MainHeader from "./components/main-header.vue"
 import NotFound from "./pages/not-found.vue"
 
 const store = useStore()
@@ -33,7 +33,7 @@ onErrorCaptured((err: unknown) => {
 </script>
 
 <template lang="pug">
-app-header(v-if="logged")
+main-header(v-if="logged")
 main
   error-handler
   not-found(v-if="status === PageStatus.NotFound")

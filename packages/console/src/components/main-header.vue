@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, toRefs } from "vue"
-import { useStore } from "../../store/store"
+import { useStore } from "../store/store"
 import { useRoute, useRouter } from "vue-router"
-import EventLink from "./event-link.vue"
-import Logo from "./logo.vue"
+import EventLink from "./common/event-link.vue"
+import Logo from "./common/logo.vue"
 // noinspection ES6UnusedImports
 import { Account, AccountMultipleCheck, Calendar, History, Medal, PodiumGold } from "mdue"
 
@@ -61,7 +61,7 @@ header(:class="{ archive: pastEvent }")
 </template>
 
 <style scoped lang="sass">
-@import "../../assets/styles/main"
+@import "../assets/styles/main"
 
 $bg: #25252d
 $border: $main-bg
