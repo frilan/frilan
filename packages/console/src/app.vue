@@ -54,9 +54,9 @@ main
 
 main
   position: relative
-  min-width: 800px
   margin: 0 auto
   background-color: $main-bg
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.25)
   overflow-y: auto
 
   $scroll-track: rgba(200, 200, 255, 0.15)

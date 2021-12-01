@@ -100,6 +100,7 @@ p.empty(v-else) There are no tournaments in this event yet.
 
 <style scoped lang="sass">
 @import "../assets/styles/main"
+@import "../assets/styles/tournament"
 
 .new
   z-index: 10
@@ -125,11 +126,7 @@ p.empty(v-else) There are no tournaments in this event yet.
     grid-template-columns: repeat(1, 1fr)
 
 .day
-  font-size: 1.4em
-  font-weight: bold
-  transform: skew(-8.5deg)
-  text-shadow: 0.4px 0
-  color: lightblue
+  @extend .skewed
   margin: 15px
   padding-left: 6px
   grid-column: 1 / -1
@@ -164,28 +161,6 @@ p.empty(v-else) There are no tournaments in this event yet.
     opacity: 25%
     z-index: -2
     transition: all 0.15s
-
-  .running
-    background-image: url("../assets/images/stripe.svg")
-    background-size: 20px
-    transform: rotate(45deg)
-    position: absolute
-    left: -50%
-    top: -50%
-    width: 200%
-    height: 200%
-    z-index: -1
-    opacity: 10%
-
-    animation-name: scroll
-    animation-duration: 1s
-    animation-iteration-count: infinite
-    animation-timing-function: linear
-    @keyframes scroll
-      from
-        background-position: 0
-      to
-        background-position: 20px
 
   h2
     margin-top: 0
@@ -231,7 +206,7 @@ p.empty(v-else) There are no tournaments in this event yet.
           font-size: 0.9em
 
   &.started
-    background: linear-gradient(rgba(0, 128, 0, 0.4), rgba(0, 128, 128, 0.2))
+    background: $running-bg
 
     .status
       color: palegreen

@@ -76,6 +76,7 @@ header
   justify-content: space-between
   background-color: $bg
   border-bottom: $border-size solid $border
+  z-index: 100
 
 .title
   display: flex
