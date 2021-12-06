@@ -2,7 +2,7 @@
 import axios from "axios"
 import { ValidationError } from "class-validator"
 import { useStore } from "../store/store"
-import { computed, toRefs } from "vue"
+import { computed, toRefs, watchEffect } from "vue"
 import MessageBox from "./common/message-box.vue"
 // noinspection ES6UnusedImports
 import { AlertOctagon } from "mdue"
@@ -44,6 +44,9 @@ let showError = computed({
     if (!val) clearError()
   },
 })
+
+let closeButton = $ref<HTMLDivElement>()
+watchEffect(() => closeButton?.focus())
 </script>
 
 <template lang="pug">
@@ -58,7 +61,7 @@ message-box(v-model="showError" background="#412")
       ul
         li(v-for="detail in details") {{ detail }}
   footer
-    button.button(@click="clearError") Close
+    button.button(@click="clearError" ref="closeButton") Close
 </template>
 
 <style scoped lang="sass">

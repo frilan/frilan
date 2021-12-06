@@ -25,10 +25,12 @@ a, button.link
 
 button.link
   background: none
-  outline: none
   border: none
   font-size: inherit
   font-family: inherit
+
+  &:not(:focus)
+    outline: none
 
 .button
   display: inline-flex
@@ -61,6 +63,10 @@ button.link
     cursor: not-allowed
     filter: saturate(50%) brightness(75%) contrast(60%)
 
+  &:focus
+    outline-width: 2px
+    filter: brightness(120%)
+
 button.icon
   @extend .button
   border-radius: 100%
@@ -78,7 +84,7 @@ button, .button, button.icon
   &.red
     color: #f8a
     background-color: #512
-    outline: 1px solid rgba(255, 128, 128, 0.2)
+    outline-color: rgba(255, 128, 128, 0.2)
 
     &:not([disabled]):hover
       background-color: #623
@@ -86,7 +92,7 @@ button, .button, button.icon
   &.green
     color: #8fa
     background-color: #142
-    outline: 1px solid rgba(128, 255, 128, 0.2)
+    outline-color: rgba(128, 255, 128, 0.2)
 
     &:not([disabled]):hover
       background-color: #253
