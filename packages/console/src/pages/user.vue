@@ -18,9 +18,12 @@ const user = (await http.getMany(`/users?username=${ name }&load=registrations`,
 if (!user)
   throw new NotFoundError()
 
-const filter = "&id=" + user.registrations.map(r => r.eventId)
-const events = await http.getMany("/events?load=registrations" + filter, Event)
-events.sort((a, b) => b.start.getTime() - a.start.getTime())
+let events: Event[] = []
+if (user.registrations.length) {
+  const filter = "&id=" + user.registrations.map(r => r.eventId)
+  events = await http.getMany("/events?load=registrations" + filter, Event)
+  events.sort((a, b) => b.start.getTime() - a.start.getTime())
+}
 
 interface EventEntry {
   event: Event
