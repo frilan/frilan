@@ -13,6 +13,7 @@ import { TournamentNotFoundError } from "./tournaments"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
+import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
@@ -206,22 +207,24 @@ export class TournamentTeamController {
 
         try {
             const savedTeam = await getRepository(Team).save(team)
+            entitySubscriber.emit(EntityEventType.Create, EntityClass.Team, { ...savedTeam, tournament: undefined })
 
             // increment the current number of full teams if needed
             if (team.members.length >= tournament.teamSizeMin) {
                 ++tournament.teamCount
                 await getRepository(Tournament).save(tournament)
+                entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, tournament)
             }
 
-            team = savedTeam
+            return savedTeam
 
         } catch (err) {
             // if trying to add non-existing or non-registered users
             if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
+            else
+                throw err
         }
-
-        return team
     }
 }
 
@@ -308,7 +311,10 @@ export class TeamController {
 
         // assign updated fields and remove relations
         Object.assign(team, { ...updatedTeam, members: undefined, tournament: undefined })
-        return await getRepository(Team).save(team)
+        const savedTeam = await getRepository(Team).save(team)
+
+        entitySubscriber.emit(EntityEventType.Update, EntityClass.Team, savedTeam)
+        return savedTeam
     }
 
     /**
@@ -346,11 +352,13 @@ export class TeamController {
             throw new BadRequestError("Cannot delete team if the tournament has already started")
 
         await getRepository(Team).delete(id)
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, { id })
 
         // decrement the number of full teams if needed
         if (team.members.length >= team.tournament.teamSizeMin) {
             --team.tournament.teamCount
             await getRepository(Tournament).save(team.tournament)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
     }
 
@@ -457,6 +465,7 @@ export class TeamController {
             // increment the number of full teams
             ++team.tournament.teamCount
             await getRepository(Tournament).save(team.tournament)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
 
         // for some reason, members.push(registration) + save(team) doesn't work here
@@ -465,6 +474,9 @@ export class TeamController {
             .relation(Team, "members")
             .of(team)
             .add({ userId: registration.userId, eventId: registration.eventId })
+
+        team.members.push(registration)
+        entitySubscriber.emit(EntityEventType.Update, EntityClass.Team, { ...team, tournament: undefined })
     }
 
     /**
@@ -511,17 +523,25 @@ export class TeamController {
         if (!membersLeft.length) {
             // also remove team if empty
             await getRepository(Team).delete(id)
-        } else
+            entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team,
+                { ...team, members: [], tournament: undefined })
+
+        } else {
             // for some reason, save(team) doesn't work here
             await getConnection()
                 .createQueryBuilder()
                 .relation(Team, "members").of(team)
                 .remove({ userId, eventId: team.tournament.eventId })
 
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Team,
+                { ...team, members: membersLeft, tournament: undefined })
+        }
+
         // decrement the number of full teams if needed
         if (membersLeft.length < team.members.length && team.members.length === team.tournament.teamSizeMin) {
             --team.tournament.teamCount
             await getRepository(Tournament).save(team.tournament)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
     }
 }

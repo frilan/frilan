@@ -10,6 +10,7 @@ import { Context } from "koa"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
+import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
  * @openapi
@@ -122,7 +123,11 @@ export class RegistrationController {
         try {
             registration.eventId = eventId
             registration.userId = userId
-            return await getRepository(Registration).save(registration)
+            const savedRegistration = await getRepository(Registration).save(registration)
+            entitySubscriber.emit(EntityEventType.Create, EntityClass.Registration, savedRegistration)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Registration, savedRegistration)
+            return savedRegistration
+
         } catch (err) {
             if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
@@ -197,5 +202,6 @@ export class RegistrationController {
             throw new ForbiddenError("Only administrators can unregister other users")
 
         await getRepository(Registration).delete({ eventId, userId })
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Registration, { eventId, userId })
     }
 }

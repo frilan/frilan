@@ -16,6 +16,7 @@ import { EventController } from "./controllers/events"
 import { RegistrationController } from "./controllers/registrations"
 import { EventTournamentController, TournamentController } from "./controllers/tournaments"
 import { TeamController, TournamentTeamController } from "./controllers/teams"
+import { SubscriberController } from "./controllers/subscriber"
 
 import openapi from "./middlewares/swagger"
 import { ErrorHandler } from "./middlewares/error-handler"
@@ -50,6 +51,7 @@ export async function startServer(): Promise<string> {
             TournamentController,
             TournamentTeamController,
             TeamController,
+            SubscriberController,
         ],
     })
 

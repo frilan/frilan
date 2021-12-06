@@ -15,6 +15,7 @@ import { EventNotFoundError } from "./events"
 import { distributeExp } from "../util/points-distribution"
 import { getFullTeams } from "./teams"
 import { isDbError } from "../util/is-db-error"
+import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
  * Make sure the tournament is happening during the event.
@@ -173,7 +174,10 @@ export class EventTournamentController {
 
         try {
             tournament.eventId = eventId
-            return await getRepository(Tournament).save(tournament)
+            const savedTournament = await getRepository(Tournament).save(tournament)
+            entitySubscriber.emit(EntityEventType.Create, EntityClass.Tournament, savedTournament)
+            return savedTournament
+
         } catch (err) {
             if (isDbError(err) && err.code === PG_FOREIGN_KEY_VIOLATION)
                 throw new NotFoundError(err.detail)
@@ -315,7 +319,10 @@ export class TournamentController {
         }
 
         try {
-            return await getRepository(Tournament).save(tournament)
+            const savedTournament = await getRepository(Tournament).save(tournament)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, savedTournament)
+            return savedTournament
+
         } catch (err) {
             if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
                 throw new TournamentConflictError()
@@ -354,6 +361,8 @@ export class TournamentController {
         }
 
         await getRepository(Tournament).delete(id)
+
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Tournament, { id })
     }
 
     /**
@@ -446,8 +455,12 @@ export class TournamentController {
                     member.score += result - prevResult
                 await getRepository(Registration).save(members)
 
+                for (const member of members)
+                    entitySubscriber.emit(EntityEventType.Update, EntityClass.Registration, member)
+
                 // for some reason, save(team) fails if it contains members
                 await getRepository(Team).save(teamWithoutMembers)
+                entitySubscriber.emit(EntityEventType.Update, EntityClass.Team, team)
             }
 
             trueRank += tiedTeams.length
@@ -455,6 +468,8 @@ export class TournamentController {
 
         tournament.status = Status.Finished
         await getRepository(Tournament).save(tournament)
+
+        entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, { ...tournament, teams: undefined })
         return tournament
     }
 }

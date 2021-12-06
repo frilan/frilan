@@ -10,6 +10,7 @@ import { Context } from "koa"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
+import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
  * @openapi
@@ -127,7 +128,10 @@ export class EventController {
     @Authorized("admin")
     async create(@Body() event: Event): Promise<Event> {
         try {
-            return await getRepository(Event).save(event)
+            const savedEvent = await getRepository(Event).save(event)
+            entitySubscriber.emit(EntityEventType.Create, EntityClass.Event, savedEvent)
+            return savedEvent
+
         } catch (err) {
             if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
                 throw new EventConflictError()
@@ -209,7 +213,10 @@ export class EventController {
                 else
                     throw err
             }
-        return getRepository(Event).findOne(id)
+
+        const savedEvent = await getRepository(Event).findOne(id)
+        entitySubscriber.emit(EntityEventType.Update, EntityClass.Event, savedEvent)
+        return savedEvent
     }
 
     /**
@@ -234,5 +241,6 @@ export class EventController {
     @Authorized("admin")
     async delete(@Param("id") id: number): Promise<void> {
         await getRepository(Event).delete(id)
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Event, { id })
     }
 }

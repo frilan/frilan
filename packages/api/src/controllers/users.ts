@@ -13,6 +13,7 @@ import bcrypt from "bcrypt"
 import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
+import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
  * @openapi
@@ -146,7 +147,9 @@ export class UserController {
         user.password = await bcrypt.hash(user.password, 10)
 
         try {
-            return await getRepository(User).save(user)
+            const savedUser = await getRepository(User).save(user)
+            entitySubscriber.emit(EntityEventType.Create, EntityClass.User, savedUser)
+            return savedUser
 
         } catch (err) {
             if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
@@ -242,7 +245,10 @@ export class UserController {
         try {
             if (Object.keys(updatedUser).length)
                 await getRepository(User).update(id, updatedUser)
-            return getRepository(User).findOne(id)
+
+            const savedUser = await getRepository(User).findOne(id)
+            entitySubscriber.emit(EntityEventType.Update, EntityClass.User, savedUser)
+            return savedUser
 
         } catch (err) {
             if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
@@ -285,5 +291,6 @@ export class UserController {
         }
 
         await repository.delete(id)
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, user)
     }
 }
