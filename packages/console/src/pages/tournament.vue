@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRefs, watchEffect } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration, Status, Team, Tournament, User } from "@frilan/models"
@@ -8,13 +8,15 @@ import Markdown from "../components/common/markdown.vue"
 import UserLink from "../components/common/user-link.vue"
 import EventLink from "../components/common/event-link.vue"
 import { NotFoundError } from "../utils/not-found-error"
+import { Subscriber } from "../utils/subscriber"
 // noinspection ES6UnusedImports
 import {
-  Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, CalendarEdit, Delete, ExitRun, FlagCheckered,
-  HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
+  Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, CalendarEdit, Delete, ExitRun, Eye,
+  FlagCheckered, HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
 } from "mdue"
 
 const route = useRoute()
+const router = useRouter()
 const store = useStore()
 
 let { user, event } = $(toRefs(store.state))
@@ -29,7 +31,7 @@ if (!tournaments.length)
 
 let tournament = $ref(tournaments[0])
 
-document.title = `${ tournament.name } - ${ document.title }`
+watchEffect(() => document.title = `${ tournament.name } - ${ document.title }`)
 
 // true if this is a solo tournament
 let solo = $(computed(() => tournament.teamSizeMax <= 1))
@@ -80,8 +82,6 @@ watchEffect(() => {
         myTeam?.members.sort(member => member.userId === user.id ? -1 : 1)
     }
   }
-
-  return tournament.teams
 })
 
 /**
@@ -89,13 +89,8 @@ watchEffect(() => {
  */
 async function register() {
   const name = solo ? user.displayName : prompt("Enter team name:")
-  if (!name || !name.length) return
-
-  const team = await http.post(`/tournaments/${ tournament.id }/teams`, { name }, Team)
-  if (team.members.length)
-    team.members[0].user = user
-  tournament.teams.push(team)
-  tournament.teamCount = fullTeams.length
+  if (name && name.length)
+    await http.post(`/tournaments/${ tournament.id }/teams`, { name }, Team)
 }
 
 /**
@@ -109,20 +104,16 @@ async function unregister() {
  * Creates an empty team, or register an arbitrary user.
  */
 async function createTeam() {
-  let team: Team
   if (solo) {
     const member = await promptMember()
-    if (!member) return
-    team = await http.post(`/tournaments/${ tournament.id }/teams`,
-      { name: member.user.displayName, members: [member] }, Team)
+    if (member)
+      await http.post(`/tournaments/${ tournament.id }/teams`,
+        { name: member.user.displayName, members: [member] }, Team)
   } else {
     const name = prompt("Enter team name:")
-    if (!name || !name.length) return
-    team = await http.post(`/tournaments/${ tournament.id }/teams`, { name, members: [] }, Team)
+    if (name && name.length)
+      await http.post(`/tournaments/${ tournament.id }/teams`, { name, members: [] }, Team)
   }
-
-  tournament.teams.push(team)
-  tournament.teamCount = fullTeams.length
 }
 
 /**
@@ -132,15 +123,10 @@ async function createTeam() {
  */
 async function addMember(team?: Team, member?: Registration) {
   if (!team || !member) return
-  await http.put(`/teams/${ team.id }/members/${ member.userId }`, {})
-  // if this is the current user, we don't need to fetch their profile
-  if (member.userId === user.id)
-    team.members.push({ ...member, user })
-  else {
-    const targetUser = await http.getOne(`/users/${ member.userId }`, User)
-    team.members.push({ ...member, user: targetUser })
-  }
-  tournament.teamCount = fullTeams.length
+
+  // if not already a member
+  if (team.members.every(m => m.userId !== member.userId))
+    await http.put(`/teams/${ team.id }/members/${ member.userId }`, {})
 }
 
 /**
@@ -150,15 +136,8 @@ async function addMember(team?: Team, member?: Registration) {
  */
 async function removeMember(team?: Team, member?: Registration) {
   if (!team || !member) return
-  if (member === myself || confirm("Do you really want to remove " + member.user.displayName + "?")) {
+  if (member === myself || confirm("Do you really want to remove " + member.user.displayName + "?"))
     await http.delete(`/teams/${ team.id }/members/${ member.userId }`)
-    team.members = team.members.filter(({ userId }) => userId !== member.userId)
-    // also remove team if empty
-    if (!team.members.length)
-      tournament.teams.splice(tournament.teams.indexOf(team), 1)
-
-    tournament.teamCount = fullTeams.length
-  }
 }
 
 /**
@@ -167,10 +146,8 @@ async function removeMember(team?: Team, member?: Registration) {
  */
 async function renameTeam(team: Team) {
   const name = prompt("Enter team name:", team.name)
-  if (name && name.length && name !== team.name) {
+  if (name && name.length && name !== team.name)
     await http.patch(`/teams/${ team.id }`, { name })
-    team.name = name
-  }
 }
 
 /**
@@ -178,12 +155,9 @@ async function renameTeam(team: Team) {
  * @param team The target team
  */
 async function deleteTeam(team: Team) {
-  const name = solo ? team.members[0].user.displayName : team.name
-  if (confirm("Do you really want to remove " + name + "?")) {
+  const name = solo && team.members.length ? team.members[0].user.displayName : team.name
+  if (confirm("Do you really want to remove " + name + "?"))
     await http.delete(`/teams/${ team.id }`)
-    tournament.teams.splice(tournament.teams.indexOf(team), 1)
-    tournament.teamCount = fullTeams.length
-  }
 }
 
 /**
@@ -224,14 +198,37 @@ function canJoin(team: Team) {
 }
 
 /**
+ * Makes the current tournament visible to players.
+ */
+async function makeVisible() {
+  await http.patch("/tournaments/" + tournament.id, { status: Status.Ready })
+}
+
+/**
  * Locks registrations and start tournament.
  */
 async function startTournament() {
   if (confirm("This will lock teams and registrations permanently. Are you sure you want to start the tournament?")) {
     await http.patch("/tournaments/" + tournament.id, { status: Status.Started })
-    tournament.status = Status.Started
   }
 }
+
+// handle live updates
+new Subscriber(Tournament, { id: tournament.id })
+  .onUpdate(updatedTournament => Object.assign(tournament, updatedTournament))
+  .onDelete(() => router.go(0))
+
+new Subscriber(Team, { tournamentId: tournament.id })
+  .onCreate(async ({ id }) =>
+    tournament.teams.push(await http.getOne(`/teams/${ id }?load=members,members.user`, Team)))
+  .onUpdate(async ({ id }) => {
+    const index = tournament.teams.findIndex(team => team.id === id)
+    if (index >= 0) tournament.teams[index] = await http.getOne(`/teams/${ id }?load=members,members.user`, Team)
+  })
+  .onDelete(async ({ id }) => {
+    const index = tournament.teams.findIndex(team => team.id === id)
+    if (index >= 0) tournament.teams.splice(index, 1)
+  })
 </script>
 
 <template lang="pug">
@@ -258,7 +255,10 @@ async function startTournament() {
             template(v-else)
               account-multiple-plus
               span New team
-          button.button.green(v-if="enoughParticipants" @click="startTournament")
+          button.button(v-if="tournament.status === Status.Hidden" @click="makeVisible")
+            eye
+            span Make visible
+          button.button.green(v-else-if="enoughParticipants" @click="startTournament")
             play
             span Start
           button.button.green(v-else disabled title="Not enough participants")
@@ -276,8 +276,8 @@ async function startTournament() {
       account(v-if="solo")
       account-group(v-else)
       .count
-        span.current(:class='{ low: !enoughParticipants }') {{ tournament.teamCount }}&nbsp;
-        span.max(v-if="!tournamentStarted") / {{ tournament.teamCountMax }}
+        span.current(:class='{ low: !enoughParticipants }') {{ tournament.teamCount }}
+        span.max(v-if="!tournamentStarted") !{" "}/ {{ tournament.teamCountMax }}
 
     template(v-if="!tournamentStarted && canRegister")
       button.button.unregister(v-if="isRegistered" @click="unregister")
@@ -535,6 +535,7 @@ async function startTournament() {
 
     .user
       max-width: 100%
+      overflow: hidden
 
       a
         overflow: hidden

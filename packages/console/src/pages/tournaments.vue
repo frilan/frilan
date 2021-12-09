@@ -3,7 +3,8 @@ import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration, Status, Team, Tournament } from "@frilan/models"
 import EventLink from "../components/common/event-link.vue"
-import { computed, toRefs } from "vue"
+import { computed, toRefs, watchEffect } from "vue"
+import { Subscriber } from "../utils/subscriber"
 // noinspection ES6UnusedImports
 import {
   Account, AccountGroup, AlertCircleCheck, CalendarPlus, CheckCircle, ClockOutline, EyeOff, FlagCheckered, Play,
@@ -14,11 +15,11 @@ let { event, user } = $(toRefs(store.state))
 let isOrganizer = $(computed(() => store.getters.isOrganizer))
 let isRegistered = $(computed(() => store.getters.isRegistered))
 
-const tournaments = await http.getMany(`/events/${ event.id }/tournaments`, Tournament)
-tournaments.sort((a, b) => a.date.getTime() - b.date.getTime())
+let tournaments = $ref(await http.getMany(`/events/${ event.id }/tournaments`, Tournament))
+watchEffect(() => tournaments.sort((a, b) => a.date.getTime() - b.date.getTime()))
 
 // get all teams of current user, if registered to event
-let registration: Registration | null = null
+let registration: Registration | null = $ref(null)
 if (isRegistered)
   registration
     = await http.getOne(`/events/${ event.id }/registrations/${ user.id }?load=teams,teams.members`, Registration)
@@ -46,6 +47,44 @@ let tournamentsWithTeams: (Tournament & { myTeam?: Team })[] = $(computed(() => 
   myTeam: registration?.teams.find(team => team.tournamentId === tournament.id),
 }))))
 
+// handle live updates
+new Subscriber(Tournament, { eventId: event.id })
+  .onCreate(newTournament => tournaments.push(newTournament))
+  .onUpdate(async updatedTournament => {
+    const index = tournaments.findIndex(tournament => tournament.id === updatedTournament.id)
+    // if tournament was displayed
+    if (index >= 0)
+      // if tournament becomes hidden
+      if (updatedTournament.status === Status.Hidden && !isOrganizer) tournaments.splice(index, 1)
+      else tournaments[index] = updatedTournament
+    // if tournament was hidden
+    else tournaments.push(updatedTournament)
+  })
+  .onDelete(({ id }) => {
+    const index = tournaments.findIndex(tournament => tournament.id === id)
+    if (index >= 0) tournaments.splice(index, 1)
+  })
+
+// if registered to the event, handle updates to the teams of the user
+if (registration) {
+  const myTeams = registration.teams
+  new Subscriber(Team, { "members.userId": user.id, "members.eventId": event.id })
+    .onCreate(newTeam => myTeams.push(newTeam))
+    .onUpdate(updatedTeam => {
+      const index = myTeams.findIndex(team => team.id === updatedTeam.id)
+      if (index >= 0)
+        // if already in the team
+        if (updatedTeam.members.some(m => m.userId === user.id)) myTeams[index] = updatedTeam
+        // if not in the team anymore
+        else myTeams.splice(index, 1)
+      // if joined a team
+      else myTeams.push(updatedTeam)
+    })
+    .onDelete(({ id }) => {
+      const index = myTeams.findIndex(team => team.id === id)
+      myTeams.splice(index, 1)
+    })
+}
 </script>
 
 <template lang="pug">

@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { computed, toRefs } from "vue"
+import { computed, toRefs, watchEffect } from "vue"
 import { useStore } from "../store/store"
-import http from "../utils/http"
-import { Registration } from "@frilan/models"
 import UserLink from "../components/common/user-link.vue"
+import { realTimeRegistrations } from "../utils/real-time"
 
 const store = useStore()
-
 let { event } = $(toRefs(store.state))
-const registrations = await http.getMany(`/events/${ event.id }/registrations?load=user`, Registration)
-registrations.sort((a, b) => b.score - a.score)
+
+let registrations = $(await realTimeRegistrations(event.id))
+watchEffect(() => registrations.sort((a, b) => b.score - a.score))
 
 let filtered = $(computed(() => registrations.filter(({ score }) => score > 0)))
 

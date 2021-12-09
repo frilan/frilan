@@ -14,6 +14,7 @@ import UserEditor from "./pages/user-editor.vue"
 import Registrations from "./pages/registrations.vue"
 import NotFound from "./pages/not-found.vue"
 import { PageStatus, store } from "./store/store"
+import { Subscriber } from "./utils/subscriber"
 
 /**
  * Meta properties:
@@ -106,6 +107,7 @@ const router = createRouter({
 
 router.beforeEach(async to => {
     store.commit("clearError")
+    Subscriber.closeAllConnections()
 
     if (to.meta.visitor && store.state.logged)
         return { name: "home" }

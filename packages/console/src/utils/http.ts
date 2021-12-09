@@ -25,6 +25,14 @@ export class Http {
             this.setToken(token)
     }
 
+    public get headers(): Record<string, string> {
+        return this.axiosInstance.defaults.headers
+    }
+
+    public get baseURL(): string {
+        return this.axiosInstance.defaults.baseURL ?? ""
+    }
+
     public setToken(token: string): void {
         this.axiosInstance.defaults.headers.common["Authorization"] = "Bearer " + token
         localStorage.setItem("token", token)

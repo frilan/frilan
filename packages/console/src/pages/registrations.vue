@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { toRefs } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { useStore } from "../store/store"
 import { Registration, Role, User } from "@frilan/models"
 import UserLink from "../components/common/user-link.vue"
 import http from "../utils/http"
 import DatetimePicker from "../components/common/datetime-picker.vue"
+import { realTimeRegistrations } from "../utils/real-time"
 
 const store = useStore()
-
 let { user, event } = $(toRefs(store.state))
 
-let registrations = $ref(await http.getMany(`/events/${ event.id }/registrations?load=user`, Registration))
+let registrations = $(await realTimeRegistrations(event.id))
+watchEffect(() => registrations.sort((a, b) => a.user.displayName.localeCompare(b.user.displayName)))
 
 async function register() {
   const username = prompt("Enter username:")
@@ -19,10 +20,6 @@ async function register() {
   const users = await http.getMany("/users?load=registrations&username=" + username, User)
   if (!users.length)
     throw "User not found"
-
-  const targetUser = users[0]
-  const registration = await http.put(`/events/${ event.id }/registrations/${ targetUser.id }`, {}, Registration)
-  registrations.push({ ...registration, user: targetUser })
 }
 
 async function update(registration: Registration) {
@@ -30,10 +27,8 @@ async function update(registration: Registration) {
 }
 
 async function unregister(registration: Registration) {
-  if (confirm(`Are you sure you want to unregister ${ registration.user.displayName }?`)) {
+  if (confirm(`Are you sure you want to unregister ${ registration.user.displayName }?`))
     await http.delete(`/events/${ event.id }/registrations/${ registration.user.id }`)
-    registrations.splice(registrations.indexOf(registration), 1)
-  }
 }
 </script>
 

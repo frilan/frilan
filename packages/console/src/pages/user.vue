@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useStore } from "../store/store"
 import http from "../utils/http"
-import { toRefs } from "vue"
+import { toRefs, watchEffect } from "vue"
 import type { RouteLocationRaw } from "vue-router"
 import { useRoute } from "vue-router"
 import { Event, Registration, Role, User } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
 import { NotFoundError } from "../utils/not-found-error"
+import { Subscriber } from "../utils/subscriber"
 
 const route = useRoute()
 const store = useStore()
@@ -14,9 +15,11 @@ const store = useStore()
 const { name } = route.params
 let { user: currentUser, mainEvent } = $(toRefs(store.state))
 
-const user = (await http.getMany(`/users?username=${ name }&load=registrations`, User))[0]
+let user = $ref((await http.getMany(`/users?username=${ name }&load=registrations`, User))[0])
 if (!user)
   throw new NotFoundError()
+
+watchEffect(() => document.title = `${ user.displayName } - ${ document.title }`)
 
 let events: Event[] = []
 if (user.registrations.length) {
@@ -49,6 +52,10 @@ function resultLink(event: Event): RouteLocationRaw {
   else
     return routeInEvent("results", event.shortName, { name })
 }
+
+// handle live updates
+new Subscriber(User, { id: user.id })
+  .onUpdate(updatedUser => Object.assign(user, updatedUser))
 </script>
 
 <template lang="pug">
