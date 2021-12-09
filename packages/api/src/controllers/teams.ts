@@ -216,7 +216,8 @@ export class TournamentTeamController {
                 entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, tournament)
             }
 
-            return savedTeam
+            // exclude tournament from result
+            return Object.assign(new Team, { ...savedTeam, tournament: undefined })
 
         } catch (err) {
             // if trying to add non-existing or non-registered users
@@ -352,7 +353,7 @@ export class TeamController {
             throw new BadRequestError("Cannot delete team if the tournament has already started")
 
         await getRepository(Team).delete(id)
-        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, { id })
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, team)
 
         // decrement the number of full teams if needed
         if (team.members.length >= team.tournament.teamSizeMin) {
@@ -523,8 +524,7 @@ export class TeamController {
         if (!membersLeft.length) {
             // also remove team if empty
             await getRepository(Team).delete(id)
-            entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team,
-                { ...team, members: [], tournament: undefined })
+            entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, { ...team, tournament: undefined })
 
         } else {
             // for some reason, save(team) doesn't work here
@@ -534,7 +534,7 @@ export class TeamController {
                 .remove({ userId, eventId: team.tournament.eventId })
 
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Team,
-                { ...team, members: membersLeft, tournament: undefined })
+                { ...team, members: membersLeft, tournament: undefined }, { ...team, tournament: undefined })
         }
 
         // decrement the number of full teams if needed

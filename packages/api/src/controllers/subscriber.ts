@@ -1,4 +1,4 @@
-import { Authorized, BadRequestError, Ctx, Get, JsonController, Param, Req, Res, UseBefore } from "routing-controllers"
+import { BadRequestError, Ctx, Get, JsonController, Param, Req, Res, UseBefore } from "routing-controllers"
 import { Context, Request, Response } from "koa"
 import { classToPlain } from "class-transformer"
 import { PassThrough } from "stream"
@@ -48,7 +48,8 @@ export class SubscriberController {
      */
     @Get("/:entity")
     @UseBefore(FiltersParser)
-    @Authorized()
+    // we skip authorization for now, because the EventSource API doesn't support custom headers
+    // @Authorized()
     async subscribe(
         @Param("entity") cls: string,
         @Ctx() ctx: Context,
@@ -67,11 +68,28 @@ export class SubscriberController {
             throw new BadRequestError("Invalid event type: " + eventType)
 
         const stream = new PassThrough()
-        const listener = (type: EntityEventType, entity: Entity) => {
+        const listener = (type: EntityEventType, entity: Entity, previous?: Entity) => {
             // skip entities that don't match filters
             if (Object.entries(ctx.filters)
                 .filter(([key]) => key !== "event")
-                .some(([key, value]) => String(entity[key]) !== String(value)))
+                .some(([key, value]) => {
+                    // apply filters to previous data when available
+                    const target = previous ?? entity
+                    // check for nested properties (one level deep)
+                    if (key.includes(".")) {
+                        const [k1, k2] = key.split(".", 2)
+                        const nested = target[k1]
+                        // skip if property doesn't exist
+                        if (!nested) return true
+                        // if parent property is an array, check if any item has matching child property
+                        if (Array.isArray(nested))
+                            return (nested as Entity[])
+                                .every((e) => String(e[k2]) !== value)
+                        else
+                            return String((nested as Entity)[k2]) !== value
+                    }
+                    return String(target[key]) !== value
+                }))
                 return
 
             stream.write(`event: ${ type }\n`)

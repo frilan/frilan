@@ -124,7 +124,6 @@ export class RegistrationController {
             registration.eventId = eventId
             registration.userId = userId
             const savedRegistration = await getRepository(Registration).save(registration)
-            entitySubscriber.emit(EntityEventType.Create, EntityClass.Registration, savedRegistration)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Registration, savedRegistration)
             return savedRegistration
 

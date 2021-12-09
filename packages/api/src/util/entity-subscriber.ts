@@ -30,7 +30,7 @@ export enum EntityClass {
 /**
  * A callback function handling entity events.
  */
-export type EntityEventListener = (type: EntityEventType, entity: Entity) => void
+export type EntityEventListener = (type: EntityEventType, entity: Entity, previous?: Entity) => void
 
 /**
  * A collection of callback lists for each entity types and entity classes.
@@ -93,9 +93,21 @@ export class EntitySubscriber {
         this.listeners[type][cls].filter(l => l !== callback)
     }
 
-    public emit(type: Exclude<EntityEventType, EntityEventType.Any>, cls: EntityClass, entity: unknown): void {
+    /**
+     * Emits an event, which calls every registered listeners.
+     * @param type The event type
+     * @param cls The entity class
+     * @param entity The entity data
+     * @param previous The previous data (can be used to match filters)
+     */
+    public emit(
+        type: Exclude<EntityEventType, EntityEventType.Any>,
+        cls: EntityClass,
+        entity: unknown,
+        previous?: unknown,
+    ): void {
         for (const callback of [...this.listeners[type][cls], ...this.listeners[EntityEventType.Any][cls]])
-            callback(type, entity as Entity)
+            callback(type, entity as Entity, previous as Entity)
     }
 }
 

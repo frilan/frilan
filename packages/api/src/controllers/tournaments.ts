@@ -351,18 +351,18 @@ export class TournamentController {
     @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
-        if (!user.admin) {
-            const tournament = await getRepository(Tournament).findOne(id)
-            if (!tournament)
-                throw new TournamentNotFoundError()
+        const tournament = await getRepository(Tournament).findOne(id)
+        if (!tournament)
+            throw new TournamentNotFoundError()
 
+        if (!user.admin) {
             if (user.roles[tournament.eventId] !== Role.Organizer)
                 throw new ForbiddenError("Only administrators and organizers can delete tournaments")
         }
 
         await getRepository(Tournament).delete(id)
 
-        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Tournament, { id })
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.Tournament, { id }, tournament)
     }
 
     /**
