@@ -3,7 +3,7 @@ import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration, Status, Team, Tournament } from "@frilan/models"
 import EventLink from "../components/common/event-link.vue"
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { Subscriber } from "../utils/subscriber"
 // noinspection ES6UnusedImports
 import {
@@ -12,8 +12,8 @@ import {
 
 const store = useStore()
 let { event, user } = $(toRefs(store.state))
-let isOrganizer = $(computed(() => store.getters.isOrganizer))
-let isRegistered = $(computed(() => store.getters.isRegistered))
+let isOrganizer = $computed(() => store.getters.isOrganizer)
+let isRegistered = $computed(() => store.getters.isRegistered)
 
 let tournaments = $ref(await http.getMany(`/events/${ event.id }/tournaments`, Tournament))
 watchEffect(() => tournaments.sort((a, b) => a.date.getTime() - b.date.getTime()))
@@ -42,10 +42,10 @@ function isNewDay(index: number) {
 }
 
 // add a 'myTeam' property to tournaments, with the team of the current user, if any
-let tournamentsWithTeams: (Tournament & { myTeam?: Team })[] = $(computed(() => tournaments.map(tournament => ({
+let tournamentsWithTeams: (Tournament & { myTeam?: Team })[] = $computed(() => tournaments.map(tournament => ({
   ...tournament,
   myTeam: registration?.teams.find(team => team.tournamentId === tournament.id),
-}))))
+})))
 
 // handle live updates
 new Subscriber(Tournament, { eventId: event.id })

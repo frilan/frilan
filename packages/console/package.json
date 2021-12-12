@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@types/markdown-it": "^12.2.1",
-    "@vitejs/plugin-vue": "^1.6.0",
+    "@vitejs/plugin-vue": "^2.0.0",
     "eslint-plugin-vue": "^7.17.0",
     "pug": "^3.0.2",
     "rollup-plugin-visualizer": "^5.5.2",

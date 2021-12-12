@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs } from "vue"
+import { toRefs } from "vue"
 import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
@@ -9,7 +9,7 @@ const store = useStore()
 let { user, mainEvent } = $(toRefs(store.state))
 
 // true if registered to at least one event
-let registered = $(computed(() => !!user.registrations.length))
+let registered = $computed(() => !!user.registrations.length)
 
 let events: Event[]
 if (registered || user.admin) {

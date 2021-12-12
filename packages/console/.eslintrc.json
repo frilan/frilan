@@ -12,6 +12,8 @@
       "files": ["*.vue"],
       "rules": {
         "indent": ["error", 2],
+        // ESLint is yielding false negatives because of Pug templates
+        // see https://github.com/vuejs/vue-eslint-parser/issues/29
         "@typescript-eslint/no-unused-vars": "off"
       }
     }
@@ -25,6 +27,8 @@
     "$$": "readonly",
     "$ref": "readonly",
     "$computed": "readonly",
-    "$shallowRef": "readonly"
+    "$shallowRef": "readonly",
+    "$toRef": "readonly",
+    "$customRef": "readonly"
   }
 }

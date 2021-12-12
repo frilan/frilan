@@ -5,7 +5,7 @@ import svgLoader from "vite-svg-loader"
 
 export default defineConfig(({ mode }) => ({
     plugins: [
-        vue({ refTransform: true }),
+        vue({ reactivityTransform: true }),
         svgLoader(),
         visualizer({ open: mode === "stats" }),
     ],

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs } from "vue"
+import { toRefs } from "vue"
 import { useStore } from "../store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./common/event-link.vue"
@@ -12,13 +12,13 @@ const router = useRouter()
 const route = useRoute()
 
 let { user, event, mainEvent, init } = $(toRefs(store.state))
-let isOrganizer = $(computed(() => store.getters.isOrganizer))
+let isOrganizer = $computed(() => store.getters.isOrganizer)
 
 let openMenu = $ref(false)
-let isHome = $(computed(() => route.name === "home" || route.name === "event-home" || null))
+let isHome = $computed(() => route.name === "home" || route.name === "event-home" || null)
 
 // true if active event is not the current one
-let pastEvent = $(computed(() => !init && event.shortName !== mainEvent))
+let pastEvent = $computed(() => !init && event.shortName !== mainEvent)
 
 function logout() {
   store.dispatch("logout")

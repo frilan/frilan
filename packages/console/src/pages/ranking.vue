@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { useStore } from "../store/store"
 import UserLink from "../components/common/user-link.vue"
 import { realTimeRegistrations } from "../utils/real-time"
@@ -10,7 +10,7 @@ let { event } = $(toRefs(store.state))
 let registrations = $(await realTimeRegistrations(event.id))
 watchEffect(() => registrations.sort((a, b) => b.score - a.score))
 
-let filtered = $(computed(() => registrations.filter(({ score }) => score > 0)))
+let filtered = $computed(() => registrations.filter(({ score }) => score > 0))
 
 function getRank(index: number): number {
   // handle tied scores

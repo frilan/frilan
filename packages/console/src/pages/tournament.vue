@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
@@ -20,7 +20,7 @@ const router = useRouter()
 const store = useStore()
 
 let { user, event } = $(toRefs(store.state))
-let isOrganizer = $(computed(() => store.getters.isOrganizer))
+let isOrganizer = $computed(() => store.getters.isOrganizer)
 
 const { name } = route.params
 const relations = ["teams", "teams.members", "teams.members.user"].join(",")
@@ -34,35 +34,35 @@ let tournament = $ref(tournaments[0])
 watchEffect(() => document.title = `${ tournament.name } - ${ document.title }`)
 
 // true if this is a solo tournament
-let solo = $(computed(() => tournament.teamSizeMax <= 1))
+let solo = $computed(() => tournament.teamSizeMax <= 1)
 
 // references the registration object of the current user
-let myself = $(computed(() => user.registrations.find(r => r.eventId === event.id)))
+let myself = $computed(() => user.registrations.find(r => r.eventId === event.id))
 // true if the current user can register to this tournament
-let canRegister = $(computed(() => !!myself))
+let canRegister = $computed(() => !!myself)
 
 // references the team of the current user
-let myTeam = $(computed(() => tournament.teams.find(t => t.members.some(m => m.userId === user.id))))
+let myTeam = $computed(() => tournament.teams.find(t => t.members.some(m => m.userId === user.id)))
 // true if the current user is registered to this tournament
-let isRegistered = $(computed(() => !!myTeam))
+let isRegistered = $computed(() => !!myTeam)
 
-let fullTeams = $(computed(() => tournament.teams.filter(team =>
+let fullTeams = $computed(() => tournament.teams.filter(team =>
   team.members.length >= tournament.teamSizeMin
-  && team.members.length <= tournament.teamSizeMax)))
+  && team.members.length <= tournament.teamSizeMax))
 
-let tournamentStarted = $(computed(() =>
-  tournament.status === Status.Started || tournament.status === Status.Finished))
+let tournamentStarted = $computed(() =>
+  tournament.status === Status.Started || tournament.status === Status.Finished)
 
-let incompleteTeams = $(computed(() =>
-  tournamentStarted ? [] : tournament.teams.filter(team => !fullTeams.includes(team))))
+let incompleteTeams = $computed(() =>
+  tournamentStarted ? [] : tournament.teams.filter(team => !fullTeams.includes(team)))
 
 // don't show incomplete teams once the tournament has started
-let teamsGroups = $(computed(() =>
-  tournamentStarted || !incompleteTeams.length ? [fullTeams] : [incompleteTeams, fullTeams]))
+let teamsGroups = $computed(() =>
+  tournamentStarted || !incompleteTeams.length ? [fullTeams] : [incompleteTeams, fullTeams])
 
 const isTeamFull = (team: Team) => team.members.length >= tournament.teamSizeMax
-let isTournamentFull = $(computed(() => tournament.teamCount >= tournament.teamCountMax))
-let enoughParticipants = $(computed(() => tournament.teamCount >= tournament.teamCountMin))
+let isTournamentFull = $computed(() => tournament.teamCount >= tournament.teamCountMax)
+let enoughParticipants = $computed(() => tournament.teamCount >= tournament.teamCountMin)
 
 // keep teams sorted
 watchEffect(() => {

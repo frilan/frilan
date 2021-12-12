@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs } from "vue"
+import { toRefs } from "vue"
 import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
 import { Registration, Status, Team, Tournament, User } from "@frilan/models"
@@ -33,17 +33,17 @@ try {
 }
 
 // hide incomplete teams if the tournament is finished
-let visibleTeams = $(computed(() => registration
+let visibleTeams = $computed(() => registration
   ? registration.teams.filter(team => team.tournament.status !== Status.Finished || team.rank > 0)
-  : []))
+  : [])
 
-let finishedTeams = $(computed(() => visibleTeams
+let finishedTeams = $computed(() => visibleTeams
   .filter(team => team.tournament.status === Status.Finished)
-  .sort((a, b) => b.result - a.result)))
+  .sort((a, b) => b.result - a.result))
 
-let registeredTeams = $(computed(() => visibleTeams
+let registeredTeams = $computed(() => visibleTeams
   .filter(team => !finishedTeams.includes(team) && team.tournament.status !== Status.Hidden)
-  .sort((a, b) => new Date(a.tournament.date).getTime() - new Date(b.tournament.date).getTime())))
+  .sort((a, b) => new Date(a.tournament.date).getTime() - new Date(b.tournament.date).getTime()))
 
 function isTeamRegistered(team: Team) {
   return team.members.length >= team.tournament.teamSizeMin

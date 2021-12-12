@@ -3,7 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import { Status, Tournament } from "@frilan/models"
 import http from "../utils/http"
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
 import { NotFoundError } from "../utils/not-found-error"
@@ -44,14 +44,14 @@ if (editing) {
   watchEffect(() => tournament.shortName = [...tournament.name.matchAll(/^\w|(?<= )\w|[A-Z\d]/g)]
     .map(([c]) => c).join("").toLowerCase())
 
-let hidden = $(computed({
+let hidden = $computed({
   get: () => tournament.status === Status.Hidden,
   set: val => tournament.status = val ? Status.Hidden : Status.Ready,
-}))
+})
 
-let started = $(computed(() =>
+let started = $computed(() =>
   tournament.status === Status.Started
-  || tournament.status === Status.Finished))
+  || tournament.status === Status.Finished)
 
 async function save() {
   if (editing)

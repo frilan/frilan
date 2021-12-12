@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from "vue"
-
 const props = defineProps<{
   modelValue?: Date
   min?: Date
@@ -17,7 +15,7 @@ function formatDate(date: Date): string {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, -1)
 }
 
-let date = computed({
+let date = $computed({
   get: () => props.modelValue ? formatDate(props.modelValue) : null,
   set: val => emit("update:modelValue", val ? new Date(val) : null),
 })

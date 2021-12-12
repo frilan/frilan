@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import { useRoute } from "vue-router"
 import { User } from "@frilan/models"
 import { useStore } from "../store/store"
@@ -20,7 +20,7 @@ if (!users.length)
 let user = $ref(users[0])
 user.password = ""
 
-let isCurrentUser = $(computed(() => currentUser.id === user.id))
+let isCurrentUser = $computed(() => currentUser.id === user.id)
 
 watchEffect(() => document.title = `Edit ${ user.displayName } - Console`)
 

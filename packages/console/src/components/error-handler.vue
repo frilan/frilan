@@ -2,7 +2,7 @@
 import axios from "axios"
 import { ValidationError } from "class-validator"
 import { useStore } from "../store/store"
-import { computed, toRefs, watchEffect } from "vue"
+import { toRefs, watchEffect } from "vue"
 import MessageBox from "./common/message-box.vue"
 // noinspection ES6UnusedImports
 import { AlertOctagon } from "mdue"
@@ -38,7 +38,7 @@ let details = $computed((): string[] => {
     return []
 })
 
-let showError = computed({
+let showError = $computed({
   get: () => !!error,
   set: val => {
     if (!val) clearError()
