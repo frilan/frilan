@@ -20,6 +20,9 @@ async function register() {
   const users = await http.getMany("/users?load=registrations&username=" + username, User)
   if (!users.length)
     throw "User not found"
+
+  const targetUser = users[0]
+  await http.put(`/events/${ event.id }/registrations/${ targetUser.id }`, {}, Registration)
 }
 
 async function update(registration: Registration) {
@@ -46,7 +49,7 @@ table
     th Actions
   tr(v-for="registration in registrations")
     td
-      user-link(:user="registration.user")
+      user-link(:registration="registration")
     td
       select(v-model="registration.role" :disabled="!user.admin" @change="update(registration)")
         option(:value="Role.Player") Player

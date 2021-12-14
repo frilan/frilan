@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import { User } from "@frilan/models"
+import { Registration, Role } from "@frilan/models"
 import EventLink from "./event-link.vue"
 import { useStore } from "../../store/store"
 import { toRefs } from "vue"
+// noinspection ES6UnusedImports
+import { Star } from "mdue"
 
 const store = useStore()
-let { user: currentUser } = $(toRefs(store.state))
+let { user } = $(toRefs(store.state))
 
-defineProps<{ user: User }>()
+const props = defineProps<{ registration: Registration }>()
+
+let myself = $computed(() => props.registration.userId === user.id)
+let organizer = $computed(() => props.registration.role === Role.Organizer)
 </script>
 
 <template lang="pug">
 event-link(
   to="results"
-  :params="{ name: user.username }"
-  :class="{ myself: user.id === currentUser.id }"
+  :params="{ name: registration.user.username }"
+  :class="{ myself, organizer }"
+  :title="organizer ? 'Organizer' : undefined"
 )
-  | {{ user.displayName }}
+  span {{ registration.user.displayName }}
+  star(v-if="organizer")
 </template>
 
 <style scoped lang="sass">
@@ -32,4 +39,15 @@ event-link(
     to
       color: orange
 
+.organizer
+  color: #f3a5c3
+  display: inline-flex
+  align-items: center
+
+  &:hover
+    color: #ffdbb1
+
+  svg
+    font-size: 0.8em
+    margin-left: 3px
 </style>

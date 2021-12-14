@@ -319,7 +319,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
                 li.member(v-for="member in team.members")
                   .user.icon-text(:class='{ myself: member.userId === user.id }')
                     account
-                    user-link(:user="member.user")
+                    user-link(:registration="member")
                   .actions
                     button.icon.red(
                       v-if="isOrganizer && !tournamentStarted"
@@ -339,7 +339,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
             .member(v-else)
               .user.icon-text(:class='{ myself: team.members[0].userId === user.id }')
                 account
-                user-link(:user="team.members[0].user")
+                user-link(:registration="team.members[0]")
               .actions
                 button.icon.red(v-if="isOrganizer && !tournamentStarted" @click="deleteTeam(team)" title="Unregister")
                   account-remove
@@ -502,6 +502,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
       justify-content: space-between
       align-items: center
       height: 26px
+      padding: 1px
 
   .name
     font-weight: bold

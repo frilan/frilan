@@ -28,7 +28,7 @@ table(v-if="filtered.length")
   tr(v-for="(registration, index) in filtered")
     td {{ getRank(index) }}
     td
-      user-link(:user="registration.user")
+      user-link(:registration="registration")
     td {{ registration.score }} pts
 
 p(v-else) No player has scored any point yet.
