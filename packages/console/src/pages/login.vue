@@ -131,7 +131,7 @@ form
     background-color: rgba(255, 255, 255, 0.15)
     outline: 1px solid rgba(255, 255, 255, 0.2)
 
-    &:hover
+    &:not([disabled]):hover
       background-color: rgba(255, 255, 255, 0.2)
       outline: 1px solid rgba(255, 255, 255, 0.4)
 

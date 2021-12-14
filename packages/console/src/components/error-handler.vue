@@ -107,6 +107,6 @@ footer
   .button
     background-color: #312
 
-    &:hover
+    &:not([disabled]):hover
       background-color: #423
 </style>
