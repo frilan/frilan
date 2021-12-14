@@ -1,9 +1,9 @@
 import {
-    Authorized, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError, OnUndefined, Param,
-    Put, UseBefore,
+    Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError,
+    OnUndefined, Param, Put, UseBefore,
 } from "routing-controllers"
 import { getRepository } from "typeorm"
-import { Registration, Role } from "@frilan/models"
+import { Registration, Role, Status } from "@frilan/models"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { RelationsParser } from "../middlewares/relations-parser"
 import { Context } from "koa"
@@ -199,6 +199,17 @@ export class RegistrationController {
 
         if (!user.admin && user.id !== userId)
             throw new ForbiddenError("Only administrators can unregister other users")
+
+        const registration = await getRepository(Registration)
+            .findOne({ eventId, userId }, { relations: ["teams", "teams.tournament"] })
+
+        if (!registration)
+            throw new RegistrationNotFoundError()
+
+        if (registration.teams.some(team =>
+            team.tournament.status === Status.Started || team.tournament.status === Status.Finished))
+            throw new BadRequestError(
+                "Cannot unregister this user because one of their tournament has already started")
 
         await getRepository(Registration).delete({ eventId, userId })
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.Registration, { eventId, userId })

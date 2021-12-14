@@ -1,5 +1,5 @@
 import { createEvents, createUsers, http, refreshPrivilege, TestUser } from "./setup"
-import { Role } from "@frilan/models"
+import { Role, Status } from "@frilan/models"
 
 // shared states
 let admin: TestUser
@@ -157,7 +157,7 @@ describe("unregister users from events", () => {
 
     test("unregister another user by admin", async () => {
         // register again
-        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
 
         const res = await http.delete(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
         expect(res.status).toBe(204)
@@ -176,6 +176,38 @@ describe("unregister users from events", () => {
     test("prevent reading deleted registration", async () => {
         const res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
         expect(res.status).toBe(404)
+    })
+
+    test("prevent unregistering when one tournament has started", async () => {
+        // register again
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
+
+        // create tournament
+        const tournament = {
+            name: "foo",
+            shortName: "f",
+            date: 5,
+            duration: 1,
+            teamSizeMin: 1,
+            teamSizeMax: 1,
+            teamCountMin: 2,
+            teamCountMax: 8,
+            status: Status.Ready,
+        }
+        let res = await http.post(`/events/${ event1 }/tournaments`, tournament, admin.config)
+        const tournamentId = res.data.id
+
+        // create teams
+        await http.post(`/tournaments/${ tournamentId }/teams`,
+            { name: "regular", members: [{ userId: regular.id }] }, admin.config)
+        await http.post(`/tournaments/${ tournamentId }/teams`,
+            { name: "admin", members: [{ userId: admin.id }] }, admin.config)
+
+        // start tournament
+        await http.patch(`/tournaments/${ tournamentId }`, { status: Status.Started }, admin.config)
+
+        res = await http.delete(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
+        expect(res.status).toBe(400)
     })
 
 })
