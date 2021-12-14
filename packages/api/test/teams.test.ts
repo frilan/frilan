@@ -159,6 +159,24 @@ describe("create teams", () => {
         expect(res.status).toBe(403)
     })
 
+    test("prevent creating team with invalid members", async () => {
+        let res = await http.post(`/tournaments/${ readyTournament }/teams`,
+            { name: "empty", members: "garbage" }, user1.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post(`/tournaments/${ readyTournament }/teams`,
+            { name: "empty", members: [123] }, user1.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post(`/tournaments/${ readyTournament }/teams`,
+            { name: "empty", members: [{ userId: 3 }, true] }, user1.config)
+        expect(res.status).toBe(400)
+
+        res = await http.post(`/tournaments/${ readyTournament }/teams`,
+            { name: "empty", members: [{ userId: "3" }] }, user1.config)
+        expect(res.status).toBe(400)
+    })
+
     test("prevent creating team as unregistered", async () => {
         const res = await http.post(`/tournaments/${ hiddenTournament }/teams`,
             { name: "garbage" }, unregistered.config)

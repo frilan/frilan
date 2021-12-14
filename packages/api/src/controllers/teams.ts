@@ -181,6 +181,8 @@ export class TournamentTeamController {
         if (team.members) {
             if (!user.admin && !await isOrganizer(user, team))
                 throw new ForbiddenError("Only administrators and organizers can provide a list of members")
+            if (!Array.isArray(team.members) || team.members.some(member => typeof member.userId !== "number"))
+                throw new BadRequestError("Property 'members' must be an array of registrations")
             if (team.members.length > tournament.teamSizeMax)
                 throw new BadRequestError(
                     `Cannot create team with ${ team.members.length } members (max is ${ tournament.teamSizeMax })`)
