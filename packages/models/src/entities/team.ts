@@ -1,6 +1,6 @@
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from "typeorm"
 import { Id } from "./common/id"
-import { IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator"
+import { IsNotEmpty, IsString } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Tournament } from "./tournament"
 import { Registration } from "./registration"
@@ -39,13 +39,10 @@ export class Team extends Id {
     name!: string
 
     @Column({ default: 0 })
-    @IsInt()
-    @IsOptional()
     @ExcludeServerSide()
     result!: number
 
     @Column({ default: 0 })
-    @IsOptional()
     @ExcludeServerSide()
     rank!: number
 

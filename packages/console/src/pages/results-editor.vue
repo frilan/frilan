@@ -38,8 +38,8 @@ else
 let editorType = $ref("ranking")
 watch($$(editorType), () => sortTeams())
 
-let points = $ref(100)
-let distribution = $ref(Distribution.Exponential)
+let points = $ref(tournament.pointsPerPlayer)
+let distribution = $ref(tournament.pointsDistribution)
 
 async function save() {
   sortTeams()
@@ -87,7 +87,7 @@ form(@submit.prevent="save")
       option(:value="Distribution.Exponential") Exponential
 
   button(type="submit") Save
-  button(@click="router.back") Cancel
+  button(@click.prevent="router.back") Cancel
 </template>
 
 <style scoped lang="sass">

@@ -467,6 +467,8 @@ export class TournamentController {
         }
 
         tournament.status = Status.Finished
+        tournament.pointsPerPlayer = ranking.points
+        tournament.pointsDistribution = ranking.distribution
         await getRepository(Tournament).save(tournament)
 
         entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, { ...tournament, teams: undefined })

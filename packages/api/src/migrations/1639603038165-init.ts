@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class init1636996217542 implements MigrationInterface {
-    name = "init1636996217542"
+export class init1639603038165 implements MigrationInterface {
+    name = "init1639603038165"
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -53,22 +53,27 @@ export class init1636996217542 implements MigrationInterface {
             CREATE TYPE "tournament_status_enum" AS ENUM('hidden', 'ready', 'started', 'finished')
         `)
         await queryRunner.query(`
+            CREATE TYPE "tournament_points_distribution_enum" AS ENUM('exponential')
+        `)
+        await queryRunner.query(`
             CREATE TABLE "tournament"
             (
-                "id"             SERIAL                   NOT NULL,
-                "name"           character varying        NOT NULL,
-                "short_name"     character varying        NOT NULL,
-                "date"           TIMESTAMP                NOT NULL,
-                "duration"       integer                  NOT NULL,
-                "rules"          character varying        NOT NULL DEFAULT '',
-                "background"     character varying,
-                "team_size_min"  integer                  NOT NULL,
-                "team_size_max"  integer                  NOT NULL,
-                "team_count"     integer                  NOT NULL DEFAULT '0',
-                "team_count_min" integer                  NOT NULL,
-                "team_count_max" integer                  NOT NULL,
-                "status"         "tournament_status_enum" NOT NULL DEFAULT 'hidden',
-                "event_id"       integer                  NOT NULL,
+                "id"                  SERIAL                                NOT NULL,
+                "name"                character varying                     NOT NULL,
+                "short_name"          character varying                     NOT NULL,
+                "date"                TIMESTAMP                             NOT NULL,
+                "duration"            integer                               NOT NULL,
+                "rules"               character varying                     NOT NULL DEFAULT '',
+                "background"          character varying,
+                "team_size_min"       integer                               NOT NULL,
+                "team_size_max"       integer                               NOT NULL,
+                "team_count"          integer                               NOT NULL DEFAULT '0',
+                "team_count_min"      integer                               NOT NULL,
+                "team_count_max"      integer                               NOT NULL,
+                "status"              "tournament_status_enum"              NOT NULL DEFAULT 'hidden',
+                "points_per_player"   integer                               NOT NULL DEFAULT '100',
+                "points_distribution" "tournament_points_distribution_enum" NOT NULL DEFAULT 'exponential',
+                "event_id"            integer                               NOT NULL,
                 CONSTRAINT "locator" UNIQUE ("event_id", "short_name"),
                 CONSTRAINT "PK_449f912ba2b62be003f0c22e767" PRIMARY KEY ("id")
             )
@@ -168,6 +173,9 @@ export class init1636996217542 implements MigrationInterface {
         `)
         await queryRunner.query(`
             DROP TABLE "tournament"
+        `)
+        await queryRunner.query(`
+            DROP TYPE "tournament_points_distribution_enum"
         `)
         await queryRunner.query(`
             DROP TYPE "tournament_status_enum"

@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm"
 import { User } from "./user"
 import { Event } from "./event"
-import { IsDate, IsEnum, IsInt, IsOptional } from "class-validator"
+import { IsDate, IsEnum, IsOptional } from "class-validator"
 import { Type } from "class-transformer"
 import { GreaterOrEqual } from "../decorators/greater-or-equal"
 import { Team } from "./team"
@@ -80,8 +80,6 @@ export class Registration {
     departure?: Date
 
     @Column({ default: 0 })
-    @IsInt()
-    @IsOptional()
     @ExcludeServerSide()
     score!: number
 

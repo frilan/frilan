@@ -7,6 +7,7 @@ import { Event } from "./event"
 import { Team } from "./team"
 import { GreaterOrEqual } from "../decorators/greater-or-equal"
 import { ExcludeServerSide } from "../decorators/exclude-server-side"
+import { Distribution } from "../payloads/ranking"
 
 /**
  * @openapi
@@ -131,6 +132,14 @@ export class Tournament extends Id {
     @IsEnum(Status)
     @IsOptional()
     status!: Status
+
+    @Column({ default: 100 })
+    @ExcludeServerSide()
+    pointsPerPlayer!: number
+
+    @Column({ type: "enum", enum: Distribution, default: Distribution.Exponential })
+    @ExcludeServerSide()
+    pointsDistribution!: Distribution
 
     @Column()
     @ExcludeServerSide()

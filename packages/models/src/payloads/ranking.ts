@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsPositive } from "class-validator"
+import { IsBoolean, IsEnum, IsInt, IsOptional, Min } from "class-validator"
 import { RankList } from "../decorators/rank-list"
 
 /**
@@ -38,7 +38,7 @@ export class Ranking {
     descOrder?: boolean
 
     @IsInt()
-    @IsPositive()
+    @Min(0)
     points!: number
 
     @IsEnum(Distribution)
