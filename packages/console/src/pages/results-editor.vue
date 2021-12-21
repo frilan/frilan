@@ -23,7 +23,7 @@ if (!tournaments.length)
   throw new NotFoundError()
 
 let tournament = $ref(tournaments[0])
-document.title = `Results for ${ tournament.name } - ${ document.title }`
+document.title = `Results for ${ tournament.name } - Console`
 
 function sortTeams() {
   tournament.teams.sort((a, b) => a.rank - b.rank)

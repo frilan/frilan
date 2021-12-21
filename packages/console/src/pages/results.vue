@@ -19,7 +19,7 @@ const user = (await http.getMany(`/users?username=${ name }`, User))[0]
 if (!user)
   throw new NotFoundError()
 
-document.title = `${ user.displayName } results - ${ document.title }`
+document.title = `${ user.displayName } results - Console`
 
 const relations = ["teams", "teams.members", "teams.tournament"].join(",")
 let registration = $ref<Registration | null>(null)

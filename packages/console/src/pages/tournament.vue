@@ -31,7 +31,7 @@ if (!tournaments.length)
 
 let tournament = $ref(tournaments[0])
 
-watchEffect(() => document.title = `${ tournament.name } - ${ document.title }`)
+watchEffect(() => document.title = `${ tournament.name } - Console`)
 
 // true if this is a solo tournament
 let solo = $computed(() => tournament.teamSizeMax <= 1)

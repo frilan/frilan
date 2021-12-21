@@ -19,7 +19,7 @@ let user = $ref((await http.getMany(`/users?username=${ name }&load=registration
 if (!user)
   throw new NotFoundError()
 
-watchEffect(() => document.title = `${ user.displayName } - ${ document.title }`)
+watchEffect(() => document.title = `${ user.displayName } - Console`)
 
 let events: Event[] = []
 if (user.registrations.length) {
