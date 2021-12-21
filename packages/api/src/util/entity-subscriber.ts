@@ -90,7 +90,9 @@ export class EntitySubscriber {
      * @param callback The callback function
      */
     public removeListener(type: EntityEventType, cls: EntityClass, callback: EntityEventListener): void {
-        this.listeners[type][cls].filter(l => l !== callback)
+        const index = this.listeners[type][cls].indexOf(callback)
+        if (index >= 0)
+            this.listeners[type][cls].splice(index, 1)
     }
 
     /**
