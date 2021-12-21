@@ -2,6 +2,7 @@ import { ClassConstructor } from "class-transformer/types/interfaces"
 import { plainToClass } from "class-transformer"
 import http from "./http"
 import { store } from "../store/store"
+import { Registration, Team, Tournament, User } from "@frilan/models"
 
 /**
  * A class representing a subscription to entity events.
@@ -12,13 +13,21 @@ export class Subscriber<T> {
 
     private static sources: EventSource[] = []
 
+    private static readonly classNames = {
+        [User.name]: "users",
+        [Event.name]: "events",
+        [Registration.name]: "registrations",
+        [Tournament.name]: "tournaments",
+        [Team.name]: "teams",
+    }
+
     /**
      * Creates a new subscriber for the specified entity class.
      * @param cls The entity class
      * @param filters The filters which entities have to match to be sent back
      */
     public constructor(private cls: ClassConstructor<T>, filters?: Record<string, unknown>) {
-        let url = http.baseURL + "/subscribe/" + cls.name.toLowerCase() + "s"
+        let url = http.baseURL + "/subscribe/" + Subscriber.classNames[cls.name]
         if (filters)
             url += "?" + Object.entries(filters).map(([key, value]) => key + "=" + value).join("&")
         this.eventSource = new EventSource(url)
