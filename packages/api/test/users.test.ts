@@ -188,4 +188,20 @@ describe("delete users", () => {
         expect(res.status).toBe(404)
     })
 
+    test("prevent deleting user registered to an event", async () => {
+        // recreate account
+        let res = await http.post("/users", regular)
+        regular.id = res.data.id
+
+        // create event
+        res = await http.post("/events",
+            { name: "n", shortName: "s", start: new Date(), end: new Date() }, admin.config)
+        const eventId = res.data.id
+
+        // register user
+        await http.put(`/events/${ eventId }/registrations/${ regular.id }`, {}, admin.config)
+
+        res = await http.delete("/users/" + regular.id, admin.config)
+        expect(res.status).toBe(400)
+    })
 })

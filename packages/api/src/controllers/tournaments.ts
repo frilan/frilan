@@ -355,10 +355,11 @@ export class TournamentController {
         if (!tournament)
             throw new TournamentNotFoundError()
 
-        if (!user.admin) {
-            if (user.roles[tournament.eventId] !== Role.Organizer)
-                throw new ForbiddenError("Only administrators and organizers can delete tournaments")
-        }
+        if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can delete tournaments")
+
+        if (tournament.status === Status.Started || tournament.status === Status.Finished)
+            throw new BadRequestError("Cannot delete this tournament because it has already started")
 
         await getRepository(Tournament).delete(id)
 

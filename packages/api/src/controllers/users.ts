@@ -1,6 +1,6 @@
 import {
-    Authorized, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
-    OnUndefined, Param, Post, UseBefore,
+    Authorized, BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController,
+    NotFoundError, OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
 import { getRepository, Repository, Transaction, TransactionRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
@@ -280,7 +280,7 @@ export class UserController {
     @Transaction()
     @Authorized("admin")
     async delete(@Param("id") id: number, @TransactionRepository(User) repository: Repository<User>): Promise<void> {
-        const user = await repository.findOne(id)
+        const user = await repository.findOne(id, { relations: ["registrations"] })
         if (!user)
             throw new UserNotFoundError()
 
@@ -290,7 +290,10 @@ export class UserController {
                 throw new AdminRemovedError()
         }
 
+        if (user.registrations.length)
+            throw new BadRequestError("Cannot delete this user because they are registered to at least one event")
+
         await repository.delete(id)
-        entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, user)
+        entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, { ...user, registrations: undefined })
     }
 }

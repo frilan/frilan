@@ -387,10 +387,10 @@ describe("delete tournaments", () => {
 
     test("prevent deleting tournament as player", async () => {
         // update role
-        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, { role: Role.Player }, admin.config)
+        await http.put(`/events/${ event2 }/registrations/${ regular.id }`, { role: Role.Player }, admin.config)
         await refreshPrivilege(regular)
 
-        const res = await http.delete("/tournaments/" + tournament1.id, regular.config)
+        const res = await http.delete("/tournaments/" + tournament2.id, regular.config)
         expect(res.status).toBe(403)
     })
 
@@ -399,27 +399,40 @@ describe("delete tournaments", () => {
         await http.delete(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
         await refreshPrivilege(regular)
 
-        const res = await http.delete("/tournaments/" + tournament1.id, regular.config)
+        const res = await http.delete("/tournaments/" + tournament2.id, regular.config)
         expect(res.status).toBe(403)
     })
 
     test("prevent updating tournament when not logged in", async () => {
-        const res = await http.delete("/tournaments/" + tournament1.id)
+        const res = await http.delete("/tournaments/" + tournament2.id)
         expect(res.status).toBe(401)
     })
 
     test("delete tournament as admin", async () => {
-        const res = await http.delete("/tournaments/" + tournament1.id, admin.config)
+        const res = await http.delete("/tournaments/" + tournament2.id, admin.config)
         expect(res.status).toBe(204)
     })
 
     test("delete tournament as organizer", async () => {
-        const res = await http.delete("/tournaments/" + tournament2.id, regular.config)
+        // update role
+        await http.put(`/events/${ event2 }/registrations/${ regular.id }`, { role: Role.Organizer }, admin.config)
+        await refreshPrivilege(regular)
+
+        // recreate tournament
+        let res = await http.post(`/events/${ event2 }/tournaments`, tournament2, regular.config)
+        tournament2.id = res.data.id
+
+        res = await http.delete("/tournaments/" + tournament2.id, regular.config)
         expect(res.status).toBe(204)
     })
 
+    test("prevent deleting tournament that has already started", async () => {
+        const res = await http.delete("/tournaments/" + tournament1.id, admin.config)
+        expect(res.status).toBe(400)
+    })
+
     test("prevent reading deleted tournament", async () => {
-        const res = await http.get("/tournaments/" + tournament1.id, admin.config)
+        const res = await http.get("/tournaments/" + tournament2.id, admin.config)
         expect(res.status).toBe(404)
     })
 
