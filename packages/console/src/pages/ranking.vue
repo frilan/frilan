@@ -3,6 +3,10 @@ import { toRefs, watchEffect } from "vue"
 import { useStore } from "../store/store"
 import UserLink from "../components/common/user-link.vue"
 import { realTimeRegistrations } from "../utils/real-time"
+import { Role } from "@frilan/models"
+import Rank from "../components/common/rank.vue"
+// noinspection ES6UnusedImports
+import { CheckboxBlank, CheckboxMarked } from "mdue"
 
 const store = useStore()
 let { event } = $(toRefs(store.state))
@@ -10,7 +14,10 @@ let { event } = $(toRefs(store.state))
 let registrations = $(await realTimeRegistrations(event.id))
 watchEffect(() => registrations.sort((a, b) => b.score - a.score))
 
-let filtered = $computed(() => registrations.filter(({ score }) => score > 0))
+let includeOrganizers = $ref(false)
+
+let filtered = $computed(() => registrations
+  .filter(({ score, role }) => score > 0 && (includeOrganizers || role === Role.Player)))
 
 function getRank(index: number): number {
   // handle tied scores
@@ -22,18 +29,59 @@ function getRank(index: number): number {
 </script>
 
 <template lang="pug">
-h1 Ranking
+.container
+  button.button(@click="includeOrganizers = !includeOrganizers")
+    checkbox-marked(v-if="includeOrganizers")
+    checkbox-blank(v-else)
+    span Include organizers
 
-table(v-if="filtered.length")
-  tr(v-for="(registration, index) in filtered")
-    td {{ getRank(index) }}
-    td
-      user-link(:registration="registration")
-    td {{ registration.score }} pts
+  table(v-if="filtered.length")
+    tr(v-for="(registration, index) in filtered" :class="{ ['rank-' + getRank(index)]: true }")
+      td.rank
+        rank(:rank="getRank(index)")
+      td.player
+        user-link(:registration="registration")
+      td.score {{ registration.score }} pts
 
-p(v-else) No player has scored any point yet.
+  p(v-else) No player has scored any point yet.
 </template>
 
 <style scoped lang="sass">
+.container
+  min-width: 800px
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding-bottom: 50px
 
+.button
+  margin: 16px
+
+  *:hover
+    cursor: pointer
+
+  label
+    padding-left: 5px
+
+.rank-1
+  font-size: 2em
+  height: 60px
+
+.rank-2
+  font-size: 1.66em
+  height: 50px
+
+.rank-3
+  font-size: 1.33em
+  height: 40px
+
+.rank, .score
+  text-align: center
+
+.rank
+  margin: auto
+
+.player
+  min-width: 240px
+  padding: 8px
 </style>

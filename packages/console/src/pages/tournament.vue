@@ -14,6 +14,7 @@ import {
   Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, CalendarEdit, Delete, ExitRun, Eye,
   FlagCheckered, HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
 } from "mdue"
+import Rank from "../components/common/rank.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -298,9 +299,9 @@ new Subscriber(Team, { tournamentId: tournament.id })
       .teams(v-if="teams.length" :class="{ solo }")
         .team(
           v-for="team in teams"
-          :class="{ myTeam: team === myTeam, ['rank-' + team.rank]: tournament.status === Status.Finished }"
+          :class="{ myTeam: team === myTeam }"
         )
-          .rank(v-if="tournament.status === Status.Finished") {{ team.rank }}
+          rank.rank(v-if="tournament.status === Status.Finished" :rank="team.rank")
 
           .info
             template(v-if="!solo || !team.members.length")
@@ -476,15 +477,8 @@ new Subscriber(Team, { tournamentId: tournament.id })
   border-radius: 5px
 
   .rank
-    font-weight: bold
     margin: 2px 10px 2px 0
-    width: 24px
-    height: 24px
     flex-shrink: 0
-    color: lightblue
-    display: flex
-    align-items: center
-    justify-content: center
 
   .result
     margin-left: 6px
