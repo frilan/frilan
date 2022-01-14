@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, OneToMany, Unique } from "typeorm"
 import { Id } from "./common/id"
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Matches, Min } from "class-validator"
+import { IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Matches, Min } from "class-validator"
 import { Trim } from "../decorators/trim"
 import { Type } from "class-transformer"
 import { Event } from "./event"
@@ -83,6 +83,7 @@ export class Tournament extends Id {
     shortName!: string
 
     @Column()
+    @IsDate()
     @Type(() => Date)
     date!: Date
 
