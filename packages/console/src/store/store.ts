@@ -63,9 +63,15 @@ if (expiration && Number(expiration) * 1000 < Date.now())
     localStorage.clear()
 
 // if logged, user data should be stored in local storage
-const user = localStorage.getItem("user")
-const event = localStorage.getItem("event")
-const main = localStorage.getItem("main")
+let user = localStorage.getItem("user")
+let event = localStorage.getItem("event")
+let main = localStorage.getItem("main")
+
+// clear local storage if corrupted
+if (!user || !event || !main) {
+    localStorage.clear()
+    user = event = main = null
+}
 
 export const store = createStore<State>({
     state: {
