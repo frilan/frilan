@@ -37,10 +37,14 @@ watchEffect(() => document.title = `${ tournament.name } - Console`)
 // true if this is a solo tournament
 let solo = $computed(() => tournament.teamSizeMax <= 1)
 
+// true if the tournament has either started or is already finished
+let tournamentStarted = $computed(() =>
+  tournament.status === Status.Started || tournament.status === Status.Finished)
+
 // references the registration object of the current user
 let myself = $computed(() => user.registrations.find(r => r.eventId === event.id))
 // true if the current user can register to this tournament
-let canRegister = $computed(() => !!myself)
+let canRegister = $computed(() => !!myself && !tournamentStarted)
 
 // references the team of the current user
 let myTeam = $computed(() => tournament.teams.find(t => t.members.some(m => m.userId === user.id)))
@@ -50,9 +54,6 @@ let isRegistered = $computed(() => !!myTeam)
 let fullTeams = $computed(() => tournament.teams.filter(team =>
   team.members.length >= tournament.teamSizeMin
   && team.members.length <= tournament.teamSizeMax))
-
-let tournamentStarted = $computed(() =>
-  tournament.status === Status.Started || tournament.status === Status.Finished)
 
 let incompleteTeams = $computed(() =>
   tournamentStarted ? [] : tournament.teams.filter(team => !fullTeams.includes(team)))
@@ -280,7 +281,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
         span.current(:class='{ low: !enoughParticipants }') {{ tournament.teamCount }}
         span.max(v-if="!tournamentStarted") !{" "}/ {{ tournament.teamCountMax }}
 
-    template(v-if="!tournamentStarted && canRegister")
+    template(v-if="canRegister")
       button.button.unregister(v-if="isRegistered" @click="unregister")
         exit-run
         span Unregister
