@@ -10,7 +10,8 @@ if (!process.env.DB_PASS) {
 
 const host = process.env.DB_HOST ?? "localhost"
 const port = Number.parseInt(process.env.DB_PORT ?? "5432")
-const database = process.env.DB_NAME ?? env === "test" ? "frilan-test" : "frilan"
+const database = process.env.DB_NAME ?? "frilan"
+const testDatabase = process.env.DB_TEST ?? "frilan-test"
 const username = process.env.DB_USER ?? "postgres"
 const password = process.env.DB_PASS
 
@@ -24,7 +25,7 @@ const config: ConnectionOptions = {
     port,
     username,
     password,
-    database,
+    database: env === "test" ? testDatabase : database,
     migrationsRun: true,
     logging: env === "dev",
     dropSchema: env === "test",

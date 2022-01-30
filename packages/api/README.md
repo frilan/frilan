@@ -34,6 +34,7 @@ Define the following variables accordingly:
 | `DB_HOST` | the database host name | localhost |
 | `DB_PORT` | the database port | 5432 |
 | `DB_NAME` | the database name | frilan |
+| `DB_TEST` | the **test** database name | frilan-test |
 | `DB_USER` | the database username | postgres |
 | `DB_PASS` | the database password |
 | `JWT_SECRET` | the secret used to sign authentication tokens |
@@ -99,8 +100,7 @@ To run integrations tests:
 npm run test -w @frilan/api
 ```
 
-Note that when running the above command, the default value of the `DB_NAME` variable becomes `frilan-test` to prevent
-accidental destruction of the main database.
+Note that when running the above command, the database name is given by `DB_TEST` and all data and schema will be **entirely destroyed** before starting.
 
 ## Database
 
