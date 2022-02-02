@@ -16,6 +16,15 @@ import { isDbError } from "../util/is-db-error"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
 
 /**
+ * Hashes the password of the given user, using the bcrypt function.
+ * @param user The target user
+ */
+export async function hashPassword(user: User): Promise<void> {
+    if (user.password)
+        user.password = await bcrypt.hash(user.password, 10)
+}
+
+/**
  * @openapi
  * components:
  *   responses:
@@ -144,7 +153,8 @@ export class UserController {
         // make the first registered user an admin
         const userCount = await getRepository(User).count()
         user.admin = userCount < 1
-        user.password = await bcrypt.hash(user.password, 10)
+
+        await hashPassword(user)
 
         try {
             const savedUser = await getRepository(User).save(user)
@@ -241,6 +251,8 @@ export class UserController {
             if (adminCount === 1)
                 throw new AdminRemovedError()
         }
+
+        await hashPassword(updatedUser)
 
         try {
             if (Object.keys(updatedUser).length)

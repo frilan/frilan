@@ -113,9 +113,19 @@ describe("update users", () => {
         const res = await http.patch("/users/" + regular.id, { username }, regular.config)
         expect(res.status).toBe(200)
         expect(res.data).toMatchObject({ id: regular.id, username })
+        regular.username = username
 
         const read = await http.get("/users/" + regular.id, regular.config)
         expect(read.data).toMatchObject(res.data)
+    })
+
+    test("update password", async () => {
+        const password = "new-password"
+        let res = await http.patch("/users/" + regular.id, { password }, regular.config)
+        expect(res.status).toBe(200)
+
+        res = await http.get("/login", { auth: { username: regular.username, password } })
+        expect(res.status).toBe(200)
     })
 
     test("update other user as admin", async () => {
