@@ -32,7 +32,7 @@ export async function createUsers(amount: number): Promise<TestUser[]> {
  */
 export async function refreshPrivilege(user: TestUser): Promise<void> {
     const res = await http.get("/login", { auth: { username: user.username, password: "password" } })
-    user.config.headers.Authorization = "Bearer " + res.data.token
+    user.config.headers.authorization = "Bearer " + res.data.token
 }
 
 /**

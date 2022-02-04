@@ -103,8 +103,6 @@ describe("read registrations", () => {
     })
 
     test("read all registrations by registered", async () => {
-        await refreshPrivilege(regular)
-
         const res = await http.get(`/events/${ event1 }/registrations`, regular.config)
         expect(res.status).toBe(200)
     })
@@ -150,12 +148,7 @@ describe("read registrations", () => {
 
 describe("unregister users from events", () => {
 
-    test("unregister user by themselves", async () => {
-        const res = await http.delete(`/events/${ event1 }/registrations/${ regular.id }`, regular.config)
-        expect(res.status).toBe(204)
-    })
-
-    test("unregister another user by admin", async () => {
+    test("unregister user by admin", async () => {
         // register again
         await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
 
@@ -163,19 +156,32 @@ describe("unregister users from events", () => {
         expect(res.status).toBe(204)
     })
 
-    test("prevent unregistering others by regular user", async () => {
+    test("unregister user by organizer", async () => {
         const res = await http.delete(`/events/${ event1 }/registrations/${ admin.id }`, regular.config)
+        expect(res.status).toBe(204)
+    })
+
+    test("prevent reading deleted registration", async () => {
+        const res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
+        expect(res.status).toBe(404)
+    })
+
+    test("prevent unregistering users by regular user", async () => {
+        // register again
+        await http.put(`/events/${ event1 }/registrations/${ regular.id }`, {}, admin.config)
+        await http.put(`/events/${ event1 }/registrations/${ admin.id }`, {}, admin.config)
+        await refreshPrivilege(regular)
+
+        let res = await http.delete(`/events/${ event1 }/registrations/${ regular.id }`, regular.config)
+        expect(res.status).toBe(403)
+
+        res = await http.delete(`/events/${ event1 }/registrations/${ admin.id }`, regular.config)
         expect(res.status).toBe(403)
     })
 
     test("prevent unregistering users when not logged in", async () => {
         const res = await http.delete(`/events/${ event1 }/registrations/${ admin.id }`)
         expect(res.status).toBe(401)
-    })
-
-    test("prevent reading deleted registration", async () => {
-        const res = await http.get(`/events/${ event1 }/registrations/${ regular.id }`, admin.config)
-        expect(res.status).toBe(404)
     })
 
     test("prevent unregistering when one tournament has started", async () => {

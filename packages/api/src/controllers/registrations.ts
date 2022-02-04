@@ -197,8 +197,8 @@ export class RegistrationController {
         @CurrentUser({ required: true }) user: AuthUser,
     ): Promise<void> {
 
-        if (!user.admin && user.id !== userId)
-            throw new ForbiddenError("Only administrators can unregister other users")
+        if (!user.admin && user.roles[eventId] !== Role.Organizer)
+            throw new ForbiddenError("Only administrators and organizers can unregister users from this event")
 
         const registration = await getRepository(Registration)
             .findOne({ eventId, userId }, { relations: ["teams", "teams.tournament"] })
