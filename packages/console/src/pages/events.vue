@@ -3,22 +3,21 @@ import { toRefs } from "vue"
 import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
+import { CheckboxBlank, CheckboxMarked } from "mdue"
 import http from "../utils/http"
 
 const store = useStore()
 let { user, mainEvent } = $(toRefs(store.state))
 
-// true if registered to at least one event
-let registered = $computed(() => !!user.registrations.length)
+// initially true if registered to at least one event
+let onlyRegistered = $ref(!!user.registrations.length)
 
-let events: Event[]
-if (registered || user.admin) {
-  // if not admin, only fetch events the user is registered to
-  const filter = user.admin ? "" : "&id=" + user.registrations.map(r => r.eventId)
+let events = await http.getMany("/events?load=registrations", Event)
+events.sort((a, b) => b.start.getTime() - a.start.getTime())
 
-  events = await http.getMany("/events?load=registrations" + filter, Event)
-  events.sort((a, b) => b.start.getTime() - a.start.getTime())
-}
+let filteredEvents = $computed(() => onlyRegistered
+  ? events.filter(({ id }) => user.registrations.some(r => r.eventId === id))
+  : events)
 
 function isMainEvent(event: Event) {
   return event.shortName === mainEvent
@@ -34,17 +33,25 @@ function homeInEvent(event: Event) {
 h1 Events
 router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
 
-.event(v-if="registered || user.admin" v-for="event in events")
-  h2
-    router-link(v-if="isMainEvent(event)" :to="{ name: 'home' }") {{ event.name }}
-    router-link(v-else :to="homeInEvent(event)") {{ event.name }}
-  router-link(v-if="user.admin" :to="{ name: 'edit-event', params: { name: event.shortName } }") Edit
-  p From {{ event.start.toLocaleString() }} to {{ event.end.toLocaleString() }}
-  p {{ event.registrations.length }} attendants
-  p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
-    | You are an organizer of this event
+template(v-if="events.length")
+  button.button(@click="onlyRegistered = !onlyRegistered")
+    checkbox-marked(v-if="onlyRegistered")
+    checkbox-blank(v-else)
+    span Only show events I'm registered to
 
-p(v-else) You are not registered to an event yet.
+  .event(v-if="filteredEvents.length" v-for="event in filteredEvents")
+    h2
+      router-link(v-if="isMainEvent(event)" :to="{ name: 'home' }") {{ event.name }}
+      router-link(v-else :to="homeInEvent(event)") {{ event.name }}
+    router-link(v-if="user.admin" :to="{ name: 'edit-event', params: { name: event.shortName } }") Edit
+    p From {{ event.start.toLocaleString() }} to {{ event.end.toLocaleString() }}
+    p {{ event.registrations.length }} attendants
+    p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
+      | You are an organizer of this event
+
+  p(v-else) You are not registered to an event yet.
+
+p(v-else) There are no events yet.
 </template>
 
 <style scoped lang="sass">
