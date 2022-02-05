@@ -132,7 +132,7 @@ template(v-if="registration")
           span.max(v-if="team.tournament.teamSizeMax > team.tournament.teamSizeMin")
             | !{" "}({{ team.tournament.teamSizeMax }})
 
-p(v-else) This user isn't registered to the event.
+p(v-else) This user isn't registered for the event.
 </template>
 
 <style scoped lang="sass">

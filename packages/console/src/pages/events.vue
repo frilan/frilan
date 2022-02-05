@@ -9,7 +9,7 @@ import http from "../utils/http"
 const store = useStore()
 let { user, mainEvent } = $(toRefs(store.state))
 
-// initially true if registered to at least one event
+// initially true if registered for at least one event
 let onlyRegistered = $ref(!!user.registrations.length)
 
 let events = await http.getMany("/events?load=registrations", Event)
@@ -37,7 +37,7 @@ template(v-if="events.length")
   button.button(@click="onlyRegistered = !onlyRegistered")
     checkbox-marked(v-if="onlyRegistered")
     checkbox-blank(v-else)
-    span Only show events I'm registered to
+    span Only show events I'm registered for
 
   .event(v-if="filteredEvents.length" v-for="event in filteredEvents")
     h2
@@ -49,7 +49,7 @@ template(v-if="events.length")
     p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
       | You are an organizer of this event
 
-  p(v-else) You are not registered to an event yet.
+  p(v-else) You are not registered for an event yet.
 
 p(v-else) There are no events yet.
 </template>

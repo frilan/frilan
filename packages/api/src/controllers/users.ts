@@ -303,7 +303,7 @@ export class UserController {
         }
 
         if (user.registrations.length)
-            throw new BadRequestError("Cannot delete this user because they are registered to at least one event")
+            throw new BadRequestError("Cannot delete this user because they are registered for at least one event")
 
         await repository.delete(id)
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, { ...user, registrations: undefined })

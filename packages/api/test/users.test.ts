@@ -198,7 +198,7 @@ describe("delete users", () => {
         expect(res.status).toBe(404)
     })
 
-    test("prevent deleting user registered to an event", async () => {
+    test("prevent deleting user registered for an event", async () => {
         // recreate account
         let res = await http.post("/users", regular)
         regular.id = res.data.id

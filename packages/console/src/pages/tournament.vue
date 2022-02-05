@@ -43,12 +43,12 @@ let tournamentStarted = $computed(() =>
 
 // references the registration object of the current user
 let myself = $computed(() => user.registrations.find(r => r.eventId === event.id))
-// true if the current user can register to this tournament
+// true if the current user can register for this tournament
 let canRegister = $computed(() => !!myself && !tournamentStarted)
 
 // references the team of the current user
 let myTeam = $computed(() => tournament.teams.find(t => t.members.some(m => m.userId === user.id)))
-// true if the current user is registered to this tournament
+// true if the current user is registered for this tournament
 let isRegistered = $computed(() => !!myTeam)
 
 let fullTeams = $computed(() => tournament.teams.filter(team =>
@@ -176,7 +176,7 @@ async function promptMember(): Promise<Registration | null> {
   const targetUser = users[0]
   const registration = targetUser.registrations.find(r => r.eventId === event.id)
   if (!registration)
-    throw "This user is not registered to this event"
+    throw "This user is not registered for this event"
 
   return { ...registration, user: targetUser }
 }
@@ -348,7 +348,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
 
           .result(v-if="tournament.status === Status.Finished") {{ team.result }} pts
 
-      p(v-else) Nobody has registered to this tournament yet.
+      p(v-else) Nobody has registered for this tournament yet.
 </template>
 
 <style scoped lang="sass">

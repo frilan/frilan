@@ -77,7 +77,7 @@ template(v-if="entries.length")
     p Rank: {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
     router-link(:to="resultLink(event)") View results
 
-p(v-else) This user isn't registered to any event
+p(v-else) This user isn't registered for any event
 </template>
 
 <style scoped lang="sass">

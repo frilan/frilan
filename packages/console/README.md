@@ -1,6 +1,6 @@
 # @frilan/console
 
-The Console is a client application that provides a user interface to manage and register to tournaments.
+The Console is a client application that provides a user interface to manage and register for tournaments.
 
 - [Installation](#installation)
   * [Prerequisites](#prerequisites)

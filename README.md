@@ -2,7 +2,8 @@
 
 This repository contains all the packages required to run all FriLAN services.
 
-- [@frilan/console](packages/console): a client application that organizers and players use to setup and register to tournaments.
+- [@frilan/console](packages/console): a client application that organizers and players use to setup and register for
+  tournaments.
 - [@frilan/api](packages/api): a server providing a REST API that stores and manages the tournaments of each event.
 - [@frilan/models](packages/models): typed classes that can be used by both servers and clients to handle common resources.
 

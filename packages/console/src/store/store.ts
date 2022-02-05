@@ -136,12 +136,12 @@ export const store = createStore<State>({
             events.sort((a, b) => b.start.getTime() - a.start.getTime())
             context.commit("setMainEvent", events[0].shortName)
 
-            // select the most recent event that the user is registered to
+            // select the most recent event that the user is registered for
             if (context.state.user.registrations.length) {
                 const userEvents = context.state.user.registrations.map(r => r.eventId)
                 context.commit("setEvent", events.find(({ id }) => userEvents.includes(id)))
             } else
-                // select main event if user is not registered to any event
+                // select main event if user is not registered for any event
                 context.commit("setEvent", events[0])
 
             // no need to create the initial event

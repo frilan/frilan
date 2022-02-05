@@ -53,7 +53,7 @@ export class LoginController {
         if (!user || !await bcrypt.compare(ctx.credentials.pass, user.password))
             throw new UnauthorizedError("Wrong username and/or password")
 
-        // the user's roles during every event they're registered to
+        // the user's roles during every event they're registered for
         const roles = user.registrations.map(({ eventId, role }) => [eventId, role])
 
         return {

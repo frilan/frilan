@@ -190,7 +190,7 @@ export class TournamentTeamController {
             const registration = await getRepository(Registration)
                 .findOne({ userId: user.id, eventId: tournament.eventId })
             if (!registration)
-                throw new ForbiddenError("Only users registered to this event can create teams")
+                throw new ForbiddenError("Only users registered for this event can create teams")
 
             team.members = [registration]
         }
@@ -416,7 +416,7 @@ export class TeamController {
      *       204:
      *         description: user added into the team
      *       400:
-     *         description: user is not registered to event or tournament has already started
+     *         description: user is not registered for this event or tournament has already started
      *       401:
      *         $ref: "#/components/responses/AuthenticationRequired"
      *       403:
@@ -445,7 +445,7 @@ export class TeamController {
         const registration = await getRepository(Registration)
             .findOne({ userId, eventId: team.tournament.eventId })
         if (!registration)
-            throw new BadRequestError("Cannot add member that is not registered to the event")
+            throw new BadRequestError("Cannot add member that is not registered for the event")
 
         // skip if member already in team
         if (team.members.some(m => m.eventId === registration.eventId && m.userId === registration.userId))

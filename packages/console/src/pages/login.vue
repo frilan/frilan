@@ -30,7 +30,7 @@ async function login() {
   if (store.state.next)
     router.push(store.state.next)
 
-  // redirect to active event if registered to it
+  // redirect to active event if registered for it
   else if (store.state.user.registrations.length)
     redirectToEvent("home")
 

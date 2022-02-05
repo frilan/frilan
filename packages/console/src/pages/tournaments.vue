@@ -18,7 +18,7 @@ let isRegistered = $computed(() => store.getters.isRegistered)
 let tournaments = $ref(await http.getMany(`/events/${ event.id }/tournaments`, Tournament))
 watchEffect(() => tournaments.sort((a, b) => a.date.getTime() - b.date.getTime()))
 
-// get all teams of current user, if registered to event
+// get all teams of current user, if registered for this event
 let registration: Registration | null = $ref(null)
 if (isRegistered)
   registration
@@ -65,7 +65,7 @@ new Subscriber(Tournament, { eventId: event.id })
     if (index >= 0) tournaments.splice(index, 1)
   })
 
-// if registered to the event, handle updates to the teams of the user
+// if registered for the event, handle updates to the teams of the user
 if (registration) {
   const myTeams = registration.teams
   new Subscriber(Team, { "members.userId": user.id, "members.eventId": event.id })

@@ -441,7 +441,7 @@ export class TournamentController {
             for (const id of tiedTeams) {
                 const team = tournament.teams.find(team => team.id === id)
                 if (!team)
-                    throw new BadRequestError(`Team ${ team } is not registered to this tournament`)
+                    throw new BadRequestError(`Team ${ team } is not registered for this tournament`)
 
                 // needed if results are being updated
                 const prevResult = team.result
