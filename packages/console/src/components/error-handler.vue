@@ -4,7 +4,6 @@ import { ValidationError } from "class-validator"
 import { useStore } from "../store/store"
 import { toRefs, watchEffect } from "vue"
 import MessageBox from "./common/message-box.vue"
-// noinspection ES6UnusedImports
 import { AlertOctagon } from "mdue"
 
 const store = useStore()

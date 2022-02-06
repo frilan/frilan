@@ -5,7 +5,6 @@ import UserLink from "../components/common/user-link.vue"
 import { realTimeRegistrations } from "../utils/real-time"
 import { Role } from "@frilan/models"
 import Rank from "../components/common/rank.vue"
-// noinspection ES6UnusedImports
 import { CheckboxBlank, CheckboxMarked } from "mdue"
 
 const store = useStore()

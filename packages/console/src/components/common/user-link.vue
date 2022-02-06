@@ -3,7 +3,6 @@ import { Registration, Role } from "@frilan/models"
 import EventLink from "./event-link.vue"
 import { useStore } from "../../store/store"
 import { toRefs } from "vue"
-// noinspection ES6UnusedImports
 import { Star } from "mdue"
 
 const store = useStore()

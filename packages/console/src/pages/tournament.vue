@@ -9,7 +9,6 @@ import UserLink from "../components/common/user-link.vue"
 import EventLink from "../components/common/event-link.vue"
 import { NotFoundError } from "../utils/not-found-error"
 import { Subscriber } from "../utils/subscriber"
-// noinspection ES6UnusedImports
 import {
   Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, CalendarEdit, Delete, ExitRun, Eye,
   FlagCheckered, HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,

@@ -5,7 +5,6 @@ import { Registration, Status, Team, Tournament } from "@frilan/models"
 import EventLink from "../components/common/event-link.vue"
 import { toRefs, watchEffect } from "vue"
 import { Subscriber } from "../utils/subscriber"
-// noinspection ES6UnusedImports
 import {
   Account, AccountGroup, AlertCircleCheck, CalendarPlus, CheckCircle, ClockOutline, EyeOff, FlagCheckered, Play,
 } from "mdue"

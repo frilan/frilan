@@ -4,7 +4,6 @@ import { useStore } from "../store/store"
 import { redirectToEvent } from "../utils/redirect-to-event"
 import Logo from "../components/common/logo.vue"
 import axios from "axios"
-// noinspection ES6UnusedImports
 import { AlertCircle } from "mdue"
 
 const router = useRouter()
