@@ -7,6 +7,8 @@ import { toRefs, watchEffect } from "vue"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
 import { NotFoundError } from "../utils/not-found-error"
+import Checkbox from "../components/common/checkbox.vue"
+import { Close, ContentSave } from "mdue"
 
 const route = useRoute()
 const router = useRouter()
@@ -18,19 +20,7 @@ let { event, mainEvent } = $(toRefs(store.state))
 // if true, we are editing an existing tournament
 const editing = !!name
 
-let tournament = $ref({
-  id: NaN,
-  name: "",
-  shortName: "",
-  date: event.start,
-  duration: 120,
-  rules: "",
-  teamSizeMin: 1,
-  teamSizeMax: 1,
-  teamCountMin: 2,
-  teamCountMax: 32,
-  status: Status.Hidden,
-})
+let tournament = $ref(new Tournament)
 
 if (editing) {
   const tournaments = await http.getMany(`/events/${ event.id }/tournaments?shortName=${ name }`, Tournament)
@@ -40,9 +30,25 @@ if (editing) {
 
   watchEffect(() => document.title = `Edit ${ tournament.name } - Console`)
 
-} else
+} else {
+  // default values
+  Object.assign(tournament, {
+    name: "",
+    shortName: "",
+    date: event.start,
+    duration: 120,
+    teamSizeMin: 1,
+    teamSizeMax: 5,
+    teamCountMin: 2,
+    teamCountMax: 32,
+    status: new Date().getTime() > event.start.getTime() ? Status.Hidden : Status.Ready,
+  })
+
   watchEffect(() => tournament.shortName = [...tournament.name.matchAll(/^\w|(?<= )\w|[A-Z\d]/g)]
     .map(([c]) => c).join("").toLowerCase())
+}
+
+watchEffect(() => tournament.shortName = tournament.shortName.toLowerCase())
 
 let hidden = $computed({
   get: () => tournament.status === Status.Hidden,
@@ -53,7 +59,22 @@ let started = $computed(() =>
   tournament.status === Status.Started
   || tournament.status === Status.Finished)
 
+let endDate = $computed(() => new Date(tournament.date.getTime() + tournament.duration * 60000))
+let endTime = $computed(() => endDate.getHours() + ":" + endDate.getMinutes().toString().padStart(2, "0"))
+
+let singlePlayer = $ref(tournament.teamSizeMax === 1)
+let variableTeamSize = $ref(editing && tournament.teamSizeMax !== tournament.teamSizeMin)
+
 async function save() {
+  if (singlePlayer)
+    tournament.teamSizeMin = tournament.teamSizeMax = 1
+  if (!variableTeamSize)
+    tournament.teamSizeMin = tournament.teamSizeMax
+
+  // delete background if empty URL
+  if (!tournament.background?.length)
+    tournament.background = undefined
+
   if (editing)
     await http.patch("/tournaments/" + tournament.id, tournament)
   else
@@ -68,48 +89,128 @@ async function save() {
 </script>
 
 <template lang="pug">
-h1(v-if="editing") Edit {{ tournament.name }}
+h1(v-if="editing") {{ tournament.name }}
 h1(v-else) New tournament
 
 form(@submit.prevent="save")
-  .field
-    label(for="name") Name
-    input(id="name" minlength=1 autofocus v-model="tournament.name")
-  .field
-    label(for="short-name") Short name
-    input(id="short-name" pattern="^[a-z0-9-]+$" v-model="tournament.shortName")
-  .field
-    label(for="date") Date
-    datetime-picker(id="date" v-model="tournament.date"
-      :min="event.start"
-      :max="event.end")
-  .field
-    label(for="duration") Duration
-    input(id="duration" type="number" min=1 v-model="tournament.duration")
-    span minutes
-  template(v-if="!started")
-    .field
-      label(for="size") Team size
-      input(id="size" type="number" v-model="tournament.teamSizeMax")
-    .field
-      label(for="size-min") Minimum size
-      input(id="size-min" type="number" v-model="tournament.teamSizeMin")
-    .field
-      label(for="count") Team count
-      input(id="count" type="number" v-model="tournament.teamCountMax")
-    .field
-      label(for="count-min") Minimum count
-      input(id="count-min" type="number" min=2 v-model="tournament.teamCountMin")
-  .field
-    label(for="rules") Rules
-    textarea(id="rules" rows=6 v-model="tournament.rules")
-  .field(v-if="!started")
-    label(for="hidden") Hidden
-    input(id="hidden" type="checkbox" v-model="hidden")
+  fieldset
+    label Tournament name
+      input(minlength=1 autofocus v-model="tournament.name" required)
+    label Abbreviation
+      input(pattern="^[a-z0-9-]+$" v-model="tournament.shortName" required)
+      .info(:class="{ hidden: !tournament.shortName.length }")
+        | Tournament URL: #[code /tournaments/{{ tournament.shortName }}]
 
-  button(type="submit") {{ editing ? "Save" : "Create" }}
+  fieldset
+    label Date and time
+      datetime-picker(v-model="tournament.date" :min="event.start" :max="event.end" required)
+    label Duration
+      .with-suffix
+        input(type="number" min=1 v-model="tournament.duration" required)
+        span minutes
+      .info(:class="{ hidden: !tournament.duration }")
+        | Tournament ends at {{ endTime }}
+
+  fieldset(v-if="!started")
+    .buttons-left.wide
+      label Game type
+      checkbox(v-model="singlePlayer") Single player
+    label Maximum amount of {{ singlePlayer ? "players" : "teams" }}
+      input(type="number" :min="tournament.teamCountMin" v-model="tournament.teamCountMax" required)
+    label Minimum amount of {{ singlePlayer ? "players" : "teams" }}
+      input(type="number" min=2 :max="tournament.teamCountMax" v-model="tournament.teamCountMin" required)
+    template(v-if="!singlePlayer")
+      label {{ variableTeamSize ? "Maximum members" : "Members" }} per team
+        input(type="number" :min="variableTeamSize ? tournament.teamSizeMin : undefined"
+          v-model="tournament.teamSizeMax" required)
+      .buttons-left(v-if="!variableTeamSize")
+        checkbox(v-model="variableTeamSize") Variable team size
+      label(v-else) Minimum members per team
+        input(type="number" min=1 :max="tournament.teamSizeMax" v-model="tournament.teamSizeMin" required)
+
+  fieldset
+    label.wide Rules
+      textarea.small(rows=10 v-model="tournament.rules")
+    label.wide Background picture
+      input.small(v-model="tournament.background" placeholder="Picture URL")
+    .buttons-left.wide(v-if="!started")
+      label Visibility
+      checkbox(v-model="hidden") Hidden
+
+  .buttons-end
+    button.button(@click.prevent="router.back")
+      close
+      span Cancel
+    button.button(type="submit")
+      content-save
+      span {{ editing ? "Save" : "Create" }}
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
+@import "../assets/styles/form"
 
+h1
+  text-align: center
+
+form
+  min-width: 700px
+  padding: 20px
+
+fieldset
+  display: grid
+  grid-template-columns: 50% 50%
+
+  @media (max-width: 650px)
+    grid-template-columns: 100%
+
+  > *
+    padding: 10px
+
+  .wide
+    grid-column: 1 / span 2
+
+.with-suffix
+  display: flex
+  align-items: center
+
+  input
+    flex-grow: 1
+
+  span
+    padding: 8px
+
+.info
+  font-size: 0.9em
+  color: rgba(255, 255, 255, 0.6)
+  padding: 8px
+  transition: opacity 0.1s linear
+
+  code
+    color: cornflowerblue
+    background: rgba(0, 0, 0, 0.4)
+    padding: 2px
+    border-radius: 5px
+
+.hidden
+  opacity: 0
+
+.buttons-left, .buttons-end
+  display: flex
+  align-items: center
+
+  > *
+    margin: 6px
+
+    &:first-child
+      margin-left: 0
+
+.buttons-left
+  justify-content: start
+
+.buttons-end
+  justify-content: end
+
+  > *
+    margin: 6px
 </style>

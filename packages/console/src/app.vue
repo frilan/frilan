@@ -58,31 +58,5 @@ main
   background-color: $main-bg
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.25)
   overflow-y: auto
-
-  $scroll-track: rgba(200, 200, 255, 0.15)
-  $scroll-thumb: rgba(200, 200, 255, 0.3)
-  $scroll-hover: rgba(200, 200, 255, 0.45)
-
-  // webkit
-  &::-webkit-scrollbar
-    width: 24px
-
-  &::-webkit-scrollbar-track
-    background-color: $scroll-track
-    background-clip: padding-box
-    border: 8px solid transparent
-    border-radius: 100px
-
-  &::-webkit-scrollbar-thumb
-    background-color: $scroll-thumb
-    background-clip: padding-box
-    border: 8px solid transparent
-    border-radius: 100px
-
-    &:hover
-      background-color: $scroll-hover
-
-  // firefox
-  scrollbar-width: thin
-  scrollbar-color: $scroll-thumb $scroll-track
+  @extend .scrollable
 </style>

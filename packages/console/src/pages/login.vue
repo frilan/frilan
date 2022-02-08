@@ -43,12 +43,8 @@ async function login() {
   .window
     logo.logo(vertical)
     form(@submit.prevent="login")
-      .field
-        label(for="username") Username
-        input(id="username" autocomplete="username" autofocus required v-model="username")
-      .field
-        label(for="password") Password
-        input(id="password" type="password" autocomplete="current-password" required v-model="password")
+      input(placeholder="Username" autocomplete="username" autofocus required v-model="username")
+      input(placeholder="Password" type="password" autocomplete="current-password" required v-model="password")
       button.button(type="submit") Sign in
 
     .error.icon-text(v-if="wrongCredentials")
@@ -61,7 +57,6 @@ async function login() {
 
 <style lang="sass" scoped>
 @import "../assets/styles/main"
-@import "../assets/styles/form"
 
 .container
   position: fixed
@@ -121,18 +116,34 @@ async function login() {
     animation-delay: 0.45s
 
 form
-  max-width: 300px
+  max-width: 250px
   margin: 40px auto 0
   text-align: right
 
   .button
-    margin: 10px 0
+    margin-bottom: 10px
     background-color: rgba(255, 255, 255, 0.15)
     outline: 1px solid rgba(255, 255, 255, 0.2)
 
     &:not([disabled]):hover
       background-color: rgba(255, 255, 255, 0.2)
       outline: 1px solid rgba(255, 255, 255, 0.4)
+
+input
+  display: block
+  width: 100%
+  box-sizing: border-box
+  margin-bottom: 16px
+  font-family: inherit
+  font-size: 1.1em
+  padding: 12px 8px
+  border: none
+  border-radius: 5px
+  background-color: rgba(255, 255, 255, 0.6)
+
+  &:focus
+    outline: 1px solid cornflowerblue
+    background-color: rgba(255, 255, 255, 0.8)
 
 .error
   color: $accent

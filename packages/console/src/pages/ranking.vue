@@ -5,7 +5,7 @@ import UserLink from "../components/common/user-link.vue"
 import { realTimeRegistrations } from "../utils/real-time"
 import { Role } from "@frilan/models"
 import Rank from "../components/common/rank.vue"
-import { CheckboxBlank, CheckboxMarked } from "mdue"
+import Checkbox from "../components/common/checkbox.vue"
 
 const store = useStore()
 let { event } = $(toRefs(store.state))
@@ -29,18 +29,16 @@ function getRank(index: number): number {
 
 <template lang="pug">
 .container
-  button.button(@click="includeOrganizers = !includeOrganizers")
-    checkbox-marked(v-if="includeOrganizers")
-    checkbox-blank(v-else)
-    span Include organizers
+  template(v-if="filtered.length")
+    checkbox(v-model="includeOrganizers") Include organizers
 
-  table(v-if="filtered.length")
-    tr(v-for="(registration, index) in filtered" :class="{ ['rank-' + getRank(index)]: true }")
-      td.rank
-        rank(:rank="getRank(index)")
-      td.player
-        user-link(:registration="registration")
-      td.score {{ registration.score }} pts
+    table
+      tr(v-for="(registration, index) in filtered" :class="{ ['rank-' + getRank(index)]: true }")
+        td.rank
+          rank(:rank="getRank(index)")
+        td.player
+          user-link(:registration="registration")
+        td.score {{ registration.score }} pts
 
   p(v-else) No player has scored any point yet.
 </template>
@@ -55,12 +53,6 @@ function getRank(index: number): number {
 
 .button
   margin: 16px
-
-  *:hover
-    cursor: pointer
-
-  label
-    padding-left: 5px
 
 .rank-1
   font-size: 2em

@@ -3,7 +3,7 @@ import { toRefs } from "vue"
 import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
-import { CheckboxBlank, CheckboxMarked } from "mdue"
+import Checkbox from "../components/common/checkbox.vue"
 import http from "../utils/http"
 
 const store = useStore()
@@ -34,10 +34,7 @@ h1 Events
 router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
 
 template(v-if="events.length")
-  button.button(@click="onlyRegistered = !onlyRegistered")
-    checkbox-marked(v-if="onlyRegistered")
-    checkbox-blank(v-else)
-    span Only show events I'm registered for
+  checkbox(v-model="onlyRegistered") Only show events I'm registered for
 
   .event(v-if="filteredEvents.length" v-for="event in filteredEvents")
     h2

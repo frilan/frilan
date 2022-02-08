@@ -31,4 +31,7 @@ input(id="date" type="datetime-local" v-model="date"
 <style scoped lang="sass">
 input.empty
   color: lightgrey
+
+input::-webkit-calendar-picker-indicator
+  filter: invert(1)
 </style>
