@@ -8,6 +8,11 @@ import { Event, Registration, Role, User } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
 import { NotFoundError } from "../utils/not-found-error"
 import { Subscriber } from "../utils/subscriber"
+import ProfilePicture from "../components/common/profile-picture.vue"
+import ConsoleIcon from "../assets/images/console.svg?component"
+import { AccountEdit, Medal } from "mdue"
+import AdminTag from "../components/tags/admin-tag.vue"
+import OrganizerTag from "../components/tags/organizer-tag.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -53,33 +58,149 @@ function resultLink(event: Event): RouteLocationRaw {
     return routeInEvent("results", event.shortName, { name })
 }
 
+/**
+ * Generates the style for a specific event card.
+ * @param event The event
+ */
+function eventStyle(event: Event) {
+  const colorA = `hsla(${ event.id * 127 }, 30%, 30%, 0.8)`
+  const colorB = `hsla(${ event.id * 127 + 60 }, 40%, 15%, 0.8)`
+  return {
+    background: `linear-gradient(130deg, ${ colorA } 0%, ${ colorB } 100%)`,
+    outline: `2px solid ${ colorB }`,
+  }
+}
+
 // handle live updates
 new Subscriber(User, { id: user.id })
   .onUpdate(updatedUser => Object.assign(user, updatedUser))
 </script>
 
 <template lang="pug">
-h1 {{ user.displayName }}
+header
+  .profile
+    profile-picture.pp(:user="user" :size="9" square)
+    .info
+      admin-tag(v-if="user.admin")
+      .username(v-if="user.username !== user.displayName" title="Username") {{ user.username }}
+      h1 {{ user.displayName }}
 
-router-link(
-  v-if="currentUser.admin || user.id === currentUser.id"
-  :to="{ name: 'edit-user', params: { name } }")
-  | Edit profile
-
-p(v-if="user.admin") Administrator
+  .edit(v-if="currentUser.admin || user.id === currentUser.id")
+    router-link.button(:to="{ name: 'edit-user', params: { name } }")
+      account-edit
+      span Edit profile
 
 template(v-if="entries.length")
-  h2 All events
-  .event(v-for="{ event, registration, rank } in entries")
-    h3 {{ event.name }}
-    p(v-if="registration.role === Role.Organizer") Organizer
-    p Score: {{ registration.score }} pts
-    p Rank: {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
-    router-link(:to="resultLink(event)") View results
+  h2 Attended events
+  .event(v-for="{ event, registration, rank } in entries" :style="eventStyle(event)")
+    div
+      h3
+        console-icon
+        span {{ event.name }}
+      table
+        tr
+          td Score
+          td.value {{ registration.score }} pts
+        tr
+          td Rank
+          td.value {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
+    div
+      organizer-tag(v-if="registration.role === Role.Organizer")
+      router-link.button(:to="resultLink(event)")
+        medal
+        span View results
 
-p(v-else) This user isn't registered for any event
+p.no-attended(v-else) This user did not attend any event.
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
 
+header
+  min-width: 550px
+  margin: 40px
+  display: flex
+  justify-content: space-between
+  align-items: start
+
+.profile
+  display: flex
+  align-items: end
+
+.info
+  display: flex
+  flex-direction: column
+  align-items: start
+  margin-left: 15px
+
+  h1
+    font-size: 3em
+    margin: 0
+
+  .username
+    margin-bottom: 8px
+    font-size: 1.3em
+    color: rgba(255, 255, 255, 0.6)
+
+  .admin-tag
+    margin-bottom: 14px
+
+h2
+  @extend .skewed
+  text-align: center
+  border-top: 1px solid rgba(220, 230, 255, 0.2)
+  padding-top: 30px
+  margin: 0 30px
+
+.event
+  margin: 30px
+  padding: 20px
+  border-radius: 10px
+  display: flex
+  justify-content: space-between
+
+  & > div
+    display: flex
+    flex-direction: column
+    justify-content: space-between
+
+    &:last-child
+      align-items: end
+
+  h3
+    margin: 0
+    display: flex
+    align-items: center
+
+    svg
+      height: 22px
+      margin-right: 12px
+
+    span
+      @extend .skewed
+      color: white
+
+  table
+    max-width: 120px
+    border-collapse: collapse
+    color: rgba(255, 255, 255, 0.7)
+
+  td
+    padding-top: 20px
+
+    &.value
+      font-weight: bold
+      color: white
+      margin-left: 10px
+      text-align: center
+
+  .button
+    background-color: rgba(255, 255, 255, 0.1)
+
+    &:hover
+      background-color: rgba(255, 255, 255, 0.15)
+
+.no-attended
+  margin: 40px
+  color: rgba(255, 255, 255, 0.7)
 </style>

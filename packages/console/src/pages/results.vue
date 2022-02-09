@@ -2,7 +2,7 @@
 import { toRefs } from "vue"
 import { useRoute } from "vue-router"
 import { useStore } from "../store/store"
-import { Registration, Status, Team, Tournament, User } from "@frilan/models"
+import { Registration, Role, Status, Team, Tournament, User } from "@frilan/models"
 import http from "../utils/http"
 import axios from "axios"
 import TournamentLink from "../components/common/tournament-link.vue"
@@ -10,6 +10,7 @@ import ProfilePicture from "../components/common/profile-picture.vue"
 import { NotFoundError } from "../utils/not-found-error"
 import { Subscriber } from "../utils/subscriber"
 import { Account, AlertCircleCheck, CheckCircle } from "mdue"
+import OrganizerTag from "../components/tags/organizer-tag.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -101,10 +102,12 @@ new Subscriber(Tournament, { eventId: event.id })
 
 <template lang="pug">
 header
-  h1
-    profile-picture.pp(:user="user" :size="1.6")
-    span {{ user.displayName }}
-  router-link.button.user-link(:to="{ name: 'user', params: { name } }")
+  .user
+    h1
+      profile-picture.pp(:user="user" :size="1.6")
+      span {{ user.displayName }}
+    organizer-tag(v-if="registration?.role === Role.Organizer")
+  router-link.button(:to="{ name: 'user', params: { name } }")
     account
     span View profile
 
@@ -142,7 +145,7 @@ template(v-if="registration")
           alert-circle-check
           span {{ team.members.length }} / {{ team.tournament.teamSizeMin }}
 
-p(v-else) This user isn't registered for the event.
+p.not-registered(v-else) This user isn't registered for the event.
 </template>
 
 <style scoped lang="sass">
@@ -152,11 +155,15 @@ header
   display: flex
   justify-content: space-between
   align-items: center
-  margin: 10px 100px
+  margin: 10px 80px
+  min-width: 400px
 
-  .button
-    border-radius: 20px
-    padding: 10px 16px
+  .user
+    display: flex
+    align-items: center
+
+    h1
+      margin-right: 20px
 
 h1
   display: flex
@@ -219,4 +226,8 @@ h2
   border-top: 1px solid rgba(220, 230, 255, 0.2)
   padding-top: 30px
   margin: 0 60px
+
+.not-registered
+  text-align: center
+  margin: 30px
 </style>

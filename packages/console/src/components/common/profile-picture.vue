@@ -5,7 +5,11 @@ import ConsoleIcon from "../../assets/images/console.svg?component"
 const props = withDefaults(defineProps<{
   user: User
   size?: number
-}>(), { size: 1.5 })
+  square?: boolean
+}>(), {
+  size: 1.5,
+  square: false,
+})
 
 let hue = $computed(() => props.user.id * 73)
 
@@ -14,6 +18,7 @@ let style = $computed(() => ({
   width: props.size + "em",
   color: `hsl(${ hue }, 50%, 75%)`,
   backgroundColor: `hsl(${ hue }, 25%, 25%)`,
+  borderRadius: props.square ? "5px" : "100%",
 }))
 </script>
 
@@ -26,7 +31,6 @@ img(v-if="user.profilePicture" :src="user.profilePicture" :style="style" alt="Pr
 <style scoped lang="sass">
 img, .default
   object-fit: cover
-  border-radius: 100%
   overflow: hidden
   display: inline-flex
   align-items: center
