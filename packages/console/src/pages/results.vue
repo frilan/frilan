@@ -6,8 +6,10 @@ import { Registration, Status, Team, Tournament, User } from "@frilan/models"
 import http from "../utils/http"
 import axios from "axios"
 import TournamentLink from "../components/common/tournament-link.vue"
+import ProfilePicture from "../components/common/profile-picture.vue"
 import { NotFoundError } from "../utils/not-found-error"
 import { Subscriber } from "../utils/subscriber"
+import { Account, AlertCircleCheck, CheckCircle } from "mdue"
 
 const route = useRoute()
 const store = useStore()
@@ -98,12 +100,18 @@ new Subscriber(Tournament, { eventId: event.id })
 </script>
 
 <template lang="pug">
-h1 {{ user.displayName }}
-router-link(:to="{ name: 'user', params: { name } }") View profile
+header
+  h1
+    profile-picture.pp(:user="user" :size="1.6")
+    span {{ user.displayName }}
+  router-link.button.user-link(:to="{ name: 'user', params: { name } }")
+    account
+    span View profile
 
 template(v-if="registration")
-  h2 Score: {{ registration.score }}
-  table
+  .score Score
+    span.value(:class="{ zero: !registration.score }") {{ registration.score }}
+  table(v-if="finishedTeams.length")
     tr
       th Tournament
       th Team
@@ -127,15 +135,88 @@ template(v-if="registration")
         td
           tournament-link(:tournament="team.tournament")
         td {{ team.tournament.teamSizeMax > 1 ? team.name : "" }}
-        td(v-if="isTeamRegistered(team)") Registered
-        td(v-else) &#9888; {{ team.members.length }} / {{ team.tournament.teamSizeMin }}
-          span.max(v-if="team.tournament.teamSizeMax > team.tournament.teamSizeMin")
-            | !{" "}({{ team.tournament.teamSizeMax }})
+        td.registered.icon-text(v-if="isTeamRegistered(team)")
+          check-circle
+          span Registered
+        td.incomplete.icon-text(v-else)
+          alert-circle-check
+          span {{ team.members.length }} / {{ team.tournament.teamSizeMin }}
 
 p(v-else) This user isn't registered for the event.
 </template>
 
 <style scoped lang="sass">
-table
+@import "../assets/styles/main"
+
+header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin: 10px 100px
+
+  .button
+    border-radius: 20px
+    padding: 10px 16px
+
+h1
+  display: flex
+  align-items: center
+
+.pp
+  margin-right: 12px
+
+.score
+  font-size: 1.8em
   text-align: center
+
+  .value
+    font-weight: bold
+    display: inline-block
+    padding: 8px
+    margin: 12px
+    min-width: 50px
+    border-radius: 5px
+    color: mediumspringgreen
+    background: rgba(0, 0, 0, 0.2)
+
+    &.zero
+      color: darkgrey
+
+table
+  min-width: 600px
+  text-align: center
+  border-collapse: collapse
+  margin: 30px 80px
+  outline: 2px solid rgba(0, 0, 0, 0.15)
+  border-radius: 5px
+  overflow: hidden
+
+tr
+  background-size: cover
+  background-position: center
+
+th
+  color: rgba(220, 230, 255, 0.8)
+  background: rgba(0, 0, 0, 0.15)
+
+td
+  background: rgba(0, 0, 0, 0.05)
+
+th, td
+  padding: 12px
+  justify-content: center
+
+  &.registered
+    color: mediumspringgreen
+
+  &.incomplete
+    justify-content: center
+    color: orange
+
+h2
+  @extend .skewed
+  text-align: center
+  border-top: 1px solid rgba(220, 230, 255, 0.2)
+  padding-top: 30px
+  margin: 0 60px
 </style>
