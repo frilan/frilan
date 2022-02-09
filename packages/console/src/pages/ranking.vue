@@ -58,13 +58,22 @@ function getRank(index: number): number {
   font-size: 2em
   height: 60px
 
+  .player
+    padding-left: 8px
+
 .rank-2
   font-size: 1.66em
   height: 50px
 
+  .player
+    padding-left: 12px
+
 .rank-3
   font-size: 1.33em
   height: 40px
+
+  .player
+    padding-left: 15px
 
 .rank, .score
   text-align: center
@@ -74,5 +83,5 @@ function getRank(index: number): number {
 
 .player
   min-width: 240px
-  padding: 8px
+  padding: 8px 8px 8px 18px
 </style>

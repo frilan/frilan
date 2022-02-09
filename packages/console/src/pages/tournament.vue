@@ -318,9 +318,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
                     delete
               ul.members(v-if="team.members.length")
                 li.member(v-for="member in team.members")
-                  .user.icon-text(:class='{ myself: member.userId === user.id }')
-                    account
-                    user-link(:registration="member")
+                  user-link.user(:registration="member" :class='{ myself: member.userId === user.id }')
                   .actions
                     button.icon.red(
                       v-if="isOrganizer && !tournamentStarted"
@@ -338,9 +336,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
                   span Join
 
             .member(v-else)
-              .user.icon-text(:class='{ myself: team.members[0].userId === user.id }')
-                account
-                user-link(:registration="team.members[0]")
+              user-link.user(:registration="team.members[0]" :class='{ myself: team.members[0].userId === user.id }')
               .actions
                 button.icon.red(v-if="isOrganizer && !tournamentStarted" @click="deleteTeam(team)" title="Unregister")
                   account-remove

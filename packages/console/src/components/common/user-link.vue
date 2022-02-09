@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Registration, Role } from "@frilan/models"
 import EventLink from "./event-link.vue"
+import ProfilePicture from "./profile-picture.vue"
 import { useStore } from "../../store/store"
 import { toRefs } from "vue"
 import { Star } from "mdue"
@@ -15,17 +16,28 @@ let organizer = $computed(() => props.registration.role === Role.Organizer)
 </script>
 
 <template lang="pug">
-event-link(
+event-link.link(
   to="results"
   :params="{ name: registration.user.username }"
   :class="{ myself, organizer }"
   :title="organizer ? 'Organizer' : undefined"
 )
+  profile-picture.pp(:user="registration.user")
   span {{ registration.user.displayName }}
   star(v-if="organizer")
 </template>
 
 <style scoped lang="sass">
+.link
+  display: inline-flex
+  align-items: center
+
+  &:hover .pp
+    filter: brightness(125%)
+
+.pp
+  margin-right: 8px
+
 .myself
   font-weight: bold
   animation-name: blink
