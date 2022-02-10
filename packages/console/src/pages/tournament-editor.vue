@@ -123,7 +123,7 @@ form(@submit.prevent="save")
       label {{ variableTeamSize ? "Maximum members" : "Members" }} per team
         input(type="number" :min="variableTeamSize ? tournament.teamSizeMin : undefined"
           v-model="tournament.teamSizeMax" required)
-      .buttons-left(v-if="!variableTeamSize")
+      .variable-size(v-if="!variableTeamSize")
         checkbox(v-model="variableTeamSize") Variable team size
       label(v-else) Minimum members per team
         input(type="number" min=1 :max="tournament.teamSizeMax" v-model="tournament.teamSizeMin" required)
@@ -137,7 +137,7 @@ form(@submit.prevent="save")
       label Visibility
       checkbox(v-model="hidden") Hidden
 
-  .buttons-end
+  .buttons-right
     button.button(@click.prevent="router.back")
       close
       span Cancel
@@ -156,19 +156,6 @@ h1
 form
   min-width: 700px
   padding: 20px
-
-fieldset
-  display: grid
-  grid-template-columns: 50% 50%
-
-  @media (max-width: 650px)
-    grid-template-columns: 100%
-
-  > *
-    padding: 10px
-
-  .wide
-    grid-column: 1 / span 2
 
 .with-suffix
   display: flex
@@ -195,22 +182,7 @@ fieldset
 .hidden
   opacity: 0
 
-.buttons-left, .buttons-end
-  display: flex
-  align-items: center
-
-  > *
-    margin: 6px
-
-    &:first-child
-      margin-left: 0
-
-.buttons-left
-  justify-content: start
-
-.buttons-end
-  justify-content: end
-
-  > *
-    margin: 6px
+.variable-size
+  @extend .buttons-left
+  margin-top: 14px
 </style>

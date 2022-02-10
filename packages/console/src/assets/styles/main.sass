@@ -63,8 +63,11 @@ button.link
     filter: saturate(50%) brightness(75%) contrast(60%)
 
   &:focus
-    outline-width: 2px
+    outline: 1px solid cornflowerblue
     filter: brightness(120%)
+
+    &:not([disabled]):hover
+      outline-color: #93b9ff
 
 button.icon
   @extend .button
@@ -81,24 +84,40 @@ button.icon
 
 button, .button, button.icon
   &.red
-    color: #f8a
+    $red: #f8a
+    color: $red
     background-color: #512
     outline-color: rgba(255, 128, 128, 0.2)
 
     &:not([disabled]):hover
-      color: #f8a
+      color: $red
       background-color: #623
       outline-color: rgba(255, 128, 128, 0.3)
 
+    &:focus
+      outline-color: $red
+      filter: brightness(120%)
+
+      &:not([disabled]):hover
+        outline-color: #fac
+
   &.green
-    color: #8fa
+    $green: #8fa
+    color: $green
     background-color: #142
     outline-color: rgba(128, 255, 128, 0.2)
 
     &:not([disabled]):hover
-      color: #8fa
+      color: $green
       background-color: #253
       outline-color: rgba(128, 255, 128, 0.3)
+
+    &:focus
+      outline-color: $green
+      filter: brightness(120%)
+
+      &:not([disabled]):hover
+        outline-color: #afc
 
 .icon-text
   display: flex

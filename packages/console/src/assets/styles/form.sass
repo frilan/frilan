@@ -5,6 +5,17 @@ fieldset
   border-bottom: 1px solid rgba(220, 230, 255, 0.2)
   padding: 0 0 12px
   margin: 0 0 16px
+  display: grid
+  grid-template-columns: 50% 50%
+
+  @media (max-width: 650px)
+    grid-template-columns: 100%
+
+  > *
+    padding: 10px
+
+  .wide
+    grid-column: 1 / span 2
 
   legend
     font-size: 1.2em
@@ -39,3 +50,22 @@ input, textarea
 textarea
   resize: vertical
   @extend .scrollable
+
+.buttons-left, .buttons-right
+  display: flex
+  align-items: center
+
+  > *
+    margin: 6px
+
+    &:first-child
+      margin-left: 0
+
+.buttons-left
+  justify-content: start
+
+.buttons-right
+  justify-content: end
+
+  > *
+    margin: 6px
