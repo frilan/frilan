@@ -113,7 +113,10 @@ router.beforeEach(async to => {
         return { name: "home" }
 
     if (!to.meta.visitor && !store.state.logged) {
-        store.commit("setNext", to)
+        // if targeting a specific page, redirect after login
+        if (to.path !== "/")
+            store.commit("setNext", to)
+
         return { name: "login" }
     }
 
