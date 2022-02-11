@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onErrorCaptured, toRefs } from "vue"
+import { onErrorCaptured, toRefs, watchEffect } from "vue"
 import { PageStatus, useStore } from "./store/store"
 import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
@@ -13,6 +13,7 @@ const router = useRouter()
 const route = useRoute()
 
 let { logged, status } = $(toRefs(store.state))
+let inPastEvent = $computed(() => store.getters.inPastEvent)
 
 // catch unhandled errors
 onErrorCaptured((err: unknown) => {
@@ -29,6 +30,14 @@ onErrorCaptured((err: unknown) => {
   }
   store.commit("setError", err)
   return true
+})
+
+// apply global filter when browsing past events
+watchEffect(() => {
+  if (inPastEvent)
+    document.body.classList.add("past-event")
+  else
+    document.body.classList.remove("past-event")
 })
 </script>
 

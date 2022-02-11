@@ -93,6 +93,9 @@ export const store = createStore<State>({
                     r.eventId === state.event.id
                     && r.role === Role.Organizer)
         },
+        inPastEvent(state) {
+            return state.logged && !state.init && state.event.shortName !== state.mainEvent
+        },
     },
     mutations: {
         setUser(state, user: User) {

@@ -4,20 +4,24 @@ import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
 import { routeInEvent } from "../utils/route-in-event"
 import Checkbox from "../components/common/checkbox.vue"
+import OrganizerTag from "../components/tags/organizer-tag.vue"
+import PlayerTag from "../components/tags/player-tag.vue"
 import http from "../utils/http"
+import { AccountGroup, Calendar, Pencil } from "mdue"
 
 const store = useStore()
 let { user, mainEvent } = $(toRefs(store.state))
 
-// initially true if registered for at least one event
-let onlyRegistered = $ref(!!user.registrations.length)
-
 let events = await http.getMany("/events?load=registrations", Event)
+events = events.filter(event => event.shortName !== mainEvent)
 events.sort((a, b) => b.start.getTime() - a.start.getTime())
 
-let filteredEvents = $computed(() => onlyRegistered
-  ? events.filter(({ id }) => user.registrations.some(r => r.eventId === id))
-  : events)
+let onlyShowAttended = $ref(true)
+let onlyAttended = $computed(() => events.filter(({ id }) => user.registrations.some(r => r.eventId === id)))
+
+// if not attended any past event, or if attended all of them, simply show all events
+let showAll = $computed(() => !onlyAttended.length || onlyAttended.length === events.length)
+let filteredEvents = $computed(() => showAll || !onlyShowAttended ? events : onlyAttended)
 
 function isMainEvent(event: Event) {
   return event.shortName === mainEvent
@@ -27,30 +31,123 @@ function homeInEvent(event: Event) {
   return routeInEvent("home", event.shortName)
 }
 
+function formatDateRange(a: Date, b: Date) {
+
+  function getMonth(date: Date) {
+    return date.toLocaleString("default", { month: "long" })
+  }
+
+  if (a.getMonth() === b.getMonth())
+    return `${ a.getDate() } – ${ b.getDate() } ${ getMonth(a) } ${ a.getFullYear() }`
+  else
+    return `${ a.getDate() } ${ getMonth(a) } – ${ b.getDate() } ${ getMonth(b) } ${ a.getFullYear() }`
+}
 </script>
 
 <template lang="pug">
-h1 Events
-router-link(v-if="user.admin" :to="{ name: 'new-event' }") New event
-
+h1 Past events
 template(v-if="events.length")
-  checkbox(v-model="onlyRegistered") Only show events I'm registered for
+  p.info Click any event to browse previous tournaments and results
 
-  .event(v-if="filteredEvents.length" v-for="event in filteredEvents")
-    h2
-      router-link(v-if="isMainEvent(event)" :to="{ name: 'home' }") {{ event.name }}
-      router-link(v-else :to="homeInEvent(event)") {{ event.name }}
-    router-link(v-if="user.admin" :to="{ name: 'edit-event', params: { name: event.shortName } }") Edit
-    p From {{ event.start.toLocaleString() }} to {{ event.end.toLocaleString() }}
-    p {{ event.registrations.length }} attendants
-    p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
-      | You are an organizer of this event
+  header
+    checkbox(v-if="!showAll" v-model="onlyShowAttended") Only show events I attended
 
-  p(v-else) You are not registered for an event yet.
+  router-link.event(v-if="filteredEvents.length" v-for="event in filteredEvents" :to="homeInEvent(event)")
+    .row
+      h2 {{ event.name }}
+      router-link.button(
+        v-if="user.admin"
+        :to="{ name: 'edit-event', params: { name: event.shortName } }"
+        title="Edit event"
+      )
+        pencil
+        span Edit
+      organizer-tag(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
+      player-tag(v-else-if="user.registrations.some(r => r.eventId === event.id)")
+
+      p(v-if="user.registrations.find(r => r.eventId === event.id)?.role === Role.Organizer")
+    .row
+      .date
+        calendar
+        span {{ formatDateRange(event.start, event.end) }}
+      .attendees(title="Registered participants")
+        account-group
+        span {{ event.registrations.length }}
+
+  p(v-else) You did not attend any previous event.
 
 p(v-else) There are no events yet.
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
 
+h1, header, p
+  text-align: center
+
+.info
+  color: rgba(220, 230, 255, 0.8)
+  font-size: 0.9em
+
+.event
+  margin: 40px
+  padding: 20px
+  min-width: 400px
+  min-height: 110px
+  display: flex
+  flex-direction: column
+  justify-content: space-between
+  background-color: rgba(0, 0, 0, 0.15)
+  border-radius: 10px
+  color: white
+  transition: transform 0.15s
+
+  &:hover
+    background-color: rgba(0, 0, 0, 0.3)
+    transform: scale(1.02)
+    text-decoration: none
+    color: white
+
+  h2
+    flex-grow: 1
+    margin-top: 0
+
+  p:last-child
+    margin-bottom: 0
+
+  .row
+    display: flex
+    justify-content: space-between
+    align-items: start
+
+    &:last-child
+      align-items: end
+
+  .button
+    border-radius: 50px
+    font-size: 0.8em
+    padding: 6px 8px
+    margin: 0 12px
+    transition: opacity 0.1s linear
+
+  &:not(:hover) .button
+    opacity: 0
+
+.date, .attendees
+  @extend .icon-text
+
+  svg
+    color: rgba(220, 230, 255, 0.5)
+
+.date
+  font-size: 1.1em
+
+.attendees
+  font-size: 1.2em
+  background-color: rgba(0, 0, 0, 0.15)
+  padding: 10px
+  border-radius: 5px
+
+  span
+    margin-left: 6px
 </style>
