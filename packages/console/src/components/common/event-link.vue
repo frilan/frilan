@@ -10,9 +10,9 @@ const props = defineProps<{
 }>()
 
 const store = useStore()
-let { event, mainEvent } = $(toRefs(store.state))
+let { event, mainEvent, init } = $(toRefs(store.state))
 
-const location = $computed(() => event.shortName === mainEvent
+const location = $computed(() => init || event.shortName === mainEvent
   ? { name: props.to, params: props.params }
   : routeInEvent(props.to, event.shortName, props.params))
 </script>

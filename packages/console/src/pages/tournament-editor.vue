@@ -167,21 +167,6 @@ form
   span
     padding: 8px
 
-.info
-  font-size: 0.9em
-  color: rgba(255, 255, 255, 0.6)
-  padding: 8px
-  transition: opacity 0.1s linear
-
-  code
-    color: cornflowerblue
-    background: rgba(0, 0, 0, 0.4)
-    padding: 2px
-    border-radius: 5px
-
-.hidden
-  opacity: 0
-
 .variable-size
   @extend .buttons-left
   margin-top: 14px

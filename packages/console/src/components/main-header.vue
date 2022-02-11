@@ -40,7 +40,9 @@ header
         close-circle
   nav
     template(v-if="init")
-      button.link(@click="logout") Log out
+      button.link.main-link(@click="logout")
+        logout-icon
+        span Log out
     template(v-else)
       event-link.main-link(to="tournaments" :active="isHome")
         calendar
@@ -73,9 +75,9 @@ header
             event-link.icon-text(to="new-tournament")
               calendar-plus
               span New Tournament
-            router-link.icon-text(v-if="user.admin" :to="{ name: 'new-event' }")
+            router-link.icon-text(v-if="user.admin" :to="{ name: 'manage-events' }")
               calendar-multiple
-              span New event
+              span Manage events
             .separator
           button.link.icon-text(@click="logout")
             logout-icon

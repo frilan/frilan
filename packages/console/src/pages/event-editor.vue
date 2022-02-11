@@ -7,6 +7,7 @@ import http from "../utils/http"
 import { routeInEvent } from "../utils/route-in-event"
 import DatetimePicker from "../components/common/datetime-picker.vue"
 import { NotFoundError } from "../utils/not-found-error"
+import { Close, ContentSave } from "mdue"
 
 const route = useRoute()
 const router = useRouter()
@@ -17,13 +18,13 @@ const { name } = route.params
 // if true, we are editing an existing event
 const editing = !!name
 
-const nextYear = (new Date().getFullYear() + 1)
+const currentYear = new Date().getFullYear()
 let event = $ref({
   id: NaN,
-  name: "FriLAN " + nextYear,
-  shortName: nextYear.toString(),
-  start: new Date(new Date(nextYear.toString())),
-  end: new Date(new Date(nextYear + "-01-03")),
+  name: "FriLAN " + currentYear,
+  shortName: currentYear.toString(),
+  start: new Date(new Date(currentYear.toString())),
+  end: new Date(new Date(currentYear + "-01-03")),
 })
 
 if (editing) {
@@ -38,42 +39,54 @@ if (editing) {
     .map(([c]) => c).join("").toLowerCase())
 
 async function save() {
-  if (editing)
+  if (editing) {
     await http.patch("/events/" + event.id, event)
-  else {
-    await http.post("events", event, Event)
+    router.push({ name: "manage-events" })
+  } else {
+    await http.post("/events", event, Event)
     await store.dispatch("reloadEvents")
+    if (event.shortName === store.state.mainEvent)
+      router.push({ name: "home" })
+    else
+      router.push(routeInEvent("home", event.shortName))
   }
-
-  if (event.shortName === store.state.mainEvent)
-    router.push({ name: "home" })
-  else
-    router.push(routeInEvent("home", event.shortName))
 }
-
 </script>
 
 <template lang="pug">
-h1(v-if="editing") Edit {{ event.name }}
+h1(v-if="editing") {{ event.name || "&nbsp;" }}
 h1(v-else-if="store.state.init") Initial event
 h1(v-else) New event
 
 form(@submit.prevent="save")
-  .field
-    label(for="name") Name
-    input(id="name" minlength=1 autofocus v-model="event.name")
-  .field
-    label(for="short-name") Short name
-    input(id="short-name" pattern="^[a-z0-9-]+$" v-model="event.shortName")
-  .field
-    label(for="start") Start date
-    datetime-picker(id="start" v-model="event.start")
-  .field
-    label(for="end") End date
-    datetime-picker(id="end" v-model="event.end" :min="event.start")
-  button(type="submit") {{ editing ? "Save" : "Create" }}
+  fieldset
+    label Name
+      input(minlength=1 autofocus v-model="event.name" required)
+    label Abbreviation
+      input(pattern="^[a-z0-9-]+$" v-model="event.shortName" required)
+      .info(:class="{ hidden: !event.shortName.length }")
+        | Event URL: #[code /events/{{ event.shortName }}]
+    label Start
+      datetime-picker(v-model="event.start" required)
+    label End
+      datetime-picker(v-model="event.end" :min="event.start" required)
+  .buttons-right
+    button.button(type="button" @click.prevent="router.back")
+      close
+      span Cancel
+    button.button(type="submit")
+      content-save
+      span {{ editing ? "Save" : "Create" }}
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
+@import "../assets/styles/form"
 
+h1
+  text-align: center
+
+form
+  min-width: 600px
+  padding: 30px
 </style>

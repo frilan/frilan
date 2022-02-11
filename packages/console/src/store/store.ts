@@ -68,7 +68,7 @@ let event = localStorage.getItem("event")
 let main = localStorage.getItem("main")
 
 // clear local storage if corrupted
-if (!user || !event || !main) {
+if (!user || (event && !main) || (!event && main)) {
     localStorage.clear()
     user = event = main = null
 }
@@ -129,6 +129,10 @@ export const store = createStore<State>({
             if (!events.length)
                 if (context.state.user.admin) {
                     context.state.init = true
+                    context.state.event = new Event
+                    context.state.mainEvent = ""
+                    localStorage.removeItem("event")
+                    localStorage.removeItem("main")
                     return
                 } else {
                     await context.dispatch("logout")

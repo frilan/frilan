@@ -5,6 +5,7 @@ import Tournaments from "./pages/tournaments.vue"
 import Tournament from "./pages/tournament.vue"
 import TournamentEditor from "./pages/tournament-editor.vue"
 import ResultsEditor from "./pages/results-editor.vue"
+import PastEvents from "./pages/past-events.vue"
 import Events from "./pages/events.vue"
 import EventEditor from "./pages/event-editor.vue"
 import Ranking from "./pages/ranking.vue"
@@ -77,28 +78,11 @@ const router = createRouter({
         { path: "/join", name: "join", component: Join, meta: { visitor: true, title: "Sign Up" } },
         { path: "/users/:name", name: "user", component: User },
         { path: "/users/:name/edit", name: "edit-user", component: UserEditor, meta: { self: true } },
-        {
-            path: "/events",
-            name: "events",
-            component: Events,
-            meta: { title: "Events" },
-        },
-        {
-            path: "/events/new",
-            name: "new-event",
-            component: EventEditor,
-            meta: { title: "New Event", admin: true },
-        },
-        {
-            path: "/events/:name",
-            redirect: to => ({ name: "event-home", params: { eventName: to.params.name } }),
-        },
-        {
-            path: "/events/:name/edit",
-            name: "edit-event",
-            component: EventEditor,
-            meta: { admin: true },
-        },
+        { path: "/events", name: "events", component: PastEvents, meta: { title: "Past events" } },
+        { path: "/events/manage", name: "manage-events", component: Events, meta: { title: "Events", admin: true } },
+        { path: "/events/new", name: "new-event", component: EventEditor, meta: { title: "New Event", admin: true } },
+        { path: "/events/:name", redirect: to => ({ name: "event-home", params: { eventName: to.params.name } }) },
+        { path: "/events/:name/edit", name: "edit-event", component: EventEditor, meta: { admin: true } },
         ...eventRoutes,
         ...nestedRoutes,
         { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound, meta: { title: "Not Found" } },
