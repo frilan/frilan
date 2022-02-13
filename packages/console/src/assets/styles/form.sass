@@ -46,7 +46,7 @@ label
       padding: 2px
       border-radius: 5px
 
-input, textarea
+input, textarea, select
   font-family: inherit
   padding: 12px 8px
   border: none
@@ -62,9 +62,24 @@ input, textarea
   &.small
     font-size: 0.9em
 
+  &[disabled]
+    background: #556
+    color: #ccd
+    cursor: not-allowed
+
 textarea
   resize: vertical
   @extend .scrollable
+
+select
+  cursor: pointer
+
+  &:hover:not([disabled])
+    background-color: rgba(0, 0, 0, 0.3)
+    outline: 1px solid rgba(255, 255, 255, 0.2)
+
+  option
+    background-color: #446
 
 .buttons-left, .buttons-right
   display: flex
