@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRefs } from "vue"
-import { useStore } from "../store/store"
+import { PageStatus, useStore } from "../store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./common/event-link.vue"
 import Logo from "./common/logo.vue"
@@ -14,13 +14,14 @@ const store = useStore()
 const router = useRouter()
 const route = useRoute()
 
-let { user, event, init } = $(toRefs(store.state))
+let { user, event, init, status } = $(toRefs(store.state))
 let isOrganizer = $computed(() => store.getters.isOrganizer)
 let inPastEvent = $computed(() => store.getters.inPastEvent)
 let isRegistered = $computed(() => store.getters.isRegistered)
 
 let openMenu = $ref(false)
-let isHome = $computed(() => route.name === "home" || route.name === "event-home" || null)
+let isHome = $computed(() =>
+  status !== PageStatus.NotFound && (route.name === "home" || route.name === "event-home") || null)
 
 function logout() {
   store.dispatch("logout")
@@ -118,7 +119,7 @@ header
   font-weight: bold
   display: flex
   align-items: center
-  color: rgba(220, 230, 255, 0.8)
+  color: $light-glass
   margin-left: 10px
   background-color: rgba(255, 255, 255, 0.1)
   padding: 3px
@@ -156,7 +157,7 @@ nav a, nav button.link
     padding: 11px 40px 11px 15px
 
     .pp
-      outline: 2px solid rgba(220, 230, 255, 0.2)
+      outline: 2px solid $dark-glass
 
     &:hover, &:focus
       color: $link-active
@@ -249,7 +250,7 @@ nav a, nav button.link
         margin-right: 12px
 
       &:not(:hover) svg
-        color: rgba(220, 230, 255, 0.75)
+        color: $light-glass
 
       &:first-of-type
         padding-top: 15px
@@ -261,7 +262,7 @@ nav a, nav button.link
   background-color: rgba(255, 0, 100, 0.15)
 
 .username
-  color: rgba(220, 230, 255, 0.75)
+  color: $light-glass
   background-color: $bg-light
   font-size: 1.1em
   text-align: center

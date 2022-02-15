@@ -9,11 +9,12 @@ import UserLink from "../components/common/user-link.vue"
 import EventLink from "../components/common/event-link.vue"
 import { NotFoundError } from "../utils/not-found-error"
 import { Subscriber } from "../utils/subscriber"
-import {
-  Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, CalendarEdit, Delete, ExitRun, Eye,
-  FlagCheckered, HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
-} from "mdue"
 import Rank from "../components/common/rank.vue"
+import TournamentBackground from "../components/common/tournament-background.vue"
+import {
+  Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, Delete, ExitRun, Eye, FlagCheckered,
+  HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
+} from "mdue"
 
 const route = useRoute()
 const router = useRouter()
@@ -235,7 +236,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
 <template lang="pug">
 .container(:class="{ [tournament.status]: true }")
   header.tournament-header
-    .bg(:style="{ backgroundImage: `url(${tournament.background})` }")
+    tournament-background(:tournament="tournament")
     .running(v-if="tournament.status === Status.Started")
     .tournament-title
       h1 {{ tournament.name }}
@@ -246,7 +247,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
       span Administration
       .actions
         event-link.button(to="edit-tournament" :params="{ name }")
-          calendar-edit
+          pencil
           span Edit
         template(v-if="!tournamentStarted")
           button.button(v-if="!isTournamentFull" @click="createTeam")
@@ -343,7 +344,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
 
           .result(v-if="tournament.status === Status.Finished") {{ team.result }} pts
 
-      p(v-else) Nobody has registered for this tournament yet.
+      p.noTeams(v-else) Nobody has registered for this tournament yet.
 </template>
 
 <style scoped lang="sass">
@@ -354,6 +355,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
   display: flex
   flex-direction: column
   margin-bottom: 20px
+  min-width: 800px
 
 .tournament-header
   flex-shrink: 0
@@ -364,17 +366,6 @@ new Subscriber(Team, { tournamentId: tournament.id })
   z-index: 1
   overflow: hidden
   box-shadow: 0 15px 20px rgba(0, 0, 0, 0.15)
-
-  .bg
-    background-size: cover
-    background-position: center
-    position: absolute
-    left: 0
-    top: 0
-    width: 100%
-    height: 100%
-    opacity: 40%
-    z-index: -2
 
   .tournament-title
     flex: 1
@@ -423,6 +414,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
     justify-content: space-between
     align-items: center
     padding: 8px
+    margin-left: 20px
 
     span
       font-size: 0.8em
@@ -435,7 +427,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
     background: $running-bg
 
   .tournament-title .status
-    color: palegreen
+    color: $started
 
 .content
   display: flex
@@ -457,7 +449,10 @@ new Subscriber(Team, { tournamentId: tournament.id })
     text-align: center
 
   &:not(:last-child) .team
-    background-color: rgba(0, 50, 0, 0.3)
+    background-color: rgba(0, 40, 60, 0.2)
+
+    &.myTeam
+      background-color: rgba(0, 40, 60, 0.3)
 
 .finished .teamsGroup
   $width: 300px
@@ -563,7 +558,7 @@ new Subscriber(Team, { tournamentId: tournament.id })
 
 :not(.solo) > .myTeam
   outline: 2px solid rgba(200, 220, 255, 0.5)
-  background-color: rgba(0, 0, 50, 0.3)
+  background-color: rgba(0, 0, 0, 0.3)
 
 .finished .team .info
   width: unset
@@ -583,4 +578,8 @@ new Subscriber(Team, { tournamentId: tournament.id })
 .rank-3 .rank
   background-color: #b48b7e
   color: #721b0d
+
+.noTeams
+  font-size: 0.9em
+  color: $light-glass
 </style>

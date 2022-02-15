@@ -40,7 +40,9 @@ function getRank(index: number): number {
           user-link(:registration="registration")
         td.score {{ registration.score }} pts
 
-  p(v-else) No player has scored any point yet.
+  .empty(v-else)
+    p No player has scored any point yet.
+    p Come back later!
 </template>
 
 <style scoped lang="sass">
@@ -84,4 +86,9 @@ function getRank(index: number): number {
 .player
   min-width: 240px
   padding: 8px 8px 8px 18px
+
+.empty
+  text-align: center
+  margin-top: 60px
+  margin-bottom: 20px
 </style>

@@ -101,11 +101,12 @@ template(v-if="entries.length")
         tr
           td Score
           td.value {{ registration.score }} pts
-        tr
+        tr(v-if="registration.score")
           td Rank
           td.value {{ rank }} / {{ event.registrations.filter(r => r.score).length }}
     div
       organizer-tag(v-if="registration.role === Role.Organizer")
+      div(v-else)
       router-link.button(:to="resultLink(event)")
         medal
         span View results
@@ -148,13 +149,14 @@ header
 h2
   @extend .skewed
   text-align: center
-  border-top: 1px solid rgba(220, 230, 255, 0.2)
+  border-top: 1px solid $dark-glass
   padding-top: 30px
   margin: 0 30px
 
 .event
   margin: 30px
   padding: 20px
+  min-height: 100px
   border-radius: 10px
   display: flex
   justify-content: space-between

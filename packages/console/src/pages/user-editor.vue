@@ -65,9 +65,9 @@ h1
 form(@submit.prevent="save")
   fieldset
     label Username
-      input(minlength=2 maxlength=30 v-model="user.username")
+      input(minlength=2 maxlength=30 v-model="user.username" required)
     label Display name
-      input(autofocus minlength=2 maxlength=30 v-model="user.displayName")
+      input(autofocus minlength=2 maxlength=30 v-model="user.displayName" required)
 
     template(v-if="hasProfilePicture")
       label Profile picture
@@ -93,7 +93,7 @@ form(@submit.prevent="save")
       label Role
       checkbox(v-model="user.admin") Administrator
   .buttons-right
-    button.button(@click.prevent="router.back")
+    button.button(type="button" @click.prevent="router.back")
       close
       span Cancel
     button.button(type="submit")
@@ -102,7 +102,6 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
 @import "../assets/styles/form"
 
 h1

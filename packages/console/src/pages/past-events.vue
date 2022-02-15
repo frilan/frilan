@@ -86,7 +86,7 @@ h1, header, p
   text-align: center
 
 .info
-  color: rgba(220, 230, 255, 0.8)
+  color: $light-glass
   font-size: 0.9em
 
 .event
@@ -137,7 +137,7 @@ h1, header, p
   @extend .icon-text
 
   svg
-    color: rgba(220, 230, 255, 0.5)
+    color: $medium-glass
 
 .date
   font-size: 1.1em

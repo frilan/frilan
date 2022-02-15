@@ -108,4 +108,10 @@ footer
 
     &:not([disabled]):hover
       background-color: #423
+
+    &:focus
+      outline: 2px solid $dark-glass
+
+      &:not([disabled]):hover
+        outline: 2px solid $medium-glass
 </style>

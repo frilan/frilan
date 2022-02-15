@@ -89,7 +89,7 @@ async function save() {
 </script>
 
 <template lang="pug">
-h1(v-if="editing") {{ tournament.name }}
+h1(v-if="editing") {{ tournament.name || "&nbsp;" }}
 h1(v-else) New tournament
 
 form(@submit.prevent="save")
@@ -138,7 +138,7 @@ form(@submit.prevent="save")
       checkbox(v-model="hidden") Hidden
 
   .buttons-right
-    button.button(@click.prevent="router.back")
+    button.button(type="button" @click.prevent="router.back")
       close
       span Cancel
     button.button(type="submit")
@@ -147,7 +147,6 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
 @import "../assets/styles/form"
 
 h1

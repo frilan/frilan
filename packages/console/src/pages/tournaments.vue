@@ -3,6 +3,7 @@ import { useStore } from "../store/store"
 import http from "../utils/http"
 import { Registration, Status, Team, Tournament } from "@frilan/models"
 import EventLink from "../components/common/event-link.vue"
+import TournamentBackground from "../components/common/tournament-background.vue"
 import { toRefs, watchEffect } from "vue"
 import { Subscriber } from "../utils/subscriber"
 import {
@@ -98,7 +99,7 @@ event-link.new.button(v-if="isOrganizer" to="new-tournament")
       to="tournament" :params="{ name: tournament.shortName }"
       :class="{ [tournament.status]: true, hasBg: tournament.background }"
     )
-      .bg(v-if="tournament.background" :style="{ backgroundImage: `url(${tournament.background})` }")
+      tournament-background(:tournament="tournament")
       .running(v-if="tournament.status === Status.Started")
       header
         h2 {{ tournament.name }}
@@ -175,6 +176,7 @@ p.empty(v-else) There are no tournaments in this event yet.
 
 .tournament
   background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.15))
+  min-width: 200px
   border-radius: 5px
   margin: 10px
   padding: 10px
@@ -189,15 +191,7 @@ p.empty(v-else) There are no tournaments in this event yet.
   overflow: hidden
 
   .bg
-    background-size: cover
-    background-position: center
-    position: absolute
-    left: 0
-    top: 0
-    width: 100%
-    height: 100%
     opacity: 25%
-    z-index: -2
     transition: all 0.15s
 
   h2
@@ -247,7 +241,7 @@ p.empty(v-else) There are no tournaments in this event yet.
     background: $running-bg
 
     .status
-      color: palegreen
+      color: $started
 
   &.finished
     filter: grayscale(100%)

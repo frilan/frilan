@@ -22,16 +22,20 @@ let date = $computed({
 </script>
 
 <template lang="pug">
-input(id="date" type="datetime-local" v-model="date"
+input(type="datetime-local" v-model="date"
   :min="min ? formatDate(min) : undefined"
   :max="max ? formatDate(max) : undefined"
   :class="{ empty: !date }")
 </template>
 
 <style scoped lang="sass">
+input
+  cursor: text
+
 input.empty
   color: lightgrey
 
 input::-webkit-calendar-picker-indicator
   filter: invert(1)
+  cursor: pointer
 </style>

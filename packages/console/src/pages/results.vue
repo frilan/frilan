@@ -127,6 +127,8 @@ template(v-if="registration")
       td {{ team.rank }} / {{ team.tournament.teamCount }}
       td {{ team.result }} pts
 
+  .spacer(v-else)
+
   template(v-if="registeredTeams.length")
     h2 Upcoming tournaments
     table
@@ -164,6 +166,9 @@ header
 
     h1
       margin-right: 20px
+
+  .button
+    margin-left: 20px
 
 h1
   display: flex
@@ -203,7 +208,7 @@ tr
   background-position: center
 
 th
-  color: rgba(220, 230, 255, 0.8)
+  color: $light-glass
   background: rgba(0, 0, 0, 0.15)
 
 td
@@ -223,11 +228,14 @@ th, td
 h2
   @extend .skewed
   text-align: center
-  border-top: 1px solid rgba(220, 230, 255, 0.2)
+  border-top: 1px solid $dark-glass
   padding-top: 30px
   margin: 0 60px
 
 .not-registered
   text-align: center
   margin: 30px
+
+.spacer
+  margin-top: 30px
 </style>

@@ -103,7 +103,6 @@ p.no-match(v-else) No user is registered for this event yet.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
 @import "../assets/styles/form"
 
 header
@@ -129,7 +128,7 @@ table
 
 th
   padding-bottom: 8px
-  color: rgba(220, 230, 255, 0.8)
+  color: $light-glass
 
 td
   vertical-align: center

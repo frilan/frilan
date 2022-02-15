@@ -101,7 +101,6 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
 @import "../assets/styles/form"
 
 h1
