@@ -3,6 +3,7 @@ import { useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import http from "../utils/http"
 import { User } from "@frilan/models"
+import { Login } from "mdue"
 
 const router = useRouter()
 const store = useStore()
@@ -20,19 +21,33 @@ async function join() {
 </script>
 
 <template lang="pug">
-h1 Create a new account
+h1 New account
 form(@submit.prevent="join")
-  .field
-    label(for="username") Username
-    input(id="username" autocomplete="username" v-model="username")
-  .field
-    label(for="password") Password
-    input(id="password" type="password" autocomplete="new-password" v-model="password")
-  button(type="submit") Join
+  fieldset
+    label Username
+      input(autocomplete="username" v-model="username" minlength=2 maxlength=30 required)
+    label Password
+      input(type="password" autocomplete="new-password" v-model="password" minlength=6 required)
+  .buttons-right
+    button.button(type="submit")
+      login
+      span Join
 
-router-link(:to="{ name: 'login' }") Log in to an existing account
+footer
+  router-link(:to="{ name: 'login' }") Log in to an existing account
 </template>
 
 <style lang="sass" scoped>
+@import "../assets/styles/form"
 
+h1
+  text-align: center
+  margin-top: 30px
+
+form
+  padding: 30px
+
+footer
+  margin-bottom: 30px
+  text-align: center
 </style>
