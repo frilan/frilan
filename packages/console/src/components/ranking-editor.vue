@@ -3,13 +3,19 @@ import { Team } from "@frilan/models"
 import { watchEffect } from "vue"
 // noinspection ES6UnusedImports
 import draggable from "vuedraggable"
+import Rank from "./common/rank.vue"
+import { ChevronDownBox, EqualBox } from "mdue"
 
 const props = defineProps<{ modelValue: Team[] }>()
-let { modelValue: teams } = $(props)
+const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
+
+let teams = $computed({
+  get: () => props.modelValue,
+  set: value => emit("update:modelValue", value),
+})
 
 let tiedTeams: boolean[] = $ref(teams.slice(1).map((team, index) => team.rank === teams[index].rank))
 
-const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
 watchEffect(() => {
   // update ranks
   teams.forEach((team, index) => {
@@ -24,13 +30,18 @@ watchEffect(() => {
 .ranking
   .ranks
     .rank(v-for="rank in teams.length" :class="{ tied: tiedTeams[rank - 2] }")
-      template(v-if="!tiedTeams[rank - 2]") {{ rank }}
+      rank(v-if="!tiedTeams[rank - 2]" :rank="rank")
 
   .ties
     span
       input.hidden(type="checkbox")
-    span(v-for="(tied, i) in tiedTeams" :class="{ tied }")
-      input(type="checkbox" v-model="tiedTeams[i]" title="Tied with team above")
+    label(
+      v-for="(tied, i) in tiedTeams" :class="{ tied }"
+      :title="(tied ? 'Untie from' : 'Tie with') + ' team above'"
+    )
+      input(type="checkbox" v-model="tiedTeams[i]")
+      equal-box.tied(v-if="tied")
+      chevron-down-box.lower(v-else)
 
   draggable.teams(v-model="teams" item-key="id" animation=250)
     template(#item="{ element: team, index }")
@@ -38,8 +49,11 @@ watchEffect(() => {
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/main"
+
 .ranking
   display: flex
+  justify-content: center
 
 .ranks, .teams, .ties
   display: flex
@@ -57,15 +71,33 @@ watchEffect(() => {
     &.tied
       border-top: 1px transparent solid
 
-.rank
-  font-weight: bold
-  font-size: 1.1em
-
 input[type=checkbox]
   cursor: pointer
 
   &.hidden
     visibility: hidden
+
+label
+  cursor: pointer
+
+  input
+    display: none
+
+  .tied, .lower
+    font-size: 1.3em
+    opacity: 75%
+
+  .tied
+    color: mediumspringgreen
+
+  &:hover
+    .tied, .lower
+      transform: scale(1.1)
+      opacity: 100%
+
+  &:active
+    .tied, .lower
+      transform: scale(0.95)
 
 .team
   cursor: grab
@@ -74,7 +106,7 @@ input[type=checkbox]
     background-color: rgba(255, 255, 255, 0.1)
 
   &[draggable=true]
-    color: orange
+    color: mediumspringgreen
     cursor: grabbing
     background-color: rgba(255, 255, 255, 0.2)
 </style>

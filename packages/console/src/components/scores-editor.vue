@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { Team } from "@frilan/models"
 import { watchEffect } from "vue"
+import Checkbox from "./common/checkbox.vue"
 
 const props = defineProps<{ modelValue: Team[] }>()
-let { modelValue: teams } = $(props)
+const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
+
+let teams = $computed({
+  get: () => props.modelValue,
+  set: value => emit("update:modelValue", value),
+})
 
 let ascOrder = $ref(teams[0].result < teams[teams.length - 1].result)
 
-const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
 watchEffect(() => {
   // update ranks
   if (teams.some(team => team.result > 0))
@@ -18,34 +23,35 @@ watchEffect(() => {
 
 <template lang="pug">
 .order-picker
-  input(id="order" type="checkbox" v-model="ascOrder")
-  label(for="order") Lower is better
+  checkbox(v-model="ascOrder") Lower is better
 
-.team(v-for="team in teams")
-  .name {{ team.name }}
-  input(type="number" v-model="team.result")
+.teams
+  .team(v-for="team in teams")
+    .name {{ team.name }}
+    input(type="number" v-model="team.result")
 </template>
 
 <style scoped lang="sass">
+@import "../assets/styles/form"
+
 .order-picker
-  padding: 12px
+  text-align: center
+  margin-bottom: 20px
 
-  & > *
-    margin: 0
-    cursor: pointer
-
-    &:hover
-      color: lightblue
-
-  & label
-    padding-left: 6px
+.teams
+  width: fit-content
+  margin: auto
 
 .team
   display: grid
-  grid-template-columns: auto 100px
-  padding: 12px
-  max-width: 400px
+  grid-template-columns: auto 90px
+  padding: 4px
+  align-items: baseline
 
   & .name
-    margin-right: 20px
+    margin-right: 40px
+
+  input
+    margin: 0
+    padding: 8px
 </style>

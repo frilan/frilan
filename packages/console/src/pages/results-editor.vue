@@ -8,6 +8,7 @@ import RankingEditor from "../components/ranking-editor.vue"
 import ScoresEditor from "../components/scores-editor.vue"
 import { routeInEvent } from "../utils/route-in-event"
 import { NotFoundError } from "../utils/not-found-error"
+import { Close, ContentSave, SortAscending, SortNumericAscending } from "mdue"
 
 const router = useRouter()
 const route = useRoute()
@@ -63,48 +64,96 @@ async function save() {
 </script>
 
 <template lang="pug">
-h1 Results for {{ tournament.name }}
+header
+  .title
+    h1 {{ tournament.name }}
+    .subtitle Results
 
-.editor-picker
-  .ranking
-    input(id="ranking" type="radio" name="type" value="ranking" v-model="editorType")
-    label(for="ranking") Ranking
-  .scores
-    input(id="scores" type="radio" name="type" value="scores" v-model="editorType")
-    label(for="scores") Scores
+  .editor-picker
+    label.button(:class="{ checked: editorType === 'ranking' }")
+      input(type="radio" name="type" value="ranking" v-model="editorType")
+      sort-ascending
+      span Ranking
+    label.button(:class="{ checked: editorType === 'scores' }")
+      input(type="radio" name="type" value="scores" v-model="editorType")
+      sort-numeric-ascending
+      span Scores
 
 ranking-editor(v-if="editorType === 'ranking'" v-model="tournament.teams")
 scores-editor(v-else v-model="tournament.teams")
 
 form(@submit.prevent="save")
-  .field
-    label(for="points") Points per player
-    input(id="points" type="number" v-model="points")
+  fieldset
+    label Points per player
+      input(type="number" v-model="points")
 
-  .field
-    label(for="distribution") Distribution algorithm
-    select(id="distribution" v-model="distribution")
-      option(:value="Distribution.Exponential") Exponential
+    label Distribution algorithm
+      select(v-model="distribution")
+        option(:value="Distribution.Exponential") Exponential
 
-  button(type="submit") Save
-  button(@click.prevent="router.back") Cancel
+  .buttons-right
+    button.button(type="button" @click.prevent="router.back")
+      close
+      span Cancel
+    button.button(type="submit")
+      content-save
+      span Save
 </template>
 
 <style scoped lang="sass">
-.editor-picker
+@import "../assets/styles/main"
+@import "../assets/styles/form"
+
+h1
+  font-size: 1.8em
   margin-bottom: 10px
+  margin-top: 0
+
+.subtitle
+  @extend .skewed
+
+header
   display: flex
+  align-items: center
+  justify-content: space-between
+  min-width: 500px
+  margin: 30px 50px
 
-  & > *
-    padding: 10px
+  label
+    display: inline-flex
+    flex-direction: row
+    align-items: center
+    margin: 0
 
-    & > *
-      margin: 0
-      cursor: pointer
+    input
+      display: none
 
-      &:hover
-        color: lightblue
+    &.checked svg
+      color: mediumspringgreen
 
-    & label
-      padding-left: 6px
+    &:not(.checked)
+      opacity: 60%
+
+    &:first-of-type
+      border-bottom-right-radius: 0
+      border-top-right-radius: 0
+      margin-right: 1px
+
+      &.button:not([disabled]):active
+        transform: translate(2px, 0) scale(0.96)
+
+    &:last-of-type
+      border-bottom-left-radius: 0
+      border-top-left-radius: 0
+      margin-left: 0
+      border-right: none
+
+      &.button:not([disabled]):active
+        transform: translate(-2px, 0) scale(0.96)
+
+.editor-picker
+  margin-left: 20px
+
+form
+  padding: 30px
 </style>
