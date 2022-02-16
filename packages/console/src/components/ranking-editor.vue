@@ -5,8 +5,13 @@ import { watchEffect } from "vue"
 import draggable from "vuedraggable"
 import Rank from "./common/rank.vue"
 import { ChevronDownBox, EqualBox } from "mdue"
+import ProfilePicture from "./common/profile-picture.vue"
 
-const props = defineProps<{ modelValue: Team[] }>()
+const props = defineProps<{
+  modelValue: Team[]
+  singlePlayer: boolean
+}>()
+
 const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
 
 let teams = $computed({
@@ -45,7 +50,9 @@ watchEffect(() => {
 
   draggable.teams(v-model="teams" item-key="id" animation=250)
     template(#item="{ element: team, index }")
-      span.team(:class="{ tied: tiedTeams[index - 1] }") {{ team.name }}
+      .team(:class="{ tied: tiedTeams[index - 1] }")
+        profile-picture.pp(v-if="singlePlayer" :user="team.members[0].user")
+        span {{ singlePlayer ? team.members[0].user.displayName : team.name }}
 </template>
 
 <style scoped lang="sass">
@@ -102,8 +109,11 @@ label
 .team
   cursor: grab
 
+  .pp
+    margin-right: 10px
+
   &:hover:not(:active)
-    background-color: rgba(255, 255, 255, 0.1)
+    background-color: rgba(255, 255, 255, 0.05)
 
   &[draggable=true]
     color: mediumspringgreen

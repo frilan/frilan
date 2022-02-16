@@ -2,8 +2,13 @@
 import { Team } from "@frilan/models"
 import { watchEffect } from "vue"
 import Checkbox from "./common/checkbox.vue"
+import ProfilePicture from "./common/profile-picture.vue"
 
-const props = defineProps<{ modelValue: Team[] }>()
+const props = defineProps<{
+  modelValue: Team[]
+  singlePlayer: boolean
+}>()
+
 const emit = defineEmits<{ (e: "update:modelValue", teams: Team[]): void }>()
 
 let teams = $computed({
@@ -27,7 +32,9 @@ watchEffect(() => {
 
 .teams
   .team(v-for="team in teams")
-    .name {{ team.name }}
+    .name
+      profile-picture.pp(v-if="singlePlayer" :user="team.members[0].user")
+      span {{ singlePlayer ? team.members[0].user.displayName : team.name }}
     input(type="number" v-model="team.result")
 </template>
 
@@ -46,10 +53,15 @@ watchEffect(() => {
   display: grid
   grid-template-columns: auto 90px
   padding: 4px
-  align-items: baseline
+  align-items: center
 
   & .name
     margin-right: 40px
+    display: flex
+    align-items: center
+
+    .pp
+      margin-right: 10px
 
   input
     margin: 0

@@ -3,7 +3,7 @@ import http from "../utils/http"
 import { useRoute, useRouter } from "vue-router"
 import { useStore } from "../store/store"
 import { toRefs, watch } from "vue"
-import { Distribution, Tournament } from "@frilan/models"
+import { Distribution, Team, Tournament } from "@frilan/models"
 import RankingEditor from "../components/ranking-editor.vue"
 import ScoresEditor from "../components/scores-editor.vue"
 import { routeInEvent } from "../utils/route-in-event"
@@ -17,14 +17,16 @@ const store = useStore()
 let { event, mainEvent } = $(toRefs(store.state))
 
 const { name } = route.params
-const relations = ["teams"].join(",")
-const url = `/events/${ event.id }/tournaments?shortName=${ name }&load=${ relations }`
-const tournaments = await http.getMany(url, Tournament)
+const tournaments = await http.getMany(`/events/${ event.id }/tournaments?shortName=${ name }&load=teams`, Tournament)
 if (!tournaments.length)
   throw new NotFoundError()
 
 let tournament = $ref(tournaments[0])
 document.title = `Results for ${ tournament.name } - Console`
+
+// load team members if single player
+if (tournament.teamSizeMax <= 1)
+  tournament.teams = await http.getMany(`/tournaments/${ tournament.id }/teams?load=members,members.user`, Team)
 
 function sortTeams() {
   tournament.teams.sort((a, b) => a.rank - b.rank)
@@ -79,8 +81,8 @@ header
       sort-numeric-ascending
       span Scores
 
-ranking-editor(v-if="editorType === 'ranking'" v-model="tournament.teams")
-scores-editor(v-else v-model="tournament.teams")
+ranking-editor(v-if="editorType === 'ranking'" :singlePlayer="tournament.teamSizeMax <= 1" v-model="tournament.teams")
+scores-editor(v-else :singlePlayer="tournament.teamSizeMax <= 1" v-model="tournament.teams")
 
 form(@submit.prevent="save")
   fieldset
