@@ -71,7 +71,7 @@ form(@submit.prevent="save")
     label End
       datetime-picker(v-model="event.end" :min="event.start" required)
   .buttons-right
-    button.button(type="button" @click.prevent="router.back")
+    button.button(v-if="!store.state.init" type="button" @click.prevent="router.back")
       close
       span Cancel
     button.button(type="submit")
