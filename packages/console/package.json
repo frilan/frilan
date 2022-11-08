@@ -28,7 +28,7 @@
     "pug": "^3.0.2",
     "rollup-plugin-visualizer": "^5.5.2",
     "sass": "^1.39.0",
-    "vite": "^2.5.3",
+    "vite": "^2.9.13",
     "vue-tsc": "^0.3.0"
   }
 }
