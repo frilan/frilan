@@ -10,6 +10,10 @@ export class BasicAuth implements KoaMiddlewareInterface {
         if (!ctx.credentials)
             throw new UnauthorizedError("Basic authentication is required")
 
+        // decode escaped unicode characters
+        ctx.credentials.name = decodeURI(ctx.credentials.name)
+        ctx.credentials.pass = decodeURI(ctx.credentials.pass)
+
         return next()
     }
 }

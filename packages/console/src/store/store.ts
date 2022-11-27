@@ -155,6 +155,10 @@ export const store = createStore<State>({
             context.state.init = false
         },
         async login(context, credentials: AxiosBasicCredentials) {
+            // escape unicode characters
+            credentials.username = encodeURI(credentials.username)
+            credentials.password = encodeURI(credentials.password)
+
             const { user, token } = await http.getOne("/login", UserAndToken, credentials)
             http.setToken(token)
             localStorage.setItem("exp", parseJwt(token).exp.toString())
