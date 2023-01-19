@@ -1,4 +1,4 @@
-import { ConnectionOptions } from "typeorm"
+import { DataSource } from "typeorm"
 import { SnakeNamingStrategy } from "typeorm-naming-strategies"
 import { Event, Registration, Team, Tournament, User } from "@frilan/models"
 import { env } from "./env"
@@ -19,7 +19,7 @@ const password = process.env.DB_PASS
 const root = env === "prod" ? "build" : "src"
 const ext = env === "prod" ? "js" : "ts"
 
-const config: ConnectionOptions = {
+const db = new DataSource({
     type: "postgres",
     host,
     port,
@@ -32,12 +32,6 @@ const config: ConnectionOptions = {
     namingStrategy: new SnakeNamingStrategy(),
     entities: [User, Event, Registration, Tournament, Team],
     migrations: [root + "/migrations/*." + ext],
-    subscribers: [root + "/subscribers/*." + ext],
-    cli: {
-        entitiesDir: "../../models/src/entities",
-        migrationsDir: "src/migrations",
-        subscribersDir: "src/subscribers",
-    },
-}
+})
 
-export default config
+export default db

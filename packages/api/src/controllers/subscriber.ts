@@ -1,6 +1,6 @@
 import { BadRequestError, Ctx, Get, JsonController, Param, Req, Res, UseBefore } from "routing-controllers"
 import { Context, Request, Response } from "koa"
-import { classToPlain } from "class-transformer"
+import { instanceToPlain } from "class-transformer"
 import { PassThrough } from "stream"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { Entity, EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
@@ -93,7 +93,7 @@ export class SubscriberController {
                 return
 
             stream.write(`event: ${ type }\n`)
-            stream.write(`data: ${ JSON.stringify(classToPlain(entity)) }\n\n`)
+            stream.write(`data: ${ JSON.stringify(instanceToPlain(entity)) }\n\n`)
         }
 
         entitySubscriber.addListener(eventType, entityClass, listener)

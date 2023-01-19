@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { toRefs } from "vue"
-import { useStore } from "../store/store"
 import { Event, Role } from "@frilan/models"
-import { routeInEvent } from "../utils/route-in-event"
-import Checkbox from "../components/common/checkbox.vue"
-import OrganizerTag from "../components/tags/organizer-tag.vue"
-import PlayerTag from "../components/tags/player-tag.vue"
-import http from "../utils/http"
+import { useStore } from "@/store/store"
+import { routeInEvent } from "@/utils/route-in-event"
+import Checkbox from "@/components/common/checkbox.vue"
+import OrganizerTag from "@/components/tags/organizer-tag.vue"
+import PlayerTag from "@/components/tags/player-tag.vue"
+import http from "@/utils/http"
 import { AccountGroup, Calendar, Pencil } from "mdue"
 
 const store = useStore()
@@ -22,10 +22,6 @@ let onlyAttended = $computed(() => events.filter(({ id }) => user.registrations.
 // if not attended any past event, or if attended all of them, simply show all events
 let showAll = $computed(() => !onlyAttended.length || onlyAttended.length === events.length)
 let filteredEvents = $computed(() => showAll || !onlyShowAttended ? events : onlyAttended)
-
-function isMainEvent(event: Event) {
-  return event.shortName === mainEvent
-}
 
 function homeInEvent(event: Event) {
   return routeInEvent("home", event.shortName)
@@ -80,7 +76,7 @@ p(v-else) There are no events yet.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 h1, header, p
   text-align: center

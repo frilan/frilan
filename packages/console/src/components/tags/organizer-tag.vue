@@ -8,7 +8,7 @@ import { Star } from "mdue"</script>
 </template>
 
 <style scoped lang="sass">
-@import "../../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .organizer-tag
   color: #fdcae4

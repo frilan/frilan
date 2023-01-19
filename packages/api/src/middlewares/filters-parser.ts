@@ -1,6 +1,6 @@
 import { Context, Next } from "koa"
 import { BadRequestError, KoaMiddlewareInterface } from "routing-controllers"
-import { EntityColumnNotFound, In } from "typeorm"
+import { EntityPropertyNotFoundError, In } from "typeorm"
 import { PG_INVALID_TEXT_REPRESENTATION } from "@drdgvhbh/postgres-error-codes"
 import { isDbError } from "../util/is-db-error"
 
@@ -24,7 +24,7 @@ export class FiltersParser implements KoaMiddlewareInterface {
         try {
             await next()
         } catch (err) {
-            if (err instanceof EntityColumnNotFound)
+            if (err instanceof EntityPropertyNotFoundError)
                 throw new BadRequestError(err.message)
             // if input syntax is invalid
             else if (isDbError(err) && err.code === PG_INVALID_TEXT_REPRESENTATION)

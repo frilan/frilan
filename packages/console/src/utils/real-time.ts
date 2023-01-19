@@ -1,4 +1,4 @@
-import { ref, Ref } from "vue"
+import { ref, type Ref } from "vue"
 import { Registration, User } from "@frilan/models"
 import { Subscriber } from "./subscriber"
 import http from "./http"

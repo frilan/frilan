@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Event } from "@frilan/models"
-import http from "../utils/http"
-import { routeInEvent } from "../utils/route-in-event"
-import { useStore } from "../store/store"
+import http from "@/utils/http"
+import { routeInEvent } from "@/utils/route-in-event"
+import { useStore } from "@/store/store"
 import { AccountMultipleCheck, CalendarPlus, Delete, Pencil } from "mdue"
 
 const store = useStore()

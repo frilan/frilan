@@ -1,12 +1,10 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {"@/*": ["./src/*"]},
     "lib": ["esnext", "dom"],
-    "types": ["vite/client", "node"],
-    "plugins": [{"name": "@vuedx/typescript-plugin-vue"}]
-  },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+    "types": ["vite/client", "vue/macros-global", "node"]
+  }
 }

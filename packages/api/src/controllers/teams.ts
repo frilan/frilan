@@ -1,8 +1,7 @@
 import {
     Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, HttpCode, JsonController,
-    NotFoundError, OnUndefined, Param, Post, Put, UseBefore,
+    NotFoundError, OnNull, OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
-import { getConnection, getRepository } from "typeorm"
 import { Registration, Role, Status, Team, Tournament } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
@@ -14,6 +13,9 @@ import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
+import db from "../config/db"
+
+const repository = db.getRepository(Team)
 
 /**
  * Returns true if the user is an organizer of the event in which the team is registered.
@@ -29,7 +31,7 @@ export async function isOrganizer(user: AuthUser, team: Team): Promise<boolean> 
  * @param tournament The tournament entity
  */
 export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
-    return await getRepository(Team)
+    return await repository
         .createQueryBuilder("team")
         .where("team.tournamentId = :id", { id: tournament.id })
         .leftJoin("team.members", "members")
@@ -46,7 +48,7 @@ export async function getFullTeams(tournament: Tournament): Promise<Team[]> {
  * @param tournamentId The ID of the tournament
  */
 export async function hasAlreadyJoined(userId: number, tournamentId: number): Promise<boolean> {
-    return await getRepository(Team)
+    return await repository
         .createQueryBuilder("team")
         .leftJoin("team.members", "members")
         .where("team.tournamentId = :tid", { tid: tournamentId })
@@ -124,7 +126,7 @@ export class TournamentTeamController {
     async readAll(@Param("tournament_id") tournamentId: number, @Ctx() ctx: Context): Promise<Team[]> {
         // prevent filtering by tournament ID
         delete ctx.filters.tournamentId
-        return getRepository(Team).find({ where: { tournamentId, ...ctx.filters }, relations: ctx.relations })
+        return repository.find({ where: { tournamentId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -166,7 +168,7 @@ export class TournamentTeamController {
         @Body() team: Team,
     ): Promise<Team> {
 
-        const tournament = await getRepository(Tournament).findOne(tournamentId)
+        const tournament = await db.getRepository(Tournament).findOneBy({ id: tournamentId })
         if (!tournament)
             throw new TournamentNotFoundError()
 
@@ -187,8 +189,8 @@ export class TournamentTeamController {
                 throw new BadRequestError(
                     `Cannot create team with ${ team.members.length } members (max is ${ tournament.teamSizeMax })`)
         } else {
-            const registration = await getRepository(Registration)
-                .findOne({ userId: user.id, eventId: tournament.eventId })
+            const registration = await db.getRepository(Registration)
+                .findOneBy({ userId: user.id, eventId: tournament.eventId })
             if (!registration)
                 throw new ForbiddenError("Only users registered for this event can create teams")
 
@@ -208,13 +210,13 @@ export class TournamentTeamController {
         }
 
         try {
-            const savedTeam = await getRepository(Team).save(team)
+            const savedTeam = await repository.save(team)
             entitySubscriber.emit(EntityEventType.Create, EntityClass.Team, { ...savedTeam, tournament: undefined })
 
             // increment the current number of full teams if needed
             if (team.members.length >= tournament.teamSizeMin) {
                 ++tournament.teamCount
-                await getRepository(Tournament).save(tournament)
+                await db.getRepository(Tournament).save(tournament)
                 entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, tournament)
             }
 
@@ -257,11 +259,11 @@ export class TeamController {
      *         $ref: "#/components/responses/TeamNotFound"
      */
     @GetById()
-    @OnUndefined(TeamNotFoundError)
+    @OnNull(TeamNotFoundError)
     @UseBefore(RelationsParser)
     @Authorized()
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Team | undefined> {
-        return getRepository(Team).findOne(id, { relations: ctx.relations })
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Team | null> {
+        return repository.findOne({ where: { id }, relations: ctx.relations })
     }
 
     /**
@@ -301,7 +303,7 @@ export class TeamController {
         @PartialBody() updatedTeam: Team,
     ): Promise<Team | undefined> {
 
-        const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
+        const team = await repository.findOne({ where: { id }, relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
@@ -314,7 +316,7 @@ export class TeamController {
 
         // assign updated fields and remove relations
         Object.assign(team, { ...updatedTeam, members: undefined, tournament: undefined })
-        const savedTeam = await getRepository(Team).save(team)
+        const savedTeam = await repository.save(team)
 
         entitySubscriber.emit(EntityEventType.Update, EntityClass.Team, savedTeam)
         return savedTeam
@@ -344,7 +346,7 @@ export class TeamController {
     @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
-        const team = await getRepository(Team).findOne({ where: { id }, relations: ["members", "tournament"] })
+        const team = await repository.findOne({ where: { id }, relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
@@ -354,13 +356,13 @@ export class TeamController {
         if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot delete team if the tournament has already started")
 
-        await getRepository(Team).delete(id)
+        await repository.delete(id)
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, team)
 
         // decrement the number of full teams if needed
         if (team.members.length >= team.tournament.teamSizeMin) {
             --team.tournament.teamCount
-            await getRepository(Tournament).save(team.tournament)
+            await db.getRepository(Tournament).save(team.tournament)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
     }
@@ -398,7 +400,7 @@ export class TeamController {
     async readMembers(@Param("id") id: number, @Ctx() ctx: Context): Promise<Registration[] | undefined> {
         const relations = ctx.relations.map((relation: string) => "members." + relation)
         relations.unshift("members")
-        const team = await getRepository(Team).findOne(id, { relations })
+        const team = await repository.findOne({ where: { id }, relations })
         return team?.members
     }
 
@@ -432,7 +434,7 @@ export class TeamController {
         @Param("user_id") userId: number,
     ): Promise<void> {
 
-        const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
+        const team = await repository.findOne({ where: { id }, relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
@@ -442,8 +444,8 @@ export class TeamController {
         if (team.tournament.status === Status.Started || team.tournament.status === Status.Finished)
             throw new BadRequestError("Cannot add member to the team if the tournament has already started")
 
-        const registration = await getRepository(Registration)
-            .findOne({ userId, eventId: team.tournament.eventId })
+        const registration = await db.getRepository(Registration)
+            .findOneBy({ userId, eventId: team.tournament.eventId })
         if (!registration)
             throw new BadRequestError("Cannot add member that is not registered for the event")
 
@@ -467,13 +469,12 @@ export class TeamController {
 
             // increment the number of full teams
             ++team.tournament.teamCount
-            await getRepository(Tournament).save(team.tournament)
+            await db.getRepository(Tournament).save(team.tournament)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
 
         // for some reason, members.push(registration) + save(team) doesn't work here
-        await getConnection()
-            .createQueryBuilder()
+        await db.createQueryBuilder()
             .relation(Team, "members")
             .of(team)
             .add({ userId: registration.userId, eventId: registration.eventId })
@@ -512,7 +513,7 @@ export class TeamController {
         @Param("user_id") userId: number,
     ): Promise<void> {
 
-        const team = await getRepository(Team).findOne(id, { relations: ["members", "tournament"] })
+        const team = await repository.findOne({ where: { id }, relations: ["members", "tournament"] })
         if (!team)
             throw new TeamNotFoundError()
 
@@ -525,13 +526,12 @@ export class TeamController {
         const membersLeft = team.members.filter(member => member.userId !== userId)
         if (!membersLeft.length) {
             // also remove team if empty
-            await getRepository(Team).delete(id)
+            await repository.delete(id)
             entitySubscriber.emit(EntityEventType.Delete, EntityClass.Team, { ...team, tournament: undefined })
 
         } else {
             // for some reason, save(team) doesn't work here
-            await getConnection()
-                .createQueryBuilder()
+            await db.createQueryBuilder()
                 .relation(Team, "members").of(team)
                 .remove({ userId, eventId: team.tournament.eventId })
 
@@ -542,7 +542,7 @@ export class TeamController {
         // decrement the number of full teams if needed
         if (membersLeft.length < team.members.length && team.members.length === team.tournament.teamSizeMin) {
             --team.tournament.teamCount
-            await getRepository(Tournament).save(team.tournament)
+            await db.getRepository(Tournament).save(team.tournament)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, team.tournament)
         }
     }

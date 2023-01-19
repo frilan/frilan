@@ -1,8 +1,8 @@
 import {
     BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController, NotFoundError,
-    OnUndefined, Param, Post, Put, UseBefore,
+    OnNull, OnUndefined, Param, Post, Put, UseBefore,
 } from "routing-controllers"
-import { getRepository, In, Not } from "typeorm"
+import { In, Not } from "typeorm"
 import { PG_FOREIGN_KEY_VIOLATION, PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
 import { PartialBody } from "../decorators/partial-body"
@@ -16,12 +16,15 @@ import { distributeExp } from "../util/points-distribution"
 import { getFullTeams } from "./teams"
 import { isDbError } from "../util/is-db-error"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
+import db from "../config/db"
+
+const repository = db.getRepository(Tournament)
 
 /**
  * Make sure the tournament is happening during the event.
  */
 async function checkDate(eventId: number, tournament: Tournament) {
-    const event = await getRepository(Event).findOne(eventId)
+    const event = await db.getRepository(Event).findOneBy({ id: eventId })
     if (!event)
         throw new EventNotFoundError()
     if (tournament.date < event.start || tournament.date > event.end)
@@ -119,7 +122,7 @@ export class EventTournamentController {
         if (!user.admin && user.roles[eventId] !== Role.Organizer)
             ctx.filters.status = Not(Status.Hidden)
 
-        return getRepository(Tournament).find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
+        return repository.find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -174,7 +177,7 @@ export class EventTournamentController {
 
         try {
             tournament.eventId = eventId
-            const savedTournament = await getRepository(Tournament).save(tournament)
+            const savedTournament = await repository.save(tournament)
             entitySubscriber.emit(EntityEventType.Create, EntityClass.Tournament, savedTournament)
             return savedTournament
 
@@ -217,19 +220,19 @@ export class TournamentController {
      *         $ref: "#/components/responses/TournamentNotFound"
      */
     @GetById()
-    @OnUndefined(TournamentNotFoundError)
+    @OnNull(TournamentNotFoundError)
     @UseBefore(RelationsParser)
     async read(
         @Param("id") id: number,
         @CurrentUser({ required: true }) user: AuthUser,
         @Ctx() ctx: Context,
-    ): Promise<Tournament | undefined> {
+    ): Promise<Tournament | null> {
 
-        const tournament = await getRepository(Tournament).findOne(id, { relations: ctx.relations })
+        const tournament = await repository.findOne({ where: { id }, relations: ctx.relations })
         // don't show hidden tournament if not admin/organizer
         if (tournament?.status === Status.Hidden)
             if (!user.admin && user.roles[tournament.eventId] !== Role.Organizer)
-                return undefined
+                return null
 
         return tournament
     }
@@ -271,7 +274,7 @@ export class TournamentController {
         @PartialBody() updatedTournament: Tournament,
     ): Promise<Tournament | undefined> {
 
-        const tournament = await getRepository(Tournament).findOne(id)
+        const tournament = await repository.findOneBy({ id })
         if (!tournament)
             throw new TournamentNotFoundError()
 
@@ -303,7 +306,7 @@ export class TournamentController {
                         `Cannot start tournament with more than ${ tournament.teamCountMin } complete teams`)
 
                 // delete teams that are incomplete
-                await getRepository(Team).delete({
+                await db.getRepository(Team).delete({
                     id: Not(In(fullTeams.map(({ id }) => id))),
                     tournamentId: tournament.id,
                 })
@@ -319,7 +322,7 @@ export class TournamentController {
         }
 
         try {
-            const savedTournament = await getRepository(Tournament).save(tournament)
+            const savedTournament = await repository.save(tournament)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, savedTournament)
             return savedTournament
 
@@ -351,7 +354,7 @@ export class TournamentController {
     @DeleteById()
     @OnUndefined(204)
     async delete(@Param("id") id: number, @CurrentUser({ required: true }) user: AuthUser): Promise<void> {
-        const tournament = await getRepository(Tournament).findOne(id)
+        const tournament = await repository.findOneBy({ id })
         if (!tournament)
             throw new TournamentNotFoundError()
 
@@ -361,7 +364,7 @@ export class TournamentController {
         if (tournament.status === Status.Started || tournament.status === Status.Finished)
             throw new BadRequestError("Cannot delete this tournament because it has already started")
 
-        await getRepository(Tournament).delete(id)
+        await repository.delete(id)
 
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.Tournament, { id }, tournament)
     }
@@ -405,7 +408,7 @@ export class TournamentController {
         @Body() ranking: Ranking,
     ): Promise<Tournament> {
 
-        const tournament = await getRepository(Tournament).findOne(id, { relations: ["teams", "teams.members"] })
+        const tournament = await repository.findOne({ where: { id }, relations: ["teams", "teams.members"] })
         if (!tournament)
             throw new TournamentNotFoundError()
 
@@ -454,13 +457,13 @@ export class TournamentController {
                 // adjust members scores
                 for (const member of members)
                     member.score += result - prevResult
-                await getRepository(Registration).save(members)
+                await db.getRepository(Registration).save(members)
 
                 for (const member of members)
                     entitySubscriber.emit(EntityEventType.Update, EntityClass.Registration, member)
 
                 // for some reason, save(team) fails if it contains members
-                await getRepository(Team).save(teamWithoutMembers)
+                await db.getRepository(Team).save(teamWithoutMembers)
                 entitySubscriber.emit(EntityEventType.Update, EntityClass.Team, team)
             }
 
@@ -470,7 +473,7 @@ export class TournamentController {
         tournament.status = Status.Finished
         tournament.pointsPerPlayer = ranking.points
         tournament.pointsDistribution = ranking.distribution
-        await getRepository(Tournament).save(tournament)
+        await repository.save(tournament)
 
         entitySubscriber.emit(EntityEventType.Update, EntityClass.Tournament, { ...tournament, teams: undefined })
         return tournament

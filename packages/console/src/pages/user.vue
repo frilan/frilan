@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { useStore } from "../store/store"
-import http from "../utils/http"
 import { toRefs, watchEffect } from "vue"
 import type { RouteLocationRaw } from "vue-router"
 import { useRoute } from "vue-router"
 import { Event, Registration, Role, User } from "@frilan/models"
-import { routeInEvent } from "../utils/route-in-event"
-import { NotFoundError } from "../utils/not-found-error"
-import { Subscriber } from "../utils/subscriber"
-import ProfilePicture from "../components/common/profile-picture.vue"
-import ConsoleIcon from "../assets/images/console.svg?component"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import { routeInEvent } from "@/utils/route-in-event"
+import { NotFoundError } from "@/utils/not-found-error"
+import { Subscriber } from "@/utils/subscriber"
+import ProfilePicture from "@/components/common/profile-picture.vue"
+import ConsoleIcon from "@/assets/images/console.svg"
+import AdminTag from "@/components/tags/admin-tag.vue"
+import OrganizerTag from "@/components/tags/organizer-tag.vue"
 import { AccountEdit, Medal } from "mdue"
-import AdminTag from "../components/tags/admin-tag.vue"
-import OrganizerTag from "../components/tags/organizer-tag.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -115,7 +115,7 @@ p.no-attended(v-else) This user did not attend any event.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 header
   min-width: 550px

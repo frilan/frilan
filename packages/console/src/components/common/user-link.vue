@@ -2,7 +2,7 @@
 import { Registration, Role } from "@frilan/models"
 import EventLink from "./event-link.vue"
 import ProfilePicture from "./profile-picture.vue"
-import { useStore } from "../../store/store"
+import { useStore } from "@/store/store"
 import { toRefs } from "vue"
 import { Star } from "mdue"
 

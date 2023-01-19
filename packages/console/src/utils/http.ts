@@ -1,6 +1,7 @@
-import axios, { AxiosBasicCredentials, AxiosInstance, AxiosRequestConfig } from "axios"
-import { ClassConstructor } from "class-transformer/types/interfaces"
-import { plainToClass } from "class-transformer"
+import type { AxiosBasicCredentials, AxiosInstance, RawAxiosRequestConfig } from "axios"
+import axios from "axios"
+import type { ClassConstructor } from "class-transformer/types/interfaces"
+import { plainToInstance } from "class-transformer"
 
 /**
  * A wrapper around entities indicating that many entities will be returned.
@@ -23,10 +24,6 @@ export class Http {
         const token = localStorage.getItem("token")
         if (token)
             this.setToken(token)
-    }
-
-    public get headers(): Record<string, string> {
-        return this.axiosInstance.defaults.headers
     }
 
     public get baseURL(): string {
@@ -76,11 +73,11 @@ export class Http {
         return this.sendRequest({ method: "delete", url })
     }
 
-    private async sendRequest(config: AxiosRequestConfig): Promise<void>
-    private async sendRequest<T>(config: AxiosRequestConfig, cls: ClassConstructor<T>): Promise<T>
-    private async sendRequest<T>(config: AxiosRequestConfig, cls: Many<T>): Promise<T[]>
-    private async sendRequest<T>(config: AxiosRequestConfig, cls: OneOrMany<T>): Promise<T | T[]>
-    private async sendRequest<T>(config: AxiosRequestConfig, cls?: OneOrMany<T>): Promise<T | T[] | void> {
+    private async sendRequest(config: RawAxiosRequestConfig): Promise<void>
+    private async sendRequest<T>(config: RawAxiosRequestConfig, cls: ClassConstructor<T>): Promise<T>
+    private async sendRequest<T>(config: RawAxiosRequestConfig, cls: Many<T>): Promise<T[]>
+    private async sendRequest<T>(config: RawAxiosRequestConfig, cls: OneOrMany<T>): Promise<T | T[]>
+    private async sendRequest<T>(config: RawAxiosRequestConfig, cls?: OneOrMany<T>): Promise<T | T[] | void> {
         // replace undefined with null
         for (const key in config.data)
             if (typeof config.data[key] === "undefined")
@@ -88,7 +85,7 @@ export class Http {
 
         const response = await this.axiosInstance(config)
         if (cls)
-            return plainToClass(cls instanceof Many ? cls.entity : cls, response.data)
+            return plainToInstance(cls instanceof Many ? cls.entity : cls, response.data)
     }
 }
 

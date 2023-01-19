@@ -1,8 +1,7 @@
 import {
     Authorized, BadRequestError, Body, Ctx, CurrentUser, ForbiddenError, Get, HttpCode, HttpError, JsonController,
-    NotFoundError, OnUndefined, Param, Post, UseBefore,
+    NotFoundError, OnNull, OnUndefined, Param, Post, UseBefore,
 } from "routing-controllers"
-import { getRepository, Repository, Transaction, TransactionRepository } from "typeorm"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { User } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
@@ -14,6 +13,9 @@ import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
+import db from "../config/db"
+
+const repository = db.getRepository(User)
 
 /**
  * Hashes the password of the given user, using the bcrypt function.
@@ -118,7 +120,7 @@ export class UserController {
     @UseBefore(RelationsParser, FiltersParser)
     @Authorized()
     readAll(@Ctx() ctx: Context): Promise<User[]> {
-        return getRepository(User).find({ relations: ctx.relations, where: ctx.filters })
+        return repository.find({ relations: ctx.relations, where: ctx.filters })
     }
 
     /**
@@ -151,13 +153,13 @@ export class UserController {
     @HttpCode(201)
     async create(@Body() user: User): Promise<User> {
         // make the first registered user an admin
-        const userCount = await getRepository(User).count()
+        const userCount = await repository.count()
         user.admin = userCount < 1
 
         await hashPassword(user)
 
         try {
-            const savedUser = await getRepository(User).save(user)
+            const savedUser = await repository.save(user)
             entitySubscriber.emit(EntityEventType.Create, EntityClass.User, savedUser)
             return savedUser
 
@@ -192,11 +194,11 @@ export class UserController {
      *         $ref: "#/components/responses/UserNotFound"
      */
     @GetById()
-    @OnUndefined(UserNotFoundError)
+    @OnNull(UserNotFoundError)
     @UseBefore(RelationsParser)
     @Authorized()
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<User | undefined> {
-        return getRepository(User).findOne(id, { relations: ctx.relations })
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<User | null> {
+        return db.getRepository(User).findOne({ where: { id }, relations: ctx.relations })
     }
 
     /**
@@ -232,12 +234,12 @@ export class UserController {
      *         $ref: "#/components/responses/UserConflict"
      */
     @PatchById()
-    @OnUndefined(UserNotFoundError)
+    @OnNull(UserNotFoundError)
     async update(
         @Param("id") id: number,
         @CurrentUser({ required: true }) currentUser: AuthUser,
         @PartialBody() updatedUser: User,
-    ): Promise<User | undefined> {
+    ): Promise<User | null> {
 
         if (!currentUser.admin) {
             if (currentUser.id !== id)
@@ -247,7 +249,7 @@ export class UserController {
 
         } else if (currentUser.id === id && updatedUser.admin === false) {
             // make sure the last admin doesn't remove their own privileges
-            const adminCount = await getRepository(User).count({ admin: true })
+            const adminCount = await repository.countBy({ admin: true })
             if (adminCount === 1)
                 throw new AdminRemovedError()
         }
@@ -256,9 +258,9 @@ export class UserController {
 
         try {
             if (Object.keys(updatedUser).length)
-                await getRepository(User).update(id, updatedUser)
+                await repository.update(id, updatedUser)
 
-            const savedUser = await getRepository(User).findOne(id)
+            const savedUser = await repository.findOneBy({ id })
             entitySubscriber.emit(EntityEventType.Update, EntityClass.User, savedUser)
             return savedUser
 
@@ -289,23 +291,25 @@ export class UserController {
      */
     @DeleteById()
     @OnUndefined(204)
-    @Transaction()
     @Authorized("admin")
-    async delete(@Param("id") id: number, @TransactionRepository(User) repository: Repository<User>): Promise<void> {
-        const user = await repository.findOne(id, { relations: ["registrations"] })
-        if (!user)
-            throw new UserNotFoundError()
+    async delete(@Param("id") id: number): Promise<void> {
+        await db.transaction(async entityManager => {
+            const repository = entityManager.getRepository(User)
+            const user = await repository.findOne({ where: { id }, relations: ["registrations"] })
+            if (!user)
+                throw new UserNotFoundError()
 
-        if (user.admin) {
-            const adminCount = await repository.count({ admin: true })
-            if (adminCount === 1)
-                throw new AdminRemovedError()
-        }
+            if (user.admin) {
+                const adminCount = await repository.countBy({ admin: true })
+                if (adminCount === 1)
+                    throw new AdminRemovedError()
+            }
 
-        if (user.registrations.length)
-            throw new BadRequestError("Cannot delete this user because they are registered for at least one event")
+            if (user.registrations.length)
+                throw new BadRequestError("Cannot delete this user because they are registered for at least one event")
 
-        await repository.delete(id)
-        entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, { ...user, registrations: undefined })
+            await repository.delete(id)
+            entitySubscriber.emit(EntityEventType.Delete, EntityClass.User, { ...user, registrations: undefined })
+        })
     }
 }

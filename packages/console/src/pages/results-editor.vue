@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import http from "../utils/http"
 import { useRoute, useRouter } from "vue-router"
-import { useStore } from "../store/store"
 import { toRefs, watch } from "vue"
 import { Distribution, Team, Tournament } from "@frilan/models"
-import RankingEditor from "../components/ranking-editor.vue"
-import ScoresEditor from "../components/scores-editor.vue"
-import { routeInEvent } from "../utils/route-in-event"
-import { NotFoundError } from "../utils/not-found-error"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import RankingEditor from "@/components/ranking-editor.vue"
+import ScoresEditor from "@/components/scores-editor.vue"
+import { routeInEvent } from "@/utils/route-in-event"
+import { NotFoundError } from "@/utils/not-found-error"
 import { Close, ContentSave, SortAscending, SortNumericAscending } from "mdue"
 
 const router = useRouter()
@@ -103,7 +103,7 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 h1
   font-size: 1.8em

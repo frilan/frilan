@@ -1,12 +1,10 @@
 import Koa from "koa"
 import logger from "koa-logger"
-import cors from "@koa/cors"
 import { Server } from "http"
 import { AddressInfo } from "net"
 import { useKoaServer } from "routing-controllers"
-import { Connection, createConnection } from "typeorm"
 
-import dbConfig from "./config/db"
+import db from "./config/db"
 import httpConfig from "./config/http"
 import { env } from "./config/env"
 
@@ -23,17 +21,15 @@ import { ErrorHandler } from "./middlewares/error-handler"
 import { getAuthorizationFromToken, getUserFromToken, tokenDecoder } from "./middlewares/jwt-utils"
 
 let server: Server | undefined
-let dbConnection: Connection | undefined
 
 export async function startServer(): Promise<string> {
-    dbConnection = await createConnection(dbConfig)
+    await db.initialize()
 
     const app = new Koa()
 
     if (env !== "test")
         app.use(logger())
 
-    app.use(cors())
     app.use(openapi())
     app.use(tokenDecoder())
 
@@ -42,6 +38,7 @@ export async function startServer(): Promise<string> {
         defaultErrorHandler: false,
         authorizationChecker: getAuthorizationFromToken,
         currentUserChecker: getUserFromToken,
+        cors: true,
         controllers: [
             LoginController,
             UserController,
@@ -62,5 +59,5 @@ export async function startServer(): Promise<string> {
 
 export async function stopServer(): Promise<void> {
     server?.close()
-    await dbConnection?.close()
+    await db.destroy()
 }

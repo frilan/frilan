@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { User } from "@frilan/models"
-import ConsoleIcon from "../../assets/images/console.svg?component"
+import type { User } from "@frilan/models"
+import ConsoleIcon from "@/assets/images/console.svg"
 
 const props = withDefaults(defineProps<{
   user: User

@@ -8,7 +8,7 @@ import { GoogleController } from "mdue"</script>
 </template>
 
 <style scoped lang="sass">
-@import "../../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .admin-tag
   color: #d7d8ff

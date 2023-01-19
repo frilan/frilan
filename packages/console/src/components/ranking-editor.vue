@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Team } from "@frilan/models"
+import type { Team } from "@frilan/models"
 import { watchEffect } from "vue"
 // noinspection ES6UnusedImports
 import draggable from "vuedraggable"
@@ -56,7 +56,7 @@ watchEffect(() => {
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .ranking
   display: flex

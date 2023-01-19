@@ -1,8 +1,8 @@
-import { ClassConstructor } from "class-transformer/types/interfaces"
-import { plainToClass } from "class-transformer"
-import http from "./http"
-import { store } from "../store/store"
+import type { ClassConstructor } from "class-transformer/types/interfaces"
+import { plainToInstance } from "class-transformer"
 import { Registration, Team, Tournament, User } from "@frilan/models"
+import http from "./http"
+import { store } from "@/store/store"
 
 /**
  * A class representing a subscription to entity events.
@@ -74,7 +74,7 @@ export class Subscriber<T> {
     private on(type: string, callback: (entity: T, type?: string) => void): void {
         this.eventSource?.addEventListener(type, async event => {
             try {
-                await callback(plainToClass(this.cls, JSON.parse((event as MessageEvent).data)), event.type)
+                await callback(plainToInstance(this.cls, JSON.parse((event as MessageEvent).data)), event.type)
             } catch (err) {
                 store.commit("setError", err)
             }

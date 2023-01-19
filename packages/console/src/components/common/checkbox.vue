@@ -13,7 +13,7 @@ button.button(type="button" @click.prevent="emit('update:modelValue', !modelValu
 </template>
 
 <style scoped lang="sass">
-@import "../../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .button.checked:focus
   outline-color: mediumspringgreen

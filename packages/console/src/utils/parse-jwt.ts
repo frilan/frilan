@@ -1,4 +1,4 @@
-import { Role } from "@frilan/models"
+import type { Role } from "@frilan/models"
 
 interface JwtPayload {
     id: number

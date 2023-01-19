@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import EventLink from "../components/common/event-link.vue"
+import EventLink from "@/components/common/event-link.vue"
 import { EmoticonDead, Home } from "mdue"
 
 document.title = "Not Found - Console"
@@ -15,7 +15,7 @@ document.title = "Not Found - Console"
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .not-found
   text-align: center

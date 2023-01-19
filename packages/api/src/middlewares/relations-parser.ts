@@ -1,6 +1,6 @@
 import { Context, Next } from "koa"
 import { BadRequestError, KoaMiddlewareInterface } from "routing-controllers"
-import { FindRelationsNotFoundError } from "typeorm"
+import { EntityPropertyNotFoundError } from "typeorm"
 
 export class RelationsParser implements KoaMiddlewareInterface {
 
@@ -21,7 +21,7 @@ export class RelationsParser implements KoaMiddlewareInterface {
         try {
             await next()
         } catch (e) {
-            if (e instanceof FindRelationsNotFoundError)
+            if (e instanceof EntityPropertyNotFoundError)
                 throw new BadRequestError(e.message.split(";")[0])
             else
                 throw e

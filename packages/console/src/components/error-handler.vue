@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from "axios"
-import { ValidationError } from "class-validator"
-import { useStore } from "../store/store"
+import type { ValidationError } from "class-validator"
+import { useStore } from "@/store/store"
 import { toRefs, watchEffect } from "vue"
 import MessageBox from "./common/message-box.vue"
 import { AlertOctagon } from "mdue"
@@ -64,7 +64,7 @@ message-box(v-model="showError" background="#412")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 $border: 1px solid rgba(255, 255, 255, 0.15)
 

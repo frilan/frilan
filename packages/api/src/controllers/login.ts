@@ -1,11 +1,11 @@
 import { Ctx, Get, JsonController, UnauthorizedError, UseBefore } from "routing-controllers"
 import { Context } from "koa"
-import { getRepository } from "typeorm"
 import { BasicAuth } from "../middlewares/basic-auth"
 import { User, UserAndToken } from "@frilan/models"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import jwtConfig from "../config/jwt"
+import db from "../config/db"
 
 /**
  * @openapi
@@ -43,7 +43,7 @@ export class LoginController {
     @UseBefore(BasicAuth)
     async login(@Ctx() ctx: Context): Promise<UserAndToken> {
         const username = ctx.credentials.name
-        const user = await getRepository(User)
+        const user = await db.getRepository(User)
             .createQueryBuilder("user")
             .leftJoinAndSelect("user.registrations", "registration")
             .leftJoin("registration.event", "event")

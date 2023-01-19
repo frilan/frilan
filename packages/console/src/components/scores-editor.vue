@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Team } from "@frilan/models"
+import type { Team } from "@frilan/models"
 import { watchEffect } from "vue"
 import Checkbox from "./common/checkbox.vue"
 import ProfilePicture from "./common/profile-picture.vue"
@@ -39,7 +39,7 @@ watchEffect(() => {
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 .order-picker
   text-align: center

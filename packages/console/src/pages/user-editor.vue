@@ -2,13 +2,13 @@
 import { toRefs, watchEffect } from "vue"
 import { useRoute } from "vue-router"
 import { User } from "@frilan/models"
-import { useStore } from "../store/store"
-import http from "../utils/http"
-import { NotFoundError } from "../utils/not-found-error"
-import router from "../router"
-import ProfilePicture from "../components/common/profile-picture.vue"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import { NotFoundError } from "@/utils/not-found-error"
+import router from "@/router"
+import ProfilePicture from "@/components/common/profile-picture.vue"
+import Checkbox from "@/components/common/checkbox.vue"
 import { Close, ContentSave, Delete, FormTextboxPassword, ImageEdit } from "mdue"
-import Checkbox from "../components/common/checkbox.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -102,7 +102,7 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 h1
   display: flex

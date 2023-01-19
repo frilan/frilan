@@ -38,7 +38,7 @@
     "@typescript-eslint/type-annotation-spacing": "error",
 
     // lines
-    "indent": ["error", 4],
+    "indent": ["error", 4, {"ignoredNodes": ["PropertyDefinition[decorators]"]}],
     "max-len": ["error", 120],
     "eol-last": ["error", "always"],
     "linebreak-style": ["error", "unix"],

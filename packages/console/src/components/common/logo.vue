@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ConsoleIcon from "../../assets/images/console.svg?component"
+import ConsoleIcon from "@/assets/images/console.svg"
 
 defineProps<{ vertical?: boolean }>()
 </script>

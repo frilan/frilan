@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { toRefs, watchEffect } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { useStore } from "../store/store"
-import http from "../utils/http"
 import { Registration, Status, Team, Tournament, User } from "@frilan/models"
-import Markdown from "../components/common/markdown.vue"
-import UserLink from "../components/common/user-link.vue"
-import EventLink from "../components/common/event-link.vue"
-import { NotFoundError } from "../utils/not-found-error"
-import { Subscriber } from "../utils/subscriber"
-import Rank from "../components/common/rank.vue"
-import TournamentBackground from "../components/common/tournament-background.vue"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import Markdown from "@/components/common/markdown.vue"
+import UserLink from "@/components/common/user-link.vue"
+import EventLink from "@/components/common/event-link.vue"
+import { NotFoundError } from "@/utils/not-found-error"
+import { Subscriber } from "@/utils/subscriber"
+import Rank from "@/components/common/rank.vue"
+import TournamentBackground from "@/components/common/tournament-background.vue"
 import {
   Account, AccountGroup, AccountMultiplePlus, AccountPlus, AccountRemove, Delete, ExitRun, Eye, FlagCheckered,
   HumanGreeting, LeadPencil, LocationEnter, LocationExit, Pencil, Play,
@@ -348,8 +348,8 @@ new Subscriber(Team, { tournamentId: tournament.id })
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
-@import "../assets/styles/tournament"
+@import "@/assets/styles/main.sass"
+@import "@/assets/styles/tournament.sass"
 
 .container
   display: flex

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { RouteParamsRaw } from "vue-router"
-import { useStore } from "../../store/store"
 import { toRefs } from "vue"
-import { routeInEvent } from "../../utils/route-in-event"
+import type { RouteParamsRaw } from "vue-router"
+import { useStore } from "@/store/store"
+import { routeInEvent } from "@/utils/route-in-event"
 
 const props = defineProps<{
   to: string

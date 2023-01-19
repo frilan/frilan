@@ -1,11 +1,11 @@
-import { InjectionKey } from "vue"
+import type { InjectionKey } from "vue"
 import { createLogger, createStore, Store, useStore as baseUseStore } from "vuex"
+import type { RouteLocationNormalized } from "vue-router"
 import { Event, Role, User, UserAndToken } from "@frilan/models"
-import http from "../utils/http"
-import { AxiosBasicCredentials } from "axios"
-import { classToPlain, plainToClass } from "class-transformer"
-import { parseJwt } from "../utils/parse-jwt"
-import { RouteLocationNormalized } from "vue-router"
+import type { AxiosBasicCredentials } from "axios"
+import { instanceToPlain, plainToInstance } from "class-transformer"
+import http from "@/utils/http"
+import { parseJwt } from "@/utils/parse-jwt"
 
 export interface State {
     /**
@@ -75,9 +75,9 @@ if (!user || (event && !main) || (!event && main)) {
 
 export const store = createStore<State>({
     state: {
-        user: user ? plainToClass(User, JSON.parse(user)) : new User(),
+        user: user ? plainToInstance(User, JSON.parse(user)) : new User(),
         logged: !!localStorage.getItem("token"),
-        event: event ? plainToClass(Event, JSON.parse(event)) : new Event(),
+        event: event ? plainToInstance(Event, JSON.parse(event)) : new Event(),
         mainEvent: main ?? "",
         error: null,
         init: !!user && !event,
@@ -100,7 +100,7 @@ export const store = createStore<State>({
     mutations: {
         setUser(state, user: User) {
             state.user = user
-            localStorage.setItem("user", JSON.stringify(classToPlain(user)))
+            localStorage.setItem("user", JSON.stringify(instanceToPlain(user)))
         },
         setEvent(state, event: Event) {
             state.event = event

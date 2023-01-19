@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from "vue-router"
-import { useStore } from "../store/store"
-import { Status, Tournament } from "@frilan/models"
-import http from "../utils/http"
 import { toRefs, watchEffect } from "vue"
-import { routeInEvent } from "../utils/route-in-event"
-import DatetimePicker from "../components/common/datetime-picker.vue"
-import { NotFoundError } from "../utils/not-found-error"
-import Checkbox from "../components/common/checkbox.vue"
+import { useRoute, useRouter } from "vue-router"
+import { Status, Tournament } from "@frilan/models"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import { routeInEvent } from "@/utils/route-in-event"
+import DatetimePicker from "@/components/common/datetime-picker.vue"
+import { NotFoundError } from "@/utils/not-found-error"
+import Checkbox from "@/components/common/checkbox.vue"
 import { Close, ContentSave } from "mdue"
 
 const route = useRoute()
@@ -147,7 +147,7 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 h1
   text-align: center

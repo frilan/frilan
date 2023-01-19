@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRefs } from "vue"
-import { PageStatus, useStore } from "../store/store"
+import { PageStatus, useStore } from "@/store/store"
 import { useRoute, useRouter } from "vue-router"
 import EventLink from "./common/event-link.vue"
 import Logo from "./common/logo.vue"
@@ -86,7 +86,7 @@ header
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 $bg: #25252d
 $bg-light: #39394f

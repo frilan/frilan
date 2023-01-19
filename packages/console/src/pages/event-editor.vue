@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { watchEffect } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { useStore } from "../store/store"
 import { Event } from "@frilan/models"
-import http from "../utils/http"
-import { routeInEvent } from "../utils/route-in-event"
-import DatetimePicker from "../components/common/datetime-picker.vue"
-import { NotFoundError } from "../utils/not-found-error"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import { routeInEvent } from "@/utils/route-in-event"
+import DatetimePicker from "@/components/common/datetime-picker.vue"
+import { NotFoundError } from "@/utils/not-found-error"
 import { Close, ContentSave } from "mdue"
 
 const route = useRoute()
@@ -80,7 +80,7 @@ form(@submit.prevent="save")
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 h1
   text-align: center

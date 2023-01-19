@@ -1,8 +1,7 @@
 import {
     Authorized, BadRequestError, Body, Ctx, CurrentUser, Delete, ForbiddenError, Get, JsonController, NotFoundError,
-    OnUndefined, Param, Put, UseBefore,
+    OnNull, OnUndefined, Param, Put, UseBefore,
 } from "routing-controllers"
-import { getRepository } from "typeorm"
 import { Registration, Role, Status } from "@frilan/models"
 import { PG_FOREIGN_KEY_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { RelationsParser } from "../middlewares/relations-parser"
@@ -11,6 +10,9 @@ import { AuthUser } from "../middlewares/jwt-utils"
 import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
+import db from "../config/db"
+
+const repository = db.getRepository(Registration)
 
 /**
  * @openapi
@@ -70,7 +72,7 @@ export class RegistrationController {
     async readAll(@Param("event_id") eventId: number, @Ctx() ctx: Context): Promise<Registration[]> {
         // prevent filtering by event ID
         delete ctx.filters.eventId
-        return getRepository(Registration).find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
+        return repository.find({ where: { eventId, ...ctx.filters }, relations: ctx.relations })
     }
 
     /**
@@ -123,7 +125,7 @@ export class RegistrationController {
         try {
             registration.eventId = eventId
             registration.userId = userId
-            const savedRegistration = await getRepository(Registration).save(registration)
+            const savedRegistration = await repository.save(registration)
             entitySubscriber.emit(EntityEventType.Update, EntityClass.Registration, savedRegistration)
             return savedRegistration
 
@@ -159,16 +161,16 @@ export class RegistrationController {
      *         $ref: "#/components/responses/RegistrationNotFound"
      */
     @Get("/:user_id(\\d+)")
-    @OnUndefined(RegistrationNotFoundError)
+    @OnNull(RegistrationNotFoundError)
     @UseBefore(RelationsParser)
     @Authorized()
     read(
         @Param("event_id") eventId: number,
         @Param("user_id") userId: number,
         @Ctx() ctx: Context,
-    ): Promise<Registration | undefined> {
+    ): Promise<Registration | null> {
 
-        return getRepository(Registration).findOne({ eventId, userId }, { relations: ctx.relations })
+        return repository.findOne({ where: { eventId, userId }, relations: ctx.relations })
     }
 
     /**
@@ -200,8 +202,8 @@ export class RegistrationController {
         if (!user.admin && user.roles[eventId] !== Role.Organizer)
             throw new ForbiddenError("Only administrators and organizers can unregister users from this event")
 
-        const registration = await getRepository(Registration)
-            .findOne({ eventId, userId }, { relations: ["teams", "teams.tournament"] })
+        const registration = await repository
+            .findOne({ where: { eventId, userId }, relations: ["teams", "teams.tournament"] })
 
         if (!registration)
             throw new RegistrationNotFoundError()
@@ -211,7 +213,7 @@ export class RegistrationController {
             throw new BadRequestError(
                 "Cannot unregister this user because one of their tournament has already started")
 
-        await getRepository(Registration).delete({ eventId, userId })
+        await repository.delete({ eventId, userId })
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.Registration, { eventId, userId })
     }
 }

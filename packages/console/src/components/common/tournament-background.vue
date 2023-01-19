@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Tournament } from "@frilan/models"
+import type { Tournament } from "@frilan/models"
 
 const props = defineProps<{ tournament: Tournament }>()
 

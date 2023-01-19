@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useStore } from "../store/store"
-import http from "../utils/http"
-import { Registration, Status, Team, Tournament } from "@frilan/models"
-import EventLink from "../components/common/event-link.vue"
-import TournamentBackground from "../components/common/tournament-background.vue"
 import { toRefs, watchEffect } from "vue"
-import { Subscriber } from "../utils/subscriber"
+import { Registration, Status, Team, Tournament } from "@frilan/models"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import EventLink from "@/components/common/event-link.vue"
+import TournamentBackground from "@/components/common/tournament-background.vue"
+import { Subscriber } from "@/utils/subscriber"
 import {
   Account, AccountGroup, AlertCircleCheck, CalendarPlus, CheckCircle, ClockOutline, EyeOff, FlagCheckered, Play,
 } from "mdue"
@@ -68,6 +68,7 @@ new Subscriber(Tournament, { eventId: event.id })
 // if registered for the event, handle updates to the teams of the user
 if (registration) {
   const myTeams = registration.teams
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   new Subscriber(Team, { "members.userId": user.id, "members.eventId": event.id })
     .onCreate(newTeam => myTeams.push(newTeam))
     .onUpdate(updatedTeam => {
@@ -138,8 +139,8 @@ p.empty(v-else) There are no tournaments in this event yet.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
-@import "../assets/styles/tournament"
+@import "@/assets/styles/main.sass"
+@import "@/assets/styles/tournament.sass"
 
 .new
   z-index: 10

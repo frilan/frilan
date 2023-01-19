@@ -1,10 +1,10 @@
 import { startServer, stopServer } from "../src/server"
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios"
+import axios, { AxiosInstance, RawAxiosRequestConfig } from "axios"
 
 export interface TestUser {
     username: string
     id: number
-    config: AxiosRequestConfig
+    config: RawAxiosRequestConfig
 }
 
 /**
@@ -32,13 +32,13 @@ export async function createUsers(amount: number): Promise<TestUser[]> {
  */
 export async function refreshPrivilege(user: TestUser): Promise<void> {
     const res = await http.get("/login", { auth: { username: user.username, password: "password" } })
-    user.config.headers.authorization = "Bearer " + res.data.token
+    user.config = { headers: { authorization: "Bearer " + res.data.token } }
 }
 
 /**
  * Creates multiple events and returns their ids.
  */
-export async function createEvents(amount: number, config: AxiosRequestConfig): Promise<number[]> {
+export async function createEvents(amount: number, config: RawAxiosRequestConfig): Promise<number[]> {
     return Promise.all([...Array(amount).keys()].map(async index => {
         const event = { name: "event-" + index, shortName: index.toString(), start: 1, end: 10 }
         const res = await http.post("/events", event, config)

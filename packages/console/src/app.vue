@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onErrorCaptured, toRefs, watchEffect } from "vue"
-import { PageStatus, useStore } from "./store/store"
 import { useRoute, useRouter } from "vue-router"
 import axios from "axios"
-import { isNotFoundError } from "./utils/not-found-error"
-import ErrorHandler from "./components/error-handler.vue"
-import MainHeader from "./components/main-header.vue"
-import NotFound from "./pages/not-found.vue"
+import { PageStatus, useStore } from "@/store/store"
+import { isNotFoundError } from "@/utils/not-found-error"
+import ErrorHandler from "@/components/error-handler.vue"
+import MainHeader from "@/components/main-header.vue"
+import NotFound from "@/pages/not-found.vue"
 
 const store = useStore()
 const router = useRouter()
@@ -54,7 +54,7 @@ main
 </template>
 
 <style lang="sass">
-@import "./assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 #app
   height: 100vh

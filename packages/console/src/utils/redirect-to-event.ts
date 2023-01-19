@@ -1,7 +1,7 @@
-import { RouteParamsRaw } from "vue-router"
+import type { RouteParamsRaw } from "vue-router"
 import { routeInEvent } from "./route-in-event"
-import { store } from "../store/store"
-import router from "../router"
+import { store } from "@/store/store"
+import router from "@/router"
 
 /**
  * Redirects to the desired route within the current active event.

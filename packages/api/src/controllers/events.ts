@@ -1,7 +1,7 @@
 import {
-    Authorized, Body, Ctx, Get, HttpCode, HttpError, JsonController, NotFoundError, OnUndefined, Param, Post, UseBefore,
+    Authorized, Body, Ctx, Get, HttpCode, HttpError, JsonController, NotFoundError, OnNull, OnUndefined, Param, Post,
+    UseBefore,
 } from "routing-controllers"
-import { getRepository } from "typeorm"
 import { Event } from "@frilan/models"
 import { PartialBody } from "../decorators/partial-body"
 import { DeleteById, GetById, PatchById } from "../decorators/method-by-id"
@@ -11,6 +11,9 @@ import { FiltersParser } from "../middlewares/filters-parser"
 import { isDbError } from "../util/is-db-error"
 import { PG_UNIQUE_VIOLATION } from "@drdgvhbh/postgres-error-codes"
 import { EntityClass, EntityEventType, entitySubscriber } from "../util/entity-subscriber"
+import db from "../config/db"
+
+const repository = db.getRepository(Event)
 
 /**
  * @openapi
@@ -91,7 +94,7 @@ export class EventController {
     @UseBefore(RelationsParser, FiltersParser)
     @Authorized()
     readAll(@Ctx() ctx: Context): Promise<Event[]> {
-        return getRepository(Event).find({ relations: ctx.relations, where: ctx.filters })
+        return repository.find({ relations: ctx.relations, where: ctx.filters })
     }
 
     /**
@@ -128,7 +131,7 @@ export class EventController {
     @Authorized("admin")
     async create(@Body() event: Event): Promise<Event> {
         try {
-            const savedEvent = await getRepository(Event).save(event)
+            const savedEvent = await repository.save(event)
             entitySubscriber.emit(EntityEventType.Create, EntityClass.Event, savedEvent)
             return savedEvent
 
@@ -163,11 +166,11 @@ export class EventController {
      *         $ref: "#/components/responses/EventNotFound"
      */
     @GetById()
-    @OnUndefined(EventNotFoundError)
+    @OnNull(EventNotFoundError)
     @UseBefore(RelationsParser)
     @Authorized()
-    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Event | undefined> {
-        return getRepository(Event).findOne(id, { relations: ctx.relations })
+    read(@Param("id") id: number, @Ctx() ctx: Context): Promise<Event | null> {
+        return repository.findOne({ where: { id }, relations: ctx.relations })
     }
 
     /**
@@ -201,12 +204,12 @@ export class EventController {
      *         $ref: "#/components/responses/EventNotFound"
      */
     @PatchById()
-    @OnUndefined(EventNotFoundError)
+    @OnNull(EventNotFoundError)
     @Authorized("admin")
-    async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | undefined> {
+    async update(@Param("id") id: number, @PartialBody() event: Event): Promise<Event | null> {
         if (Object.keys(event).length)
             try {
-                await getRepository(Event).update(id, event)
+                await repository.update(id, event)
             } catch (err) {
                 if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION)
                     throw new EventConflictError()
@@ -214,7 +217,7 @@ export class EventController {
                     throw err
             }
 
-        const savedEvent = await getRepository(Event).findOne(id)
+        const savedEvent = await repository.findOneBy({ id })
         entitySubscriber.emit(EntityEventType.Update, EntityClass.Event, savedEvent)
         return savedEvent
     }
@@ -240,7 +243,7 @@ export class EventController {
     @OnUndefined(204)
     @Authorized("admin")
     async delete(@Param("id") id: number): Promise<void> {
-        await getRepository(Event).delete(id)
+        await repository.delete(id)
         entitySubscriber.emit(EntityEventType.Delete, EntityClass.Event, { id })
     }
 }

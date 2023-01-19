@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { toRefs, watchEffect } from "vue"
-import { useStore } from "../store/store"
-import UserLink from "../components/common/user-link.vue"
-import { realTimeRegistrations } from "../utils/real-time"
 import { Role } from "@frilan/models"
-import Rank from "../components/common/rank.vue"
-import Checkbox from "../components/common/checkbox.vue"
+import { useStore } from "@/store/store"
+import UserLink from "@/components/common/user-link.vue"
+import { realTimeRegistrations } from "@/utils/real-time"
+import Rank from "@/components/common/rank.vue"
+import Checkbox from "@/components/common/checkbox.vue"
 
 const store = useStore()
 let { event } = $(toRefs(store.state))

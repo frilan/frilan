@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { toRefs, watchEffect } from "vue"
-import { useStore } from "../store/store"
 import { Registration, Role, User } from "@frilan/models"
-import UserLink from "../components/common/user-link.vue"
-import http from "../utils/http"
-import DatetimePicker from "../components/common/datetime-picker.vue"
-import { realTimeRegistrations } from "../utils/real-time"
+import { useStore } from "@/store/store"
+import UserLink from "@/components/common/user-link.vue"
+import http from "@/utils/http"
+import DatetimePicker from "@/components/common/datetime-picker.vue"
+import { realTimeRegistrations } from "@/utils/real-time"
 import { AccountPlus, AccountRemove } from "mdue"
 
 const store = useStore()
@@ -103,7 +103,7 @@ p.no-match(v-else) No user is registered for this event yet.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 header
   display: flex

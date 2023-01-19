@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { useStore } from "../store/store"
-import { redirectToEvent } from "../utils/redirect-to-event"
-import Logo from "../components/common/logo.vue"
+import { useStore } from "@/store/store"
+import { redirectToEvent } from "@/utils/redirect-to-event"
+import Logo from "@/components/common/logo.vue"
 import axios from "axios"
 import { AlertCircle } from "mdue"
 
@@ -56,7 +56,7 @@ async function login() {
 </template>
 
 <style lang="sass" scoped>
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 .container
   position: fixed

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { toRefs } from "vue"
 import { useRoute } from "vue-router"
-import { useStore } from "../store/store"
 import { Registration, Role, Status, Team, Tournament, User } from "@frilan/models"
-import http from "../utils/http"
 import axios from "axios"
-import TournamentLink from "../components/common/tournament-link.vue"
-import ProfilePicture from "../components/common/profile-picture.vue"
-import { NotFoundError } from "../utils/not-found-error"
-import { Subscriber } from "../utils/subscriber"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
+import TournamentLink from "@/components/common/tournament-link.vue"
+import ProfilePicture from "@/components/common/profile-picture.vue"
+import OrganizerTag from "@/components/tags/organizer-tag.vue"
+import { NotFoundError } from "@/utils/not-found-error"
+import { Subscriber } from "@/utils/subscriber"
 import { Account, AlertCircleCheck, CheckCircle } from "mdue"
-import OrganizerTag from "../components/tags/organizer-tag.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -56,9 +56,12 @@ function isTeamRegistered(team: Team) {
 // handle live updates
 new Subscriber(Registration, { eventId: event.id, userId: user.id })
   .onCreate(newRegistration => registration = { ...newRegistration, teams: [] })
-  .onUpdate(updatedRegistration => Object.assign(registration, updatedRegistration))
+  .onUpdate(updatedRegistration => {
+    if (registration) Object.assign(registration, updatedRegistration)
+  })
   .onDelete(() => registration = null)
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 new Subscriber(Team, { "members.userId": user.id, "members.eventId": event.id })
   .onCreate(async newTeam => registration?.teams.push({
     ...newTeam,
@@ -151,7 +154,7 @@ p.not-registered(v-else) This user isn't registered for the event.
 </template>
 
 <style scoped lang="sass">
-@import "../assets/styles/main"
+@import "@/assets/styles/main.sass"
 
 header
   display: flex

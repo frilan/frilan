@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { useStore } from "../store/store"
-import http from "../utils/http"
+import { useStore } from "@/store/store"
+import http from "@/utils/http"
 import { User } from "@frilan/models"
 import { Login } from "mdue"
 
@@ -38,7 +38,7 @@ footer
 </template>
 
 <style lang="sass" scoped>
-@import "../assets/styles/form"
+@import "@/assets/styles/form.sass"
 
 h1
   text-align: center
