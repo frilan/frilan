@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "^4.5.15",
-    "axios": "^1.2.3",
+    "axios": "^1.12.0",
     "markdown-it": "^13.0.1",
     "mdue": "^0.1.4",
     "vue": "^3.2.45",
